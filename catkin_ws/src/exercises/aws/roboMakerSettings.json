@@ -1,0 +1,58 @@
+{
+  "runConfigurations": [
+    {
+      "id": "377ef693-b25f-9cbb-bfee-a8823a89825b",
+      "name": "Colcon Build",
+      "type": "colcon build",
+      "cfg": {
+        "workingDir": "/",
+        "cmdArgs": ""
+      }
+    },
+    {
+      "id": "7bc3407a-b9b8-dbd4-0166-fe929dc1b27c",
+      "name": "Colcon Bundle",
+      "type": "colcon bundle",
+      "cfg": {
+        "workingDir": "/",
+        "cmdArgs": ""
+      }
+    },
+    {
+      "id": "61c405dd-8e9d-0710-069b-d150ab6658e9",
+      "name": "Simulation",
+      "type": "simulation",
+      "cfg": {
+        "simulation": {
+          "maxJobDurationInSeconds": 300,
+          "failureBehavior": "Continue",
+          "iamRole": "",
+          "outputLocation": ""
+        },
+        "simulationApp": {
+          "name": "hello-world",
+          "sourceBundleFile": "/bundle/output.tar.gz",
+          "architecture": "X86_64",
+          "s3Bucket": "",
+          "launchConfig": {
+            "packageName": "exercises",
+            "launchFile": "hello_world_aws.launch",
+            "environmentVariables": {}
+          },
+          "simulationSoftwareSuite": {
+            "name": "Gazebo",
+            "version": "7"
+          },
+          "renderingEngine": {
+            "name": "OGRE",
+            "version": "1.x"
+          },
+          "robotSoftwareSuite": {
+            "name": "ROS",
+            "version": "Kinetic"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+<launch>
+  <!-- The following line will launch hello_world.launch when this file is launched. -->
+  <include file="$(find exercises)/part0/ros/launch/hello_world.launch" />
+
+  <!-- MISSING: Launch gazebo.launch and rviz.launch. -->
+</launch>

@@ -1,0 +1,14 @@
+<launch>
+  <include file="$(find exercises)/part0/ros/launch/hello_world.launch"/>
+  <include file="$(find exercises)/part0/ros/launch/gazebo.launch">
+    <!-- Disable GUI for RoboMaker, it starts the GUI automatically -->
+    <arg name="use_gui" value="false"/>
+  </include>
+  <include file="$(find exercises)/part0/ros/launch/rviz.launch">
+    <!-- 
+      Disable opening rviz config for RoboMaker, 
+      rviz config needs to be opened manually  
+    -->
+    <arg name="open_rviz_config" value="false"/>
+  </include>
+</launch>

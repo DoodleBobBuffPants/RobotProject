@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find exercises)/part0/ros/launch/hello_world.launch" />
+  <include file="$(find exercises)/part0/ros/launch/gazebo.launch" />
+  <include file="$(find exercises)/part0/ros/launch/rviz.launch" />
+</launch>

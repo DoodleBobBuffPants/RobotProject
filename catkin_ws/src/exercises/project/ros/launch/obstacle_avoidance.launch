@@ -1,0 +1,5 @@
+<launch>
+	<arg name="mode" />
+
+	<node pkg="exercises" type="obstacle_avoidance.py" name="obstacle_avoidance" args="--mode=$(arg mode)" output="screen"></node>
+</launch>

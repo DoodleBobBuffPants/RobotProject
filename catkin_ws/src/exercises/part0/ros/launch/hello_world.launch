@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="exercises" type="hello_world.py" name="hello_world" output="screen">
+  </node>
+</launch>

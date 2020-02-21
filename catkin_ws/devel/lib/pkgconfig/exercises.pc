@@ -1,0 +1,8 @@
+prefix=/home/ajay/catkin_ws/devel
+
+Name: exercises
+Description: Description of exercises
+Version: 1.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: rospy std_msgs geometry_msgs nav_msgs message_runtime

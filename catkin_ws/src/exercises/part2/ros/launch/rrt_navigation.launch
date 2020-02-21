@@ -1,0 +1,5 @@
+<launch>
+	<arg name="mode" />
+
+	<node pkg="exercises" type="rrt_navigation.py" name="rrt_navigation" output="screen"></node>
+</launch>

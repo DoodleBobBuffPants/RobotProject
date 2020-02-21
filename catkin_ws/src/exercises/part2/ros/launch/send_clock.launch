@@ -1,0 +1,5 @@
+<launch>
+	<arg name="mode" />
+
+	<node pkg="exercises" type="send_clock.py" name="send_clock" output="screen"></node>
+</launch>

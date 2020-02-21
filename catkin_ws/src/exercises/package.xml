@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>exercises</name>
+  <version>1.0.0</version>
+  <description>Exercises for Mobile Robots</description>
+  <maintainer email="asp45@cl.cam.ac.uk">asp45</maintainer>
+  <license>None</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <exec_depend>rospy</exec_depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>gazebo_ros</depend>
+  <depend>turtlebot3_gazebo</depend>
+  <depend>gazebo_plugins</depend>
+  <depend>message_runtime</depend>
+  <depend>joy</depend>
+  <depend>teleop_twist_joy</depend>
+  <depend>teleop_twist_keyboard</depend>
+  <depend>laser_proc</depend>
+  <depend>rgbd_launch</depend>
+  <depend>depthimage_to_laserscan</depend>
+  <depend>rosserial_arduino</depend>
+  <depend>rosserial_python</depend>
+  <depend>rosserial_server</depend>
+  <depend>rosserial_client</depend>
+  <depend>rosserial_msgs</depend>
+  <depend>amcl</depend>
+  <depend>map_server </depend>
+  <depend>move_base</depend>
+  <depend>urdf</depend>
+  <depend>xacro</depend>
+  <depend>compressed_image_transport</depend>
+  <depend>image_view</depend>
+  <depend>gmapping</depend>
+  <depend>navigation</depend>
+  <depend>interactive_markers</depend>
+  <depend>turtlebot3</depend>
+  <depend>turtlebot3_msgs</depend>
+  <depend>turtlebot3_simulations</depend>
+
+  <exec_depend>gazebo</exec_depend>
+  <export>
+    <gazebo_ros gazebo_model_path="${prefix}/part1/ros/models"/>
+  </export>
+</package>
+
