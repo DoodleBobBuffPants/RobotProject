@@ -18,6 +18,7 @@ from sensor_msgs.msg import LaserScan
 from gazebo_msgs.msg import ModelStates
 from tf.transformations import euler_from_quaternion
 
+robot_names = ["tb3_0", "tb3_1", "tb3_2"]
 
 def braitenberg(front, front_left, front_right, left, right):
   u = 0.  # [m/s]
@@ -28,7 +29,9 @@ def braitenberg(front, front_left, front_right, left, right):
 
   u = 0.8 * np.tanh(front+front_right+front_left+0.5*(right+left))
   w = np.pi*(1-np.tanh(front))
-
+  print(u)
+  print(w)
+  print('\n')
   return u, w
 
 
@@ -48,8 +51,8 @@ def rule_based(front, front_left, front_right, left, right):
 
 
 class SimpleLaser(object):
-  def __init__(self):
-    rospy.Subscriber('/scan', LaserScan, self.callback)
+  def __init__(self, name):
+    rospy.Subscriber('/' + name + '/scan', LaserScan, self.callback)
     self._angles = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
     self._width = np.pi / 180. * 10.  # 10 degrees cone of view.
     self._measurements = [float('inf')] * len(self._angles)
@@ -124,28 +127,33 @@ def run(args):
 
   # Update control every 100 ms.
   rate_limiter = rospy.Rate(100)
-  publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
-  laser = SimpleLaser()
+  publisher = [None] * len(robot_names)
+  laser = [None] * len(robot_names)
+  groundtruth = [None] * len(robot_names)
+  for i,name in enumerate(robot_names):
+  	publisher[i-1] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
+  	laser[i-1] = SimpleLaser(name)
+  	groundtruth[i-1] = GroundtruthPose(name)
   # Keep track of groundtruth position for plotting purposes.
-  groundtruth = GroundtruthPose()
   pose_history = []
   with open('/tmp/gazebo_exercise.txt', 'w'):
     pass
 
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
-    if not laser.ready or not groundtruth.ready:
+    if not (laser[0].ready and laser[1].ready and laser[2].ready) or not (groundtruth[0].ready and groundtruth[1].ready and groundtruth[2].ready):
       rate_limiter.sleep()
       continue
 
-    u, w = avoidance_method(*laser.measurements)
-    vel_msg = Twist()
-    vel_msg.linear.x = u
-    vel_msg.angular.z = w
-    publisher.publish(vel_msg)
-
+    for i,_ in enumerate(robot_names):
+    	u, w = avoidance_method(*laser[i-1].measurements)
+    	vel_msg = Twist()
+    	vel_msg.linear.x = u
+    	vel_msg.angular.z = w
+    	publisher[i-1].publish(vel_msg)
+    
     # Log groundtruth positions in /tmp/gazebo_exercise.txt
-    pose_history.append(groundtruth.pose)
+    pose_history.append(groundtruth[0].pose)
     if len(pose_history) % 10:
       with open('/tmp/gazebo_exercise.txt', 'a') as fp:
         fp.write('\n'.join(','.join(str(v) for v in p) for p in pose_history) + '\n')
