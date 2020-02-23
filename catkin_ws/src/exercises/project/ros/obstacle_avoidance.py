@@ -29,9 +29,6 @@ def braitenberg(front, front_left, front_right, left, right):
 
   u = 0.8 * np.tanh(front+front_right+front_left+0.5*(right+left))
   w = np.pi*(1-np.tanh(front))
-  print(u)
-  print(w)
-  print('\n')
   return u, w
 
 
@@ -141,7 +138,7 @@ def run(args):
 
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
-    if not (laser[0].ready and laser[1].ready and laser[2].ready) or not (groundtruth[0].ready and groundtruth[1].ready and groundtruth[2].ready):
+    if not all(lasers.ready for lasers in laser) or not all(groundtruths.ready for groundtruths in groundtruth):
       rate_limiter.sleep()
       continue
 
