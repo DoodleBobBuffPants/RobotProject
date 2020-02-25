@@ -6,7 +6,21 @@ from __future__ import print_function
 
 import argparse
 import numpy as np
+import yaml
+import os
+import re
+import scipy.signal
+import random
 import rospy
+import sys
+
+import rrt_navigation
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
+sys.path.insert(0, directory)
+try:
+  import rrt
+except ImportError:
+  raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -19,6 +33,13 @@ from gazebo_msgs.msg import ModelStates
 from tf.transformations import euler_from_quaternion
 
 robot_names = ["tb3_0", "tb3_1", "tb3_2"]
+GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
+EPSILON = .1
+MAX_SPEED = 0.5
+
+X = 0
+Y = 1
+YAW = 2
 
 def move(front1, front2, front3):
   u = 0.  # [m/s]
@@ -29,6 +50,11 @@ def move(front1, front2, front3):
 
   return u, w
 
+def cap(v, max_speed):
+  n = np.linalg.norm(v)
+  if n > max_speed:
+    return v / n * max_speed
+  return v
 
 class SimpleLaser(object):
   def __init__(self, name):
@@ -114,19 +140,43 @@ def run():
   	laser[i-1] = SimpleLaser(name)
   	groundtruth[i-1] = GroundtruthPose(name)
 
+  # Load map.
+  with open('map.yaml') as fp:
+    data = yaml.load(fp)
+  img = rrt.read_pgm(os.path.join(os.path.dirname(args.map), data['image']))
+  occupancy_grid = np.empty_like(img, dtype=np.int8)
+  occupancy_grid[:] = UNKNOWN
+  occupancy_grid[img < .1] = OCCUPIED
+  occupancy_grid[img > .9] = FREE
+  # Transpose (undo ROS processing).
+  occupancy_grid = occupancy_grid.T
+  # Invert Y-axis.
+  occupancy_grid = occupancy_grid[:, ::-1]
+  occupancy_grid = rrt.OccupancyGrid(occupancy_grid, data['origin'], data['resolution'])
+
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
     if not all(lasers.ready for lasers in laser) or not all(groundtruths.ready for groundtruths in groundtruth):
       rate_limiter.sleep()
       continue
 
-    u, w = move(laser[0].measurements[0], laser[1].measurements[0], laser[2].measurements[0])
-    vel_msg = Twist()
-    vel_msg.linear.x = u
-    vel_msg.angular.z = w
-    publisher[0].publish(vel_msg)
-    publisher[1].publish(vel_msg)
-    publisher[2].publish(vel_msg)
+    for i,_ in enumerate(robot_names):
+    	start_node, final_node = rrt.rrt(groundtruth[i-1].pose, GOAL_POSITION, occupancy_grid)
+    	current_path = rrt_navigation.get_path(final_node)
+    	if not current_path:
+    		print('Unable to reach goal position:', goal.position)
+
+    	position = np.array([groundtruth[i-1].pose[X] + EPSILON*np.cos(groundtruth[i-1].pose[YAW]),
+    		                 groundtruth[i-1].pose[Y] + EPSILON*np.sin(groundtruth[i-1].pose[YAW])], dtype=np.float32)
+    	v = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
+    	ur, wr = rrt_navigation.feedback_linearized(groundtruth[i-1].pose, v, epsilon=EPSILON)
+
+    	uo, wo = move(laser[0].measurements[0], laser[1].measurements[0], laser[2].measurements[0])
+
+    	vel_msg = Twist()
+    	vel_msg.linear.x = cap(ur+uo, MAX_SPEED)
+    	vel_msg.angular.z = (wr+wo) % (2.*np.pi)
+    	publisher[i-1].publish(vel_msg)
 
     rate_limiter.sleep()
 
