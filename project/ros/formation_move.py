@@ -143,7 +143,7 @@ def run():
   # Load map.
   with open('map.yaml') as fp:
     data = yaml.load(fp)
-  img = rrt.read_pgm(os.path.join(os.path.dirname(args.map), data['image']))
+  img = rrt.read_pgm(os.path.join(os.path.dirname('map'), data['image']))
   occupancy_grid = np.empty_like(img, dtype=np.int8)
   occupancy_grid[:] = UNKNOWN
   occupancy_grid[img < .1] = OCCUPIED
