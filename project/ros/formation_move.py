@@ -6,6 +6,8 @@ from __future__ import print_function
 
 import argparse
 import numpy as np
+import matplotlib.pylab as plt
+import matplotlib.patches as patches
 import yaml
 import os
 import re
@@ -40,6 +42,10 @@ MAX_SPEED = 0.5
 X = 0
 Y = 1
 YAW = 2
+
+FREE = 0
+UNKNOWN = 1
+OCCUPIED = 2
 
 def move(front1, front2, front3):
   u = 0.  # [m/s]
@@ -130,20 +136,22 @@ class GroundtruthPose(object):
 def run():
   rospy.init_node('obstacle_avoidance')
 
-  # Update control every 100 ms.
-  rate_limiter = rospy.Rate(100)
+  # Update control every 50 ms.
+  rate_limiter = rospy.Rate(50)
   publisher = [None] * len(robot_names)
   laser = [None] * len(robot_names)
   groundtruth = [None] * len(robot_names)
+  current_path = [None] * len(robot_names)
+  cp_computed = [False] * len(robot_names)
   for i,name in enumerate(robot_names):
   	publisher[i-1] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
   	laser[i-1] = SimpleLaser(name)
   	groundtruth[i-1] = GroundtruthPose(name)
 
   # Load map.
-  with open('map.yaml') as fp:
+  with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
     data = yaml.load(fp)
-  img = rrt.read_pgm(os.path.join(os.path.dirname('map'), data['image']))
+  img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.pgm'), data['image'])
   occupancy_grid = np.empty_like(img, dtype=np.int8)
   occupancy_grid[:] = UNKNOWN
   occupancy_grid[img < .1] = OCCUPIED
@@ -161,21 +169,24 @@ def run():
       continue
 
     for i,_ in enumerate(robot_names):
-    	start_node, final_node = rrt.rrt(groundtruth[i-1].pose, GOAL_POSITION, occupancy_grid)
-    	current_path = rrt_navigation.get_path(final_node)
-    	if not current_path:
-    		print('Unable to reach goal position:', goal.position)
+      if not cp_computed[i-1]:
+        start_node, final_node = rrt.rrt(groundtruth[i-1].pose, GOAL_POSITION, occupancy_grid)
+        current_path[i-1] = rrt_navigation.get_path(final_node)
+        cp_computed[i-1] = True
+        if not current_path[i-1]:
+          cp_computed[i-1] = False
+          print('Unable to reach goal position:', GOAL_POSITION)
 
     	position = np.array([groundtruth[i-1].pose[X] + EPSILON*np.cos(groundtruth[i-1].pose[YAW]),
     		                 groundtruth[i-1].pose[Y] + EPSILON*np.sin(groundtruth[i-1].pose[YAW])], dtype=np.float32)
-    	v = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
+    	v = rrt_navigation.get_velocity(position, np.array(current_path[i-1], dtype=np.float32))
     	ur, wr = rrt_navigation.feedback_linearized(groundtruth[i-1].pose, v, epsilon=EPSILON)
 
-    	uo, wo = move(laser[0].measurements[0], laser[1].measurements[0], laser[2].measurements[0])
+    	#uo, wo = move(laser[0].measurements[0], laser[1].measurements[0], laser[2].measurements[0])
 
     	vel_msg = Twist()
-    	vel_msg.linear.x = cap(ur+uo, MAX_SPEED)
-    	vel_msg.angular.z = (wr+wo) % (2.*np.pi)
+    	vel_msg.linear.x = cap(ur, MAX_SPEED)
+    	vel_msg.angular.z = wr
     	publisher[i-1].publish(vel_msg)
 
     rate_limiter.sleep()
