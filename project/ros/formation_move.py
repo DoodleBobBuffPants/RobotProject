@@ -138,6 +138,7 @@ def run():
 
   # Update control every 50 ms.
   rate_limiter = rospy.Rate(50)
+  
   publisher = [None] * len(robot_names)
   laser = [None] * len(robot_names)
   groundtruth = [None] * len(robot_names)
