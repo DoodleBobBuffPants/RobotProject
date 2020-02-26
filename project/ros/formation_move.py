@@ -35,7 +35,7 @@ from sensor_msgs.msg import LaserScan
 from gazebo_msgs.msg import ModelStates
 from tf.transformations import euler_from_quaternion
 
-robot_names = ["tb3_0", "tb3_1", "tb3_2"]
+robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 EPSILON = .1
 MAX_SPEED = 0.5
