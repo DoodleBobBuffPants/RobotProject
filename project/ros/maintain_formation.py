@@ -17,14 +17,20 @@
 X = 0
 Y= 1
 YAW = 2
+ROBOT_RADIUS = 0.105 / 2.
 
-# Formation spacing parameter
+# Formation spacing parameter for the formation
 SPACING_DIST = 0.5
 LINE = [[-2*SPACING_DIST,0], 
         [SPACING_DIST, 0], 
         [0, 0], 
         [SPACING_DIST, 0], 
         [2*SPACING_DIST, 0]]
+
+# DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
+DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
+# CONTROL_ZONE (if robot is within the controlled zone, velocity towards position linearly increases the further away it is)
+CONTROLLED_ZONE = DEAD_ZONE + SPACING_DIST
 
 def get_desired_positions(formation, formation_pose):
     """
@@ -66,16 +72,32 @@ def maintain_formation(current_poses, update_velocities):
     average_update_velocity = np.sum(update_velocities, axis=0) / len(update_velocities)
     # Formation orientation is the angle of average velocity 
     formation_orientation = np.arctan(average_update_velocity[Y]/average_update_velocity[X])
-    formation_pose = np.concatenate((unit_reference, [formation_orientation]))
+    formation_pose = np.concatenate((unit_reference[:2], [formation_orientation]))
 
     # Desired positions of each of the robots in the formation
     desired_positions = get_desired_positions(formation=LINE, formation_pose=formation_pose)
 
-    # Vector pointing from the current position to the desired position
-    # TODO x, y, yaw -> velocities?
-    # TODO first get unit direction vector and then multiply it by a number to get a magnitude dpeending on distance
-    velocities = desired_poses - current_poses
+    # velocity directs the robot from its current position to its desired position in the formation
+    current_positions = [pose[0:2] for pose in current_poses]
+    velocities = desired_positions - current_positions
+
+    # update each velocity (the displacement between the current and desired position) depending on the distance
+    for i in range(len(velocities)):
+        # euclidian distance
+        distance = np.sqrt(np.square(velocities[i][X]) + np.square(velocities[i][Y]))
+
+        # If a robot is within accepted radius of formation position, velocity should be 0
+        # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
+        if distance < DEAD_ZONE:
+            velocities[i] = np.zeros_like(velocities[i])
+        elif distance < CONTROLLED_ZONE:
+            # we do nothing, velocity is directly proportional to distance
+            pass
+        else:
+            # robot is outside the controlled zone, so we normalize the velocity and then multiply
+            # by the radius of the control zone.
+            velocities[i] = velocities[i] / distance
+            velocities[i] = velocities[i] * CONTROLLED_ZONE
+
 
     return velocities
-
-# weighted (x,y) -> feedback lin (u, w)
