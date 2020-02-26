@@ -4,20 +4,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
 import scipy.signal
+
 import sys
-import yaml
 import os
+import yaml
 import re
 import random
 import rospy
+
 import obstacle_avoidance
 import rrt_navigation
-
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
 try:
@@ -37,6 +37,7 @@ from tf.transformations import euler_from_quaternion
 
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
+
 EPSILON = .1
 MAX_SPEED = 0.5
 
@@ -131,20 +132,20 @@ def run():
   # Update control every 50 ms.
   rate_limiter = rospy.Rate(50)
   
-  publisher = [None] * len(robot_names)
-  laser = [None] * len(robot_names)
-  groundtruth = [None] * len(robot_names)
-  current_path = [None] * len(robot_names)
-  cp_computed = [False] * len(robot_names)
-  vel_msg = [None] * len(robot_names)
-  for i,name in enumerate(robot_names):
-  	publisher[i-1] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
-  	laser[i-1] = SimpleLaser(name)
-  	groundtruth[i-1] = GroundtruthPose(name)
+  publishers = [None] * len(robot_names)
+  lasers = [None] * len(robot_names)
+  groundtruths = [None] * len(robot_names)
+  current_paths = [None] * len(robot_names)
+  vel_msgs = [None] * len(robot_names)
 
   stop_msg = Twist()
   stop_msg.linear.x = 0.
   stop_msg.angular.z = 0.
+  
+  for i,name in enumerate(robot_names):
+  	publishers[i-1] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
+  	lasers[i-1] = SimpleLaser(name)
+  	groundtruths[i-1] = GroundtruthPose(name)
 
   # Load map.
   with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
@@ -162,42 +163,41 @@ def run():
 
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
-    if not all(lasers.ready for lasers in laser) or not all(groundtruths.ready for groundtruths in groundtruth):
+    if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruths):
       rate_limiter.sleep()
       continue
 
+    #do rrt first
+    for i,name in enumerate(robot_names):
+    	if not current_paths[i-1]:
+    		start_node, final_node = rrt.rrt(groundtruths[i-1].pose, GOAL_POSITION, occupancy_grid)
+    		current_paths[i-1] = rrt_navigation.get_path(final_node)
+    		if not current_paths[i-1]:
+    			print(name + ' unable to reach goal position:', GOAL_POSITION)
+
     for i,_ in enumerate(robot_names):
-      #do rrt once
-      if not cp_computed[i-1]:
-        start_node, final_node = rrt.rrt(groundtruth[i-1].pose, GOAL_POSITION, occupancy_grid)
-        current_path[i-1] = rrt_navigation.get_path(final_node)
-        cp_computed[i-1] = True
-        if not current_path[i-1]:
-          cp_computed[i-1] = False
-          print('Unable to reach goal position:', GOAL_POSITION)
-      
       #stop if at goal
-      if np.linalg.norm(groundtruth[i-1].pose[:2] - GOAL_POSITION) < .2:
-        vel_msg[i-1] = stop_msg
+      if np.linalg.norm(groundtruths[i-1].pose[:2] - GOAL_POSITION) < .2:
+        vel_msgs[i-1] = stop_msg
         continue
 
-      position = np.array([groundtruth[i-1].pose[X] + EPSILON*np.cos(groundtruth[i-1].pose[YAW]),
-    		               groundtruth[i-1].pose[Y] + EPSILON*np.sin(groundtruth[i-1].pose[YAW])], dtype=np.float32)
-      v = rrt_navigation.get_velocity(position, np.array(current_path[i-1], dtype=np.float32))
+      position = np.array([groundtruths[i-1].pose[X] + EPSILON*np.cos(groundtruths[i-1].pose[YAW]),
+    		               groundtruths[i-1].pose[Y] + EPSILON*np.sin(groundtruths[i-1].pose[YAW])], dtype=np.float32)
+      v = rrt_navigation.get_velocity(position, np.array(current_paths[i-1], dtype=np.float32))
       
       #velocities from each component
-      ur, wr = rrt_navigation.feedback_linearized(groundtruth[i-1].pose, v, epsilon=EPSILON)
-      uo, wo = obstacle_avoidance.rule_based(*laser[i-1].measurements)
+      ur, wr = rrt_navigation.feedback_linearized(groundtruths[i-1].pose, v, epsilon=EPSILON)
+      uo, wo = obstacle_avoidance.rule_based(*lasers[i-1].measurements)
 
-      u = cap(0.2*ur + 0.8*uo, MAX_SPEED)
-      w = (0.2*wr + 0.8*wo) % (2.*np.pi)
+      u = cap(0.*ur + 1.*uo, MAX_SPEED)
+      w = (0.*wr + 1.*wo) % (2.*np.pi)
 
-      vel_msg[i-1] = Twist()
-      vel_msg[i-1].linear.x = u
-      vel_msg[i-1].angular.z = w
+      vel_msgs[i-1] = Twist()
+      vel_msgs[i-1].linear.x = u
+      vel_msgs[i-1].angular.z = w
 
     for i,_ in enumerate(robot_names):
-      publisher[i-1].publish(vel_msg[i-1])
+      publishers[i-1].publish(vel_msgs[i-1])
 
     rate_limiter.sleep()
 
