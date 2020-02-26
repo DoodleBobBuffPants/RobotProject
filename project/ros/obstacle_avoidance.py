@@ -38,10 +38,10 @@ def rule_based(front, front_left, front_right, left, right):
 
   # MISSING: Implement a rule-based controller that avoids obstacles.
 
-  u = 0.8
+  u = 0.5
   w = 0
   if front < 1:
-  	u = 0.05
+  	u = 0.
   	w = np.pi/5.
 
   return u, w

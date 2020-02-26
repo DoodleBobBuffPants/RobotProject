@@ -87,7 +87,7 @@ def get_velocity(position, path_points):
     vec = minp - position
     vec = vec / np.linalg.norm(vec)
 
-  return .3 * vec
+  return .5 * vec
 
 
 class SLAM(object):
