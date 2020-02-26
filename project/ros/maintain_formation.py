@@ -14,37 +14,62 @@
 # TODO parameters
 # spacing parameter for formation
 
+X = 0
+Y= 1
+YAW = 2
 
-def get_desired_positions(current_poses, formation):
+# Formation spacing parameter
+SPACING_DIST = 0.5
+LINE = [[-2*SPACING_DIST,0], 
+        [SPACING_DIST, 0], 
+        [0, 0], 
+        [SPACING_DIST, 0], 
+        [2*SPACING_DIST, 0]]
+
+def get_desired_positions(formation, formation_pose):
     """
-    current_poses: a list of current poses [X, Y, YAW] of each of the robots
     formation: a list of points defining each robot position in the formation relative to the formation origin
+    formation_pose: origin of formation (unit-reference) where YAW is the orientation of the formation
 
     returns: 
-    list of desired positions i.e. where each robot should be in the formation
+    desired_positions: list of desired positions i.e. where each robot should be in the formation
     """
-    desired_poses = [[0, 0, 0] for robot_pose in current_poses]
+    # Take formation and transform (rotate, translate) onto formation_pose
+    # Rotate 
+    theta = formation_pose[YAW]
+    formation = np.matmul(
+        [[np.cos(theta), -np.sin(theta)],
+         [np.sin(theta),  np.cos(theta)]],
+        formation
+    )
+    # Translate
+    formation = formation - formation_pose[0:2]
 
-    retrun desired_poses
+    desired_positions = formation
+
+    return desired_positions
 
 def maintain_formation(current_poses, update_velocities):
     """
     current_poses: a list of current poses [X, Y, YAW] of each of the robots
-    update_velocities: a list of velocities that direct each robot in the next step 
+    update_velocities: a list of velocities that direct each robot in the next step (directions to next navigational waypoint)
 
     returns: 
     velocities: list of vectors [x, y] indicating the velocities of each robot needed to maintain formation
     """
-    # TODO Unit reference
+    # Unit reference
     # Use average of all the robot position to work out a unit center
-    unit_reference = [0, 0]
+    unit_reference = np.sum(current_poses, axis=0) / len(current_poses)
 
-    # TODO The orientation of this formation is defined by a line from the unit center to the next navigational waypoint
+    # The orientation of this formation is defined by a line from the unit center to the next navigational waypoint
     # The unit center and formation orientation together define a local coordinate system around whih the new formation is based
-    formation_orientation = 0
+    average_update_velocity = np.sum(update_velocities, axis=0) / len(update_velocities)
+    # Formation orientation is the angle of average velocity 
+    formation_orientation = np.arctan(average_update_velocity[Y]/average_update_velocity[X])
+    formation_pose = np.concatenate((unit_reference, [formation_orientation]))
 
     # Desired positions of each of the robots in the formation
-    desired_poses = get_desired_positions(current_poses)
+    desired_positions = get_desired_positions(formation=LINE, formation_pose=formation_pose)
 
     # Vector pointing from the current position to the desired position
     # TODO x, y, yaw -> velocities?
