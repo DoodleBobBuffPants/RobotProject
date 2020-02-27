@@ -89,16 +89,9 @@ def get_velocity(position, path_points):
       minp = u
       mind = np.linalg.norm(u-position)
       nextp = v
-  if np.linalg.norm(v-position) < mind:
-    minp = v
-    mind = np.linalg.norm(v-position)
 
-  if mind < .05:
-    vec = nextp - position
-    vec = vec / np.linalg.norm(vec)
-  else:
-    vec = minp - position
-    vec = vec / np.linalg.norm(vec)
+  vec = nextp - position
+  vec = vec / np.linalg.norm(vec)
 
   return SPEED * vec
 
