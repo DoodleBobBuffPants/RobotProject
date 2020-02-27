@@ -136,8 +136,8 @@ def run():
   # Update control every 50 ms.
   rate_limiter = rospy.Rate(50)
   
-  publisher = [None] * len(robot_names)
-  laser = [None] * len(robot_names)
+  publishers = [None] * len(robot_names)
+  lasers = [None] * len(robot_names)
 
   # ground truth pose of robots
   groundtruth_poses = [None] * len(robot_names)
@@ -145,13 +145,10 @@ def run():
   # the path RRT get_navigation returns
   current_path = [None] * len(robot_names)
 
-  # cp_computed, has the current path been computed for each robot
-  cp_computed = [False] * len(robot_names)
-
-  vel_msg = [None] * len(robot_names)
+  vel_msgs = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
-  	publisher[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
-  	laser[i] = SimpleLaser(name)
+  	publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
+  	lasers[i] = SimpleLaser(name)
   	groundtruth_poses[i] = GroundtruthPose(name)
 
   stop_msg = Twist()
@@ -174,7 +171,7 @@ def run():
 
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
-    if not all(lasers.ready for lasers in laser) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
+    if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
       rate_limiter.sleep()
       continue
 
@@ -182,17 +179,15 @@ def run():
     rrt_velocities = []
     for i,_ in enumerate(robot_names):
       #do rrt once
-      if not cp_computed[i]:
+      if not current_path[i]:
         start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, GOAL_POSITION, occupancy_grid)
         current_path[i] = rrt_navigation.get_path(final_node)
-        cp_computed[i] = True
         if not current_path[i]:
-          cp_computed[i] = False
           print('Unable to reach goal position:', GOAL_POSITION)
       
       #stop if at goal
       if np.linalg.norm(groundtruth_poses[i].pose[:2] - GOAL_POSITION) < .2:
-        vel_msg[i-1] = stop_msg
+        vel_msgs[i] = stop_msg
         continue
 
       position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
@@ -200,6 +195,7 @@ def run():
       v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
 
       rrt_velocities.append(v)
+
     rrt_velocities = np.array(rrt_velocities)
 
     # get our combined velocity for each robot
@@ -212,13 +208,16 @@ def run():
       us[i] = cap(us[i], MAX_SPEED)
       ws[i] %= (2.*np.pi)
 
+      if ws[i] > np.pi:
+        ws[i] = np.pi - ws[i]
+
       # get results and publish them
-      vel_msg[i] = Twist()
-      vel_msg[i].linear.x = us[i]
-      vel_msg[i].angular.z = ws[i]
+      vel_msgs[i] = Twist()
+      vel_msgs[i].linear.x = us[i]
+      vel_msgs[i].angular.z = ws[i]
 
     for i,_ in enumerate(robot_names):
-      publisher[i].publish(vel_msg[i])
+      publishers[i].publish(vel_msgs[i])
 
     rate_limiter.sleep()
 
