@@ -29,6 +29,24 @@ LINE = [[-2*SPACING_DIST,0],
         [SPACING_DIST, 0], 
         [2*SPACING_DIST, 0]]
 
+COLUMN =   [[0, 2*SPACING_DIST], 
+            [0, SPACING_DIST], 
+            [0, 0], 
+            [0,-SPACING_DIST], 
+            [0, -2*SPACING_DIST]]
+
+DIAMOND =  [[-SPACING_DIST, 0], 
+            [0, SPACING_DIST], 
+            [0, 0], 
+            [0,-SPACING_DIST], 
+            [SPACING_DIST, 0]]
+
+WEDGE =  [[-2*SPACING_DIST, -SPACING_DIST], 
+            [-SPACING_DIST, 0], 
+            [0, SPACING_DIST], 
+            [SPACING_DIST, 0], 
+            [2*SPACING_DIST, -SPACING_DIST]]
+
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
 DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
 # CONTROL_ZONE (if robot is within the controlled zone, velocity towards position linearly increases the further away it is)
