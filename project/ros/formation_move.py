@@ -221,7 +221,6 @@ def run():
 
     # cap and mod angle
     for i in range(len(us)):
-    #  us[i] = 0.1 * us[i]
       us[i] = cap(us[i], MAX_SPEED / 2.)
 
       # get results and publish them
