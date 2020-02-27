@@ -30,7 +30,7 @@ EPSILON = 0.1
 # position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 
-def get_combined_velocities(robot_poses, rrt_velocities):
+def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     """
     param robot_poses: the ground truth positions of the robot currently
     param occupancy_grid: the C map used by RRT
@@ -51,10 +51,10 @@ def get_combined_velocities(robot_poses, rrt_velocities):
     ws = []
     for i in range(len(combined_velocities)):
       u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
-      #u = 1
-      #w = 0
-      us.append(u)
-      ws.append(w)
+      uo, wo = obstacle_avoidance.rule_based(*lasers[i].measurements)
+
+      us.append(u+uo)
+      ws.append(w+wo)
 
     print("us: ", us)
     print("ws: ", ws)
