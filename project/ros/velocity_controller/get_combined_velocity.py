@@ -25,7 +25,7 @@ except ImportError:
   raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
 # Feedback linearisation epsilon
-EPSILON = 0.1
+EPSILON = 0.01
 
 def get_combined_velocities(robot_poses):
     """
@@ -33,7 +33,7 @@ def get_combined_velocities(robot_poses):
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """
     # TODO Update velocities come from rrt i.e. the velocity each robot is following to stay on the path
-    rrt_velocities = [[1., 0.] for robot in robot_poses]
+    rrt_velocities = [[0.5, 0.] for robot in robot_poses]
 
     # Velocities needed to maintain formation
     formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
@@ -41,7 +41,8 @@ def get_combined_velocities(robot_poses):
     # combined_velocities = weight_velocities(goal_velocities, formation_velocities, obstacle_velocities)
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
-    combined_velocities = formation_velocities
+    #combined_velocities = formation_velocities
+    combined_velocities = rrt_velocities
     us = []
     ws = []
     for i in range(len(combined_velocities)):
@@ -49,6 +50,8 @@ def get_combined_velocities(robot_poses):
       us.append(u)
       ws.append(w)
 
+    print("us: ", us)
+    print("ws: ", ws)
     return us, ws 
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities):

@@ -30,7 +30,7 @@ LINE = [[-2*SPACING_DIST,0],
         [2*SPACING_DIST, 0]]
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
-DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
+DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS)
 # CONTROL_ZONE (if robot is within the controlled zone, velocity towards position linearly increases the further away it is)
 CONTROLLED_ZONE = DEAD_ZONE + SPACING_DIST
 
@@ -60,6 +60,16 @@ def get_desired_positions(formation, formation_pose):
 
     return desired_positions
 
+def get_formation_orientation(average_update_velocity):
+    # check if velocity is near zero:
+    threshold = 0.01
+    threshold = 0.01
+    if average_update_velocity[X] < threshold and average_update_velocity[Y] < threshold:
+        return 0.
+    else:
+        return np.arctan(average_update_velocity[Y]/average_update_velocity[X])
+ 
+
 def maintain_formation(current_poses, update_velocities):
     """
     current_poses: a list of current poses [X, Y, YAW] of each of the robots
@@ -76,7 +86,7 @@ def maintain_formation(current_poses, update_velocities):
     # The unit center and formation orientation together define a local coordinate system around whih the new formation is based
     average_update_velocity = np.sum(update_velocities, axis=0) / len(update_velocities)
     # Formation orientation is the angle of average velocity 
-    formation_orientation = np.arctan(average_update_velocity[Y]/average_update_velocity[X])
+    formation_orientation = get_formation_orientation(average_update_velocity)
     formation_pose = np.concatenate((unit_reference[:2], [formation_orientation]))
 
     # Desired positions of each of the robots in the formation

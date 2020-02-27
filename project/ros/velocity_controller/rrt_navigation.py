@@ -38,6 +38,21 @@ YAW = 2
 
 
 def feedback_linearized(pose, velocity, epsilon):
+  # u = 0.  # [m/s]
+  # w = 0.  # [rad/s] going counter-clockwise.
+
+  # # MISSING: Implement feedback-linearization to follow the velocity
+  # # vector given as argument. Epsilon corresponds to the distance of
+  # # linearized point in front of the robot.
+
+  # threshold = 0.01
+  # if velocity[X] < threshold and velocity[Y] < threshold:
+  #   return u, w 
+
+  # u = velocity[X]*np.cos(pose[YAW]) + velocity[Y]*np.sin(pose[YAW])
+  # w = (velocity[Y]*np.cos(pose[YAW]) - velocity[X]*np.sin(pose[YAW]))/epsilon
+
+  # return u, w
   u = 0.  # [m/s]
   w = 0.  # [rad/s] going counter-clockwise.
 
@@ -45,8 +60,26 @@ def feedback_linearized(pose, velocity, epsilon):
   # vector given as argument. Epsilon corresponds to the distance of
   # linearized point in front of the robot.
 
-  u = velocity[X]*np.cos(pose[YAW]) + velocity[Y]*np.sin(pose[YAW])
-  w = (velocity[Y]*np.cos(pose[YAW]) - velocity[X]*np.sin(pose[YAW]))/epsilon
+  u = 0.  # [m/s]
+  w = 0.  # [rad/s] going counter-clockwise.
+
+  # MISSING: Implement feedback-linearization to follow the velocity
+  # vector given as argument. Epsilon corresponds to the distance of
+  # linearized point in front of the robot.
+
+  # check if velocity is near zero:
+  threshold = 0.01
+  if velocity[X] < threshold and velocity[Y] < threshold:
+    return u, w 
+
+  d_xp_t = velocity[X]
+  d_yp_t = velocity[Y]
+
+  # theta
+  theta = pose[YAW]
+
+  u = d_xp_t * np.cos(theta) + d_yp_t * np.sin(theta)
+  w = (epsilon ** -1) * (d_yp_t * np.cos(theta) - d_xp_t * np.sin(theta))
 
   return u, w
 

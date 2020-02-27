@@ -137,9 +137,9 @@ def run():
 
   vel_msg = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
-  	publisher[i-1] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
-  	laser[i-1] = SimpleLaser(name)
-  	groundtruth_poses[i-1] = GroundtruthPose(name)
+  	publisher[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
+  	laser[i] = SimpleLaser(name)
+  	groundtruth_poses[i] = GroundtruthPose(name)
 
   stop_msg = Twist()
   stop_msg.linear.x = 0.
@@ -152,22 +152,22 @@ def run():
       continue
 
     # get our combined velocity for each robot
-    # get poses from groud truth objects
-    robot_poses = np.array([groundtruth.pose for groundtruth in groundtruth_poses])
+    # get poses from ground truth objects
+    robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
     us, ws = gcv.get_combined_velocities(robot_poses=robot_poses)
 
     # cap and mod angle
     for i in range(len(us)):
-      us[i-1] = cap(us[i], MAX_SPEED)
-      ws[i-1] %= (2.*np.pi)
+      us[i] = cap(us[i], MAX_SPEED)
+      ws[i] %= (2.*np.pi)
 
       # get results and publish them
-      vel_msg[i-1] = Twist()
-      vel_msg[i-1].linear.x = us[i-1]
-      vel_msg[i-1].angular.z = ws[i-1]
+      vel_msg[i] = Twist()
+      vel_msg[i].linear.x = us[i]
+      vel_msg[i].angular.z = ws[i]
 
     for i,_ in enumerate(robot_names):
-      publisher[i-1].publish(vel_msg[i-1])
+      publisher[i].publish(vel_msg[i])
 
     rate_limiter.sleep()
 
