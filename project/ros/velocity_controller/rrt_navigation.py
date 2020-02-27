@@ -53,7 +53,7 @@ def feedback_linearized(pose, velocity, epsilon):
 
   # check if velocity is near zero:
   threshold = 0.01
-  if velocity[X] < threshold and velocity[Y] < threshold:
+  if np.sqrt(velocity[X]**2 + velocity[Y]**2) < threshold:
     return u, w 
 
   d_xp_t = velocity[X]
@@ -63,7 +63,7 @@ def feedback_linearized(pose, velocity, epsilon):
   theta = pose[YAW]
 
   u = d_xp_t * np.cos(theta) + d_yp_t * np.sin(theta)
-  w = (epsilon ** -1) * (d_yp_t * np.cos(theta) - d_xp_t * np.sin(theta))
+  w = (d_yp_t * np.cos(theta) - d_xp_t * np.sin(theta))/epsilon
 
   return u, w
 
