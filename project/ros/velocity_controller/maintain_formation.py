@@ -1,51 +1,19 @@
 # 5 robots, POSE(X, Y, YAW)
 
-# TODO need some sort of indication mechanism to decide which robot goes to where in each pose
-# TODO assign an ID to each robot
-# TODO need to configure different posesd desired formation 
-#  velocity in:
-#   'dead-zone' immediately around the desired formation = 0
-#   'controlled-zone' a ring around the dead-zone, velocity linearly decreases from max->0
-#   'ballistic-zone` outside of the controlled-zone, velocity is at its max
-
-# TODO: zones around desired formation
-# TODO potentially add noise? if get stuck in local min/max
-
 # TODO parameters
 # spacing parameter for formation
 
 import numpy as np
+import sys, os
+
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+sys.path.insert(0, directory)
+from init_formations import FORMATION, SPACING_DIST
 
 X = 0
 Y= 1
 YAW = 2
 ROBOT_RADIUS = 0.105 / 2.
-
-# Formation spacing parameter for the formation
-SPACING_DIST = 0.5
-LINE = [[-2*SPACING_DIST,0], 
-        [SPACING_DIST, 0], 
-        [0, 0], 
-        [SPACING_DIST, 0], 
-        [2*SPACING_DIST, 0]]
-
-COLUMN =   [[0, 2*SPACING_DIST], 
-            [0, SPACING_DIST], 
-            [0, 0], 
-            [0,-SPACING_DIST], 
-            [0, -2*SPACING_DIST]]
-
-DIAMOND =  [[-SPACING_DIST, 0], 
-            [0, SPACING_DIST], 
-            [0, 0], 
-            [0,-SPACING_DIST], 
-            [SPACING_DIST, 0]]
-
-WEDGE =  [[-2*SPACING_DIST, -SPACING_DIST], 
-            [-SPACING_DIST, 0], 
-            [0, SPACING_DIST], 
-            [SPACING_DIST, 0], 
-            [2*SPACING_DIST, -SPACING_DIST]]
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
 DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
@@ -108,7 +76,7 @@ def maintain_formation(current_poses, update_velocities):
     formation_pose = np.concatenate((unit_reference[:2], [formation_orientation]))
 
     # Desired positions of each of the robots in the formation
-    desired_positions = get_desired_positions(formation=LINE, formation_pose=formation_pose)
+    desired_positions = get_desired_positions(formation=FORMATION, formation_pose=formation_pose)
 
     # velocity directs the robot from its current position to its desired position in the formation
     current_positions = np.array([pose[0:2] for pose in current_poses])

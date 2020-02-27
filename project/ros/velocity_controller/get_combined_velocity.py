@@ -48,7 +48,7 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
 
     xyoa_velocities = []
     for i in range(len(robot_poses)):
-        u, w = obstacle_avoidance.rule_based(*lasers[i].measurements)
+        u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
         x = u*np.cos(robot_poses[i][YAW])
         y = u*np.sin(robot_poses[i][YAW])
@@ -71,6 +71,19 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     return us, ws 
   
 
+def normalize(v):
+  """
+  Normalise vectors to all be of length 1
+  But if length of the vector is already small, (<1e-2), vector becomes all zeros
+  n = normalised(v) = root(v[0]**2+v[1]**2)
+  Returns [0, 0] if n < 1e-2
+  else returns v / n = v / |v|
+  """
+  n = np.linalg.norm(v)
+  if n < 1e-2:
+    return np.zeros_like(v)
+  return v / n
+
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities):
     """
     param goal_velocities: the velocity directing the robot towards the goal (e.g to the next point on the path given by RRT)
@@ -79,4 +92,8 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    return (2 * obstacle_velocities) + (0.8 * goal_velocities) + (1 * formation_velocities)
+    weighted_sum = (0. * obstacle_velocities) + (1 * goal_velocities) + (0. * formation_velocities)
+
+    normalized_velocities = np.array([normalize(v) for v in weighted_sum])
+    # normalized_velocities = weighted_sum
+    return normalized_velocities * 0.5

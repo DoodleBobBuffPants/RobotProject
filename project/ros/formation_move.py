@@ -24,6 +24,7 @@ directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/ve
 sys.path.insert(0, directory)
 import get_combined_velocity as gcv
 import rrt_navigation
+from init_formations import FORMATION
 
 try:
   import rrt
@@ -179,14 +180,29 @@ def run():
     rrt_velocities = []
     for i,_ in enumerate(robot_names):
       #do rrt once
-      if not current_path[i]:
-        start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, GOAL_POSITION, occupancy_grid)
+      while not current_path[i]:
+        robot_goal = GOAL_POSITION#-FORMATION[i]
+        start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, robot_goal, occupancy_grid)
+
+        #plot rrt paths
+        # fig, ax = plt.subplots()
+        # occupancy_grid.draw()
+        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
+        # rrt.draw_solution(start_node, final_node)
+        # plt.scatter(groundtruth_poses[i].pose[0], groundtruth_poses[i].pose[1], s=10, marker='o', color='green', zorder=1000)
+        # plt.scatter(robot_goal[0], robot_goal[1], s=10, marker='o', color='red', zorder=1000)
+        
+        # plt.axis('equal')
+        # plt.xlabel('x')
+        # plt.ylabel('y')
+        # plt.xlim([-.5 - 2., 2. + .5])
+        # plt.ylim([-.5 - 2., 2. + .5])
+        # plt.show()
+
         current_path[i] = rrt_navigation.get_path(final_node)
-        if not current_path[i]:
-          print('Unable to reach goal position:', GOAL_POSITION)
       
       #stop if at goal
-      if np.linalg.norm(groundtruth_poses[i].pose[:2] - GOAL_POSITION) < .2:
+      if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < .05:
         vel_msgs[i] = stop_msg
         continue
 
