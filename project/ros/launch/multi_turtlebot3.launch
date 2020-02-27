@@ -5,7 +5,7 @@
   <arg name="first_tb3"  default="tb3_0"/>
   <arg name="second_tb3" default="tb3_1"/>
   <arg name="third_tb3"  default="tb3_2"/>
-  <arg name="fourth_tb3"  default="tb3_3"/>
+  <arg name="fourth_tb3" default="tb3_3"/>
   <arg name="fifth_tb3"  default="tb3_4"/>
 
   <arg name="first_tb3_x_pos" default=" 0.6"/>

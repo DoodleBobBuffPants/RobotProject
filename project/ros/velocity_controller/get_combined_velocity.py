@@ -26,7 +26,7 @@ except ImportError:
 
 # Feedback linearisation epsilon
 EPSILON = 0.1
-THRESHOLD = 0.1
+THRESHOLD = 0.01
 
 X = 0
 Y = 1
@@ -92,7 +92,7 @@ def weighted_velocities(velocities, weight):
     if np.sqrt(velocities[i][X]**2 + velocities[i][Y]**2) > THRESHOLD:
       theta = np.abs(np.arctan(velocities[i][Y]/velocities[i][X]))
 
-    if np.linalg.norm(velocities[i]) < 0.15 and theta < np.pi/36.:
+    if np.linalg.norm(velocities[i]) < 0.2 and theta < np.pi/18.:
       wv.append(0. * velocities[i])
     else:
       wv.append(weight * velocities[i])
@@ -106,7 +106,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    weighted_sum = weighted_velocities(obstacle_velocities, 0.) + weighted_velocities(goal_velocities, 1.) + weighted_velocities(formation_velocities, 0.)
+    weighted_sum = weighted_velocities(obstacle_velocities, .1) + weighted_velocities(goal_velocities, .9) + weighted_velocities(formation_velocities, 0.)
 
     #normalized_velocities = np.array([normalize(v) for v in weighted_sum])
     normalized_velocities = weighted_sum
