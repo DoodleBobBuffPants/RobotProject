@@ -1,2 +1,2 @@
 Report/*.pdf
-project/*/*.pyc
+project/**/*.pyc
