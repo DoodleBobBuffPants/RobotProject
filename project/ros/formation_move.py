@@ -184,6 +184,7 @@ def run():
         current_path[i] = rrt_navigation.get_path(final_node)
         if not current_path[i]:
           print('Unable to reach goal position:', GOAL_POSITION)
+          continue
       
       #stop if at goal
       if np.linalg.norm(groundtruth_poses[i].pose[:2] - GOAL_POSITION) < .2:
@@ -205,7 +206,6 @@ def run():
 
     # cap and mod angle
     for i in range(len(us)):
-    #  us[i] = 0.1 * us[i]
       us[i] = cap(us[i], MAX_SPEED / 2.)
 
       # get results and publish them
