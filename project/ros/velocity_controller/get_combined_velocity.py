@@ -27,6 +27,10 @@ except ImportError:
 # Feedback linearisation epsilon
 EPSILON = 0.1
 
+X = 0
+Y = 1
+YAW = 2
+
 # position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 
@@ -42,19 +46,27 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     # Velocities needed to maintain formation
     formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
 
-    # combined_velocities = weight_velocities(goal_velocities, formation_velocities, obstacle_velocities)
+    xyoa_velocities = []
+    for i in len(robot_poses):
+        u, w = obstacle_avoidance.rule_based(*lasers[i].measurements)
+
+        x = u*np.cos(robot_poses[i].pose[YAW])
+        y = u*np.sin(robot_poses[i].pose[YAW])
+
+        xyoa_velocities.append([x,y])
+    xyoa_velocities = np.array(xyoa_velocities)
+
+    # combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities)
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
-    #combined_velocities = formation_velocities
     combined_velocities = rrt_velocities
     us = []
     ws = []
     for i in range(len(combined_velocities)):
       u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
-      uo, wo = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
-      us.append(u+uo)
-      ws.append(w+wo)
+      us.append(u)
+      ws.append(w)
 
     return us, ws 
   
