@@ -45,6 +45,7 @@ robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
 EPSILON = .1
 MAX_SPEED = 0.25
+GOAL_TOLERANCE = 0.05
 
 X = 0
 Y = 1
@@ -181,13 +182,13 @@ def run():
     for i,_ in enumerate(robot_names):
       #do rrt once
       while not current_path[i]:
-        robot_goal = GOAL_POSITION#-FORMATION[i]
+        robot_goal = GOAL_POSITION-FORMATION[i]
         start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, robot_goal, occupancy_grid)
 
         current_path[i] = rrt_navigation.get_path(final_node)
       
       #stop if at goal
-      if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < .05:
+      if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
         vel_msgs[i] = stop_msg
         continue
 
