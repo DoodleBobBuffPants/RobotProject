@@ -64,7 +64,7 @@ def get_formation_orientation(average_update_velocity):
     # check if velocity is near zero:
     threshold = 0.01
     threshold = 0.01
-    if average_update_velocity[X] < threshold and average_update_velocity[Y] < threshold:
+    if np.sqrt(average_update_velocity[X]**2 + average_update_velocity[Y]**2) < threshold:
         return 0.
     else:
         return np.arctan(average_update_velocity[Y]/average_update_velocity[X])
