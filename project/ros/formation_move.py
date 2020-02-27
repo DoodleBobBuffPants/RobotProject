@@ -184,6 +184,7 @@ def run():
         current_path[i] = rrt_navigation.get_path(final_node)
         if not current_path[i]:
           print('Unable to reach goal position:', GOAL_POSITION)
+          continue
       
       #stop if at goal
       if np.linalg.norm(groundtruth_poses[i].pose[:2] - GOAL_POSITION) < .2:
