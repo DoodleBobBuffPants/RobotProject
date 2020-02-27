@@ -37,7 +37,7 @@ def get_combined_velocities(robot_poses, rrt_velocities):
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """
     # TODO Update velocities come from rrt i.e. the velocity each robot is following to stay on the path
-    #rrt_velocities = [[0.5, 0.] for robot in robot_poses]
+    #rrt_velocities = [[0.5, 0.5] for robot in robot_poses]
 
     # Velocities needed to maintain formation
     formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
@@ -51,6 +51,8 @@ def get_combined_velocities(robot_poses, rrt_velocities):
     ws = []
     for i in range(len(combined_velocities)):
       u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
+      #u = 1
+      #w = 0
       us.append(u)
       ws.append(w)
 
