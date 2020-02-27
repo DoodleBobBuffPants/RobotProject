@@ -44,7 +44,7 @@ from tf.transformations import euler_from_quaternion
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
 EPSILON = .1
-MAX_SPEED = 0.5
+MAX_SPEED = 0.25
 
 X = 0
 Y = 1
@@ -184,21 +184,6 @@ def run():
         robot_goal = GOAL_POSITION#-FORMATION[i]
         start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, robot_goal, occupancy_grid)
 
-        #plot rrt paths
-        # fig, ax = plt.subplots()
-        # occupancy_grid.draw()
-        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        # rrt.draw_solution(start_node, final_node)
-        # plt.scatter(groundtruth_poses[i].pose[0], groundtruth_poses[i].pose[1], s=10, marker='o', color='green', zorder=1000)
-        # plt.scatter(robot_goal[0], robot_goal[1], s=10, marker='o', color='red', zorder=1000)
-        
-        # plt.axis('equal')
-        # plt.xlabel('x')
-        # plt.ylabel('y')
-        # plt.xlim([-.5 - 2., 2. + .5])
-        # plt.ylim([-.5 - 2., 2. + .5])
-        # plt.show()
-
         current_path[i] = rrt_navigation.get_path(final_node)
       
       #stop if at goal
@@ -221,7 +206,7 @@ def run():
 
     # cap and mod angle
     for i in range(len(us)):
-      us[i] = cap(us[i], MAX_SPEED / 2.)
+      us[i] = cap(us[i], MAX_SPEED)
 
       # get results and publish them
       vel_msgs[i] = Twist()

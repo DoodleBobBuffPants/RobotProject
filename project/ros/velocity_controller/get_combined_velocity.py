@@ -26,6 +26,7 @@ except ImportError:
 
 # Feedback linearisation epsilon
 EPSILON = 0.1
+THRESHOLD = 0.1
 
 X = 0
 Y = 1
@@ -84,6 +85,19 @@ def normalize(v):
     return np.zeros_like(v)
   return v / n
 
+def weighted_velocities(velocities, weight):
+  wv = []
+  for i in range(len(velocities)):
+    theta = 0
+    if np.sqrt(velocities[i][X]**2 + velocities[i][Y]**2) > THRESHOLD:
+      theta = np.abs(np.arctan(velocities[i][Y]/velocities[i][X]))
+
+    if np.linalg.norm(velocities[i]) < 0.15 and theta < np.pi/36.:
+      wv.append(0. * velocities[i])
+    else:
+      wv.append(weight * velocities[i])
+  return np.array(wv)
+
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities):
     """
     param goal_velocities: the velocity directing the robot towards the goal (e.g to the next point on the path given by RRT)
@@ -92,8 +106,9 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    weighted_sum = (0. * obstacle_velocities) + (1 * goal_velocities) + (0. * formation_velocities)
+    weighted_sum = weighted_velocities(obstacle_velocities, 0.) + weighted_velocities(goal_velocities, 1.) + weighted_velocities(formation_velocities, 0.)
 
-    normalized_velocities = np.array([normalize(v) for v in weighted_sum])
-    # normalized_velocities = weighted_sum
-    return normalized_velocities * 0.5
+    #normalized_velocities = np.array([normalize(v) for v in weighted_sum])
+    normalized_velocities = weighted_sum
+
+    return normalized_velocities
