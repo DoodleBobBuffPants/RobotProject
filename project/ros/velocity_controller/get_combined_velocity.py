@@ -106,7 +106,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    weighted_sum = weighted_velocities(obstacle_velocities, .1) + weighted_velocities(goal_velocities, .9) + weighted_velocities(formation_velocities, 0.)
+    weighted_sum = weighted_velocities(obstacle_velocities, 0.) + weighted_velocities(goal_velocities, 0.9) + weighted_velocities(formation_velocities, 0.)
 
     #normalized_velocities = np.array([normalize(v) for v in weighted_sum])
     normalized_velocities = weighted_sum
