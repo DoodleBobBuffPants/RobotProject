@@ -190,13 +190,12 @@ def run():
       #stop if at goal
       if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
         vel_msgs[i] = stop_msg
-        continue
-
-      position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
-    		               groundtruth_poses[i].pose[Y] + EPSILON*np.sin(groundtruth_poses[i].pose[YAW])], dtype=np.float32)
-      v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
-
-      rrt_velocities.append(v)
+        rrt_velocities.append(np.array([0,0]))
+      else:
+        position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
+                             groundtruth_poses[i].pose[Y] + EPSILON*np.sin(groundtruth_poses[i].pose[YAW])], dtype=np.float32)
+        v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
+        rrt_velocities.append(v)
 
     rrt_velocities = np.array(rrt_velocities)
 
