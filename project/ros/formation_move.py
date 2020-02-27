@@ -15,12 +15,13 @@ import os
 import re
 import random
 import rospy
-import obstacle_avoidance
-import rrt_navigation
-import get_combined_velocity as gcv
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
+
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+sys.path.insert(0, directory)
+import get_combined_velocity as gcv
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
