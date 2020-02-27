@@ -16,12 +16,19 @@ import re
 import random
 import rospy
 
+
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
 sys.path.insert(0, directory)
 import get_combined_velocity as gcv
+import rrt_navigation
+
+try:
+  import rrt
+except ImportError:
+  raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -135,6 +142,12 @@ def run():
   # ground truth pose of robots
   groundtruth_poses = [None] * len(robot_names)
 
+  # the path RRT get_navigation returns
+  current_path = [None] * len(robot_names)
+
+  # cp_computed, has the current path been computed for each robot
+  cp_computed = [False] * len(robot_names)
+
   vel_msg = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
   	publisher[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
@@ -145,16 +158,54 @@ def run():
   stop_msg.linear.x = 0.
   stop_msg.angular.z = 0.
 
+  # Load map. (in here so it is only computed once)
+  with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
+    data = yaml.load(fp)
+  img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.pgm'), data['image'])
+  occupancy_grid = np.empty_like(img, dtype=np.int8)
+  occupancy_grid[:] = UNKNOWN
+  occupancy_grid[img < .1] = OCCUPIED
+  occupancy_grid[img > .9] = FREE
+  # Transpose (undo ROS processing).
+  occupancy_grid = occupancy_grid.T
+  # Invert Y-axis.
+  occupancy_grid = occupancy_grid[:, ::-1]
+  occupancy_grid = rrt.OccupancyGrid(occupancy_grid, data['origin'], data['resolution'])
+
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
     if not all(lasers.ready for lasers in laser) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
       rate_limiter.sleep()
       continue
 
+    # get our RRT velocities
+    rrt_velocities = []
+    for i,_ in enumerate(robot_names):
+      #do rrt once
+      if not cp_computed[i]:
+        start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, GOAL_POSITION, occupancy_grid)
+        current_path[i] = rrt_navigation.get_path(final_node)
+        cp_computed[i] = True
+        if not current_path[i]:
+          cp_computed[i] = False
+          print('Unable to reach goal position:', GOAL_POSITION)
+      
+      #stop if at goal
+      if np.linalg.norm(groundtruth_poses[i].pose[:2] - GOAL_POSITION) < .2:
+        vel_msg[i-1] = stop_msg
+        continue
+
+      position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
+    		               groundtruth_poses[i].pose[Y] + EPSILON*np.sin(groundtruth_poses[i].pose[YAW])], dtype=np.float32)
+      v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
+
+      rrt_velocities.append(v)
+    rrt_velocities = np.array(rrt_velocities)
+
     # get our combined velocity for each robot
     # get poses from ground truth objects
     robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
-    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses)
+    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, rrt_velocities=rrt_velocities)
 
     # cap and mod angle
     for i in range(len(us)):
