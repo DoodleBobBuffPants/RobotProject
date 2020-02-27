@@ -51,13 +51,11 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     ws = []
     for i in range(len(combined_velocities)):
       u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
-      uo, wo = obstacle_avoidance.rule_based(*lasers[i].measurements)
+      uo, wo = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
       us.append(u+uo)
       ws.append(w+wo)
 
-    print("us: ", us)
-    print("ws: ", ws)
     return us, ws 
   
 
