@@ -27,13 +27,17 @@ except ImportError:
 # Feedback linearisation epsilon
 EPSILON = 0.01
 
-def get_combined_velocities(robot_poses):
+# position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
+GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
+
+def get_combined_velocities(robot_poses, rrt_velocities):
     """
     param robot_poses: the ground truth positions of the robot currently
+    param occupancy_grid: the C map used by RRT
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """
     # TODO Update velocities come from rrt i.e. the velocity each robot is following to stay on the path
-    rrt_velocities = [[0.5, 0.] for robot in robot_poses]
+    #rrt_velocities = [[0.5, 0.] for robot in robot_poses]
 
     # Velocities needed to maintain formation
     formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
@@ -53,6 +57,7 @@ def get_combined_velocities(robot_poses):
     print("us: ", us)
     print("ws: ", ws)
     return us, ws 
+  
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities):
     """
