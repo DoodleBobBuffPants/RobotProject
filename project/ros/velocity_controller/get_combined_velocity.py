@@ -25,7 +25,7 @@ except ImportError:
   raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
 # Feedback linearisation epsilon
-EPSILON = 0.01
+EPSILON = 0.1
 
 # position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
