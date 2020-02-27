@@ -30,7 +30,7 @@ LINE = [[-2*SPACING_DIST,0],
         [2*SPACING_DIST, 0]]
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
-DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS)
+DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
 # CONTROL_ZONE (if robot is within the controlled zone, velocity towards position linearly increases the further away it is)
 CONTROLLED_ZONE = DEAD_ZONE + SPACING_DIST
 
