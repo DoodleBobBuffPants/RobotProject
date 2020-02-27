@@ -47,19 +47,19 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
 
     xyoa_velocities = []
-    for i in len(robot_poses):
+    for i in range(len(robot_poses)):
         u, w = obstacle_avoidance.rule_based(*lasers[i].measurements)
 
-        x = u*np.cos(robot_poses[i].pose[YAW])
-        y = u*np.sin(robot_poses[i].pose[YAW])
+        x = u*np.cos(robot_poses[i][YAW])
+        y = u*np.sin(robot_poses[i][YAW])
 
         xyoa_velocities.append([x,y])
     xyoa_velocities = np.array(xyoa_velocities)
 
-    # combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities)
+    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities)
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
-    combined_velocities = rrt_velocities
+    # combined_velocities = rrt_velocities
     us = []
     ws = []
     for i in range(len(combined_velocities)):
@@ -78,5 +78,5 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     param obstacle_velocities: the velocities drecting the robot away from the obstacles.
     return: normalized weighted sum of the robot velocities
     """
-    # TODO: Complete
-    return None
+    # Using weights from Table 1 in paper
+    return (2 * obstacle_velocities) + (0.8 * goal_velocities) + (1 * formation_velocities)
