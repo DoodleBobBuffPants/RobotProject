@@ -15,6 +15,7 @@ import random
 import rospy
 import obstacle_avoidance
 import rrt_navigation
+import maintain_formation
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
@@ -23,15 +24,30 @@ try:
 except ImportError:
   raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
+# Feedback linearisation epsilon
+EPSILON = 0.1
 
 def get_combined_velocities(robot_poses):
     """
     param robot_poses: the ground truth positions of the robot currently
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """
-    # TODO: Complete
-    us = np.ones_like(robot_poses)
-    ws = np.zeros_like(robot_poses)
+    # TODO Update velocities come from rrt i.e. the velocity each robot is following to stay on the path
+    rrt_velocities = [[1., 0.] for robot in robot_poses]
+
+    # Velocities needed to maintain formation
+    formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
+
+    # combined_velocities = weight_velocities(goal_velocities, formation_velocities, obstacle_velocities)
+
+    # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
+    combined_velocities = formation_velocities
+    us = []
+    ws = []
+    for i in range(len(combined_velocities)):
+      u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
+      us.append(u)
+      ws.append(w)
 
     return us, ws 
 

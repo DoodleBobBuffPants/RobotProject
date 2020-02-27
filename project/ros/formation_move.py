@@ -152,7 +152,9 @@ def run():
       continue
 
     # get our combined velocity for each robot
-    us, ws = gcv.get_combined_velocities(robot_poses=groundtruth_poses)
+    # get poses from groud truth objects
+    robot_poses = np.array([groundtruth.pose for groundtruth in groundtruth_poses])
+    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses)
 
     # cap and mod angle
     for i in range(len(us)):

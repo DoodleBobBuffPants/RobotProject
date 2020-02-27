@@ -14,6 +14,8 @@
 # TODO parameters
 # spacing parameter for formation
 
+import numpy as np
+
 X = 0
 Y= 1
 YAW = 2
@@ -43,13 +45,16 @@ def get_desired_positions(formation, formation_pose):
     # Take formation and transform (rotate, translate) onto formation_pose
     # Rotate 
     theta = formation_pose[YAW]
-    formation = np.matmul(
-        [[np.cos(theta), -np.sin(theta)],
-         [np.sin(theta),  np.cos(theta)]],
-        formation
-    )
-    # Translate
-    formation = formation - formation_pose[0:2]
+
+    for i in range(len(formation)):
+        # Rotate
+        formation[i] = np.matmul(
+                        [[np.cos(theta), -np.sin(theta)],
+                        [np.sin(theta),  np.cos(theta)]],
+                        formation[i]
+                    )
+        # Translate
+        formation[i] = formation[i] - formation_pose[0:2]
 
     desired_positions = formation
 
@@ -78,7 +83,7 @@ def maintain_formation(current_poses, update_velocities):
     desired_positions = get_desired_positions(formation=LINE, formation_pose=formation_pose)
 
     # velocity directs the robot from its current position to its desired position in the formation
-    current_positions = [pose[0:2] for pose in current_poses]
+    current_positions = np.array([pose[0:2] for pose in current_poses])
     velocities = desired_positions - current_positions
 
     # update each velocity (the displacement between the current and desired position) depending on the distance
