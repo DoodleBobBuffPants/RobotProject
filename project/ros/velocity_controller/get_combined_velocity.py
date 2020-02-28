@@ -27,6 +27,8 @@ except ImportError:
 # Feedback linearisation epsilon
 EPSILON = 0.1
 THRESHOLD = 0.01
+ROBOT_DISTANCE = 0.1
+SPEED = .2
 
 X = 0
 Y = 1
@@ -73,10 +75,16 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     return us, ws 
 
 def robot_avoidance_velocities(robot_poses):
-  #TODO: calculate robot avoidance velocities
+  #TODO: Better robot avoidance
   v = []
   for i in range(len(robot_poses)):
     v.append(np.array([0,0]))
+    for j in range(len(robot_poses)):
+      if i != j:
+        if np.linalg.norm(robot_poses[i][:Y] - robot_poses[j][:Y]) < ROBOT_DISTANCE:
+          #Velocity vector pointing diagonally away from robot. Assumes they face each other
+          vec = np.array([np.cos(robot_poses[i][YAW] + np.pi/4.), np.sin(robot_poses[i][YAW] + np.pi/4.)])
+          v[i] = v[i] + SPEED*vec
   v = np.array(v)
   return v
 
@@ -115,7 +123,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     """
     # Using weights from Table 1 in paper
     weighted_sum = weighting(obstacle_velocities, .8) + weighting(goal_velocities, .8) + \
-                   weighting(formation_velocities, .4) + weighting(robot_avoidance_velocities, .8)
+                   weighting(formation_velocities, .8) + weighting(robot_avoidance_velocities, .8)
 
     normalized_velocities = weighted_sum
 
