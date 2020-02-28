@@ -86,10 +86,10 @@ def normalize(v):
     return np.zeros_like(v)
   return v / n
 
-def weighted_velocities(velocities, weight):
+def weighting(velocities, weight):
   wv = []
   for i in range(len(velocities)):
-    theta = 0
+    theta = 0.
     if np.sqrt(velocities[i][X]**2 + velocities[i][Y]**2) > THRESHOLD:
       theta = np.abs(np.arctan(velocities[i][Y]/velocities[i][X]))
 
@@ -107,9 +107,8 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    weighted_sum = weighted_velocities(obstacle_velocities, .8) + weighted_velocities(goal_velocities, .8) + weighted_velocities(formation_velocities, 0.)
+    weighted_sum = weighting(obstacle_velocities, .8) + weighting(goal_velocities, .8) + weighting(formation_velocities, .4)
 
-    #normalized_velocities = np.array([normalize(v) for v in weighted_sum])
     normalized_velocities = weighted_sum
 
     return normalized_velocities

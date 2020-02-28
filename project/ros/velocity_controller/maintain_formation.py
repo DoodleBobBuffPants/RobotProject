@@ -32,23 +32,19 @@ def get_desired_positions(formation, formation_pose):
     # Rotate 
     theta = formation_pose[YAW]
 
+    desired_positions = np.zeros_like(formation)
     for i in range(len(formation)):
         # Rotate
-        formation[i] = np.matmul(
-                        [[np.cos(theta), -np.sin(theta)],
-                        [np.sin(theta),  np.cos(theta)]],
-                        formation[i]
-                    )
-        # Translate
-        formation[i] = formation[i] - formation_pose[0:2]
+        desired_positions[i] = np.matmul([[np.cos(theta), -np.sin(theta)],
+                                          [np.sin(theta),  np.cos(theta)]], formation[i])
 
-    desired_positions = formation
+        # Translate
+        desired_positions[i] = desired_positions[i] - formation_pose[:Y]
 
     return desired_positions
 
 def get_formation_orientation(average_update_velocity):
     # check if velocity is near zero:
-    threshold = 0.01
     threshold = 0.01
     if np.sqrt(average_update_velocity[X]**2 + average_update_velocity[Y]**2) < threshold:
         return 0.
