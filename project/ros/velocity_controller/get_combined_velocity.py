@@ -51,10 +51,11 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     for i in range(len(robot_poses)):
         u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
-        x = u*np.cos(robot_poses[i][YAW])
-        y = u*np.sin(robot_poses[i][YAW])
+        delta = 0.5
+        x = u*np.cos(robot_poses[i][YAW] + delta*w)
+        y = u*np.sin(robot_poses[i][YAW] + delta*w)
 
-        xyoa_velocities.append([x,y])
+        xyoa_velocities.append(np.array([x,y]))
     xyoa_velocities = np.array(xyoa_velocities)
 
     combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities)
@@ -106,7 +107,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    weighted_sum = weighted_velocities(obstacle_velocities, 0.) + weighted_velocities(goal_velocities, 0.9) + weighted_velocities(formation_velocities, 0.)
+    weighted_sum = weighted_velocities(obstacle_velocities, .8) + weighted_velocities(goal_velocities, .8) + weighted_velocities(formation_velocities, 0.)
 
     #normalized_velocities = np.array([normalize(v) for v in weighted_sum])
     normalized_velocities = weighted_sum
