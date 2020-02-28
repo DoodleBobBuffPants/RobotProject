@@ -58,7 +58,7 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
         xyoa_velocities.append(np.array([x,y]))
     xyoa_velocities = np.array(xyoa_velocities)
 
-    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities)
+    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities, robot_avoidance_velocities(robot_poses))
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
     # combined_velocities = rrt_velocities
@@ -71,7 +71,14 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
       ws.append(w)
 
     return us, ws 
-  
+
+def robot_avoidance_velocities(robot_poses):
+  #TODO: calculate robot avoidance velocities
+  v = []
+  for i in range(len(robot_poses)):
+    v.append(np.array([0,0]))
+  v = np.array(v)
+  return v
 
 def normalize(v):
   """
@@ -99,7 +106,7 @@ def weighting(velocities, weight):
       wv.append(weight * velocities[i])
   return np.array(wv)
 
-def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities):
+def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_velocities):
     """
     param goal_velocities: the velocity directing the robot towards the goal (e.g to the next point on the path given by RRT)
     param formation_velocities: the velocities directing the robot to its desired position in the formation
@@ -107,7 +114,8 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: normalized weighted sum of the robot velocities
     """
     # Using weights from Table 1 in paper
-    weighted_sum = weighting(obstacle_velocities, .8) + weighting(goal_velocities, .8) + weighting(formation_velocities, .4)
+    weighted_sum = weighting(obstacle_velocities, .8) + weighting(goal_velocities, .8) + \
+                   weighting(formation_velocities, .4) + weighting(robot_avoidance_velocities, .8)
 
     normalized_velocities = weighted_sum
 
