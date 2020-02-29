@@ -24,6 +24,8 @@ try:
 except ImportError:
   raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
+from init_formations import LEADER_ID
+
 # Feedback linearisation epsilon
 EPSILON = 0.1
 THRESHOLD = 0.01
@@ -76,19 +78,21 @@ def scale_velocities(velocities, min = 0, max=3.5):
 
   return scaled_velocities
 
-def get_combined_velocities(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers, leader_id=LEADER_ID)
-:
+def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     """
     param leader_pose: ground truth pose of the leader
     param follower_poses: the ground truth poses of the followers
     param leader_rrt_velocity: rrt_velocity of the leader
-    param LEADER_ID: the id of the leader into the lasers array
     param lasers: the information from each robot on its sensors in the gazebo simulation.
 
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """
+    # get leader and follower poses
+    leader_pose = robot_poses[LEADER_ID]
+    follower_poses = np.array([robot_poses[i] for i in range(len(robot_poses)) if i != LEADER_ID])
+
     # Velocities needed to maintain formation
-    formation_velocities = maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
+    follower_formation_velocities = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
 
     obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(robot_poses, lasers)
 
@@ -96,6 +100,11 @@ def get_combined_velocities(leader_pose=leader_pose, follower_poses=follower_pos
     # formation_velocities = scale_velocities(formation_velocities)
     # obstacle_avoidance_velocities = scale_velocities(obstacle_avoidance_velocities)
     # rrt_velocities = scale_velocities(rrt_velocities, min=0, max=0.4)
+
+    # NOTE: for numpy insert, obj is the index of insertion.
+    formation_velocities = np.insert(arr=follower_formation_velocities, obj=LEADER_ID,  values=np.array([0.,0.]), axis=0)
+    # follower formation velocities is only 4 long
+    rrt_velocities = np.insert(arr=np.zeros_like(follower_formation_velocities), obj=LEADER_ID, values=leader_rrt_velocity, axis=0)
 
     combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_velocities(robot_poses))
 
@@ -161,7 +170,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     """
 
     goal = weighting(goal_velocities, 1.)
-    formation = weighting(formation_velocities, 0.)
+    formation = weighting(formation_velocities, .6)
     static_obstacle_avoidance = weighting(obstacle_velocities, 0.)
     robot_avoidance = weighting(robot_avoidance_velocities, 0.)
 
@@ -179,5 +188,9 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
       #   goal[i] = np.array([0.,0.])
 
     # compute the weighted sum of all the competing velocities
+    print("goal: ", goal)
+    print("formation: ", formation)
+    print("soa: ", static_obstacle_avoidance)
+    print("robot_avoidance: ", robot_avoidance)
     weighted_sum = goal + formation + static_obstacle_avoidance + robot_avoidance
     return weighted_sum

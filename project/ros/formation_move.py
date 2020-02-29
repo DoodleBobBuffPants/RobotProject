@@ -24,7 +24,7 @@ directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/ve
 sys.path.insert(0, directory)
 import get_combined_velocity as gcv
 import rrt_navigation
-from init_formations import FORMATION
+from init_formations import FORMATION, LEADER_ID
 
 try:
   import rrt
@@ -43,12 +43,11 @@ from tf.transformations import euler_from_quaternion
 
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 # GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
-GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
-#GOAL_POSITION = np.array([0.96, 0.63], dtype=np.float32)
+# GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
+GOAL_POSITION = np.array([-0.21, 1.3], dtype=np.float32)
 EPSILON = .1
 MAX_SPEED = 0.25
 GOAL_TOLERANCE = 0.05
-LEADER_ID = 0
 
 X = 0
 Y = 1
@@ -174,6 +173,8 @@ def run():
   occupancy_grid = occupancy_grid[:, ::-1]
   occupancy_grid = rrt.OccupancyGrid(occupancy_grid, data['origin'], data['resolution'])
 
+  current_path = None
+
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
     if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
@@ -184,7 +185,6 @@ def run():
     follwers = [robot_names[i] for i in range(len(robot_names)) if i != LEADER_ID]
 
     # Compute RRT on the leader only
-    current_path = None
     robot_goal = GOAL_POSITION
 
     while not current_path:
@@ -227,13 +227,11 @@ def run():
     #   # get our combined velocity for each robot
     #   # get poses from ground truth objects
 
-    # get leader and follower poses
+    # get robot poses
     robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
-    leader_pose = robot_poses[LEADER_ID]
-    follower_poses = np.array([robot_poses[i] for i in range(len(robot_names)) if i != LEADER_ID])
 
     # get the velocities for all the robots
-    us, ws = gcv.get_combined_velocities(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers, leader_id=LEADER_ID)
+    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers)
 
     # cap and mod angle
     for i in range(len(us)):
