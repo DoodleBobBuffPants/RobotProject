@@ -29,6 +29,7 @@ EPSILON = 0.1
 THRESHOLD = 0.01
 ROBOT_DISTANCE = 0.1
 SPEED = .2
+GOAL_THRESHOLD = 0.1
 
 X = 0
 Y = 1
@@ -75,7 +76,6 @@ def scale_velocities(velocities, min = 0, max=3.5):
 
   return scaled_velocities
 
-
 def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     """
     param robot_poses: the ground truth positions of the robot currently
@@ -88,9 +88,9 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(robot_poses, lasers)
 
     # Scale velocties to be between 0 and 1
-    formation_velocities = scale_velocities(formation_velocities)
-    obstacle_avoidance_velocities = scale_velocities(obstacle_avoidance_velocities)
-    rrt_velocities = scale_velocities(rrt_velocities)
+    # formation_velocities = scale_velocities(formation_velocities)
+    # obstacle_avoidance_velocities = scale_velocities(obstacle_avoidance_velocities)
+    # rrt_velocities = scale_velocities(rrt_velocities, min=0, max=0.4)
 
     combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_velocities(robot_poses))
 
@@ -134,17 +134,18 @@ def normalize(v):
   return v / n
 
 def weighting(velocities, weight):
-  wv = []
-  for i in range(len(velocities)):
-    theta = 0.
-    if np.sqrt(velocities[i][X]**2 + velocities[i][Y]**2) > THRESHOLD:
-      theta = np.abs(np.arctan(velocities[i][Y]/velocities[i][X]))
+  # wv = []
+  # for i in range(len(velocities)):
+  #   theta = 0.
+  #   if np.sqrt(velocities[i][X]**2 + velocities[i][Y]**2) > THRESHOLD:
+  #     theta = np.abs(np.arctan(velocities[i][Y]/velocities[i][X]))
 
-    if np.linalg.norm(velocities[i]) < 0.2 and theta < np.pi/18.:
-      wv.append(0. * velocities[i])
-    else:
-      wv.append(weight * velocities[i])
-  return np.array(wv)
+  #   if np.linalg.norm(velocities[i]) < 0.2 and theta < np.pi/18.:
+  #     wv.append(0. * velocities[i])
+  #   else:
+      # wv.append(weight * velocities[i])
+  # return np.array(wv)
+  return weight * velocities
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_velocities):
     """
@@ -154,26 +155,24 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: weighted sum of the robot velocities
     """
 
-    goal = weighting(goal_velocities, .8)
-    formation = []
-    obstacle = []
-    robot_avoidance = []
+    goal = weighting(goal_velocities, 1.)
+    formation = weighting(formation_velocities, 0.)
+    static_obstacle_avoidance = weighting(obstacle_velocities, 0.)
+    robot_avoidance = weighting(robot_avoidance_velocities, 0.)
 
-    #weight 0 if at goal to stop movement
-    for i in range(len(goal)):
-      theta = 0.
-      if np.sqrt(goal[i][X]**2 + goal[i][Y]**2) > THRESHOLD:
-        theta = np.abs(np.arctan(goal[i][Y]/goal[i][X]))
+    # print([np.linalg.norm(goal[i]) for i in range(len(goal))])
 
-      if np.linalg.norm(goal[i]) < 0.2 and theta < np.pi/18.:
-        formation.append(np.array([0., 0.]))
-        obstacle.append(np.array([0., 0.]))
-        robot_avoidance.append(np.array([0., 0.]))
-      else:
-        formation.append(weighting(np.array([formation_velocities[i]]), 1.).flatten())
-        obstacle.append(weighting(np.array([obstacle_velocities[i]]), 1.5).flatten())
-        robot_avoidance.append(weighting(np.array([robot_avoidance_velocities[i]]), 2.).flatten())
+    # weight 0 if at goal to stop movement
+    # for i in range(len(goal)):
+      # theta = 0.
+      # if np.sqrt(goal[i][X]**2 + goal[i][Y]**2) > THRESHOLD:
+      #   theta = np.abs(np.arctan(goal[i][Y]/goal[i][X])
 
-    weighted_sum = goal + np.array(formation) + np.array(obstacle) + np.array(robot_avoidance)
+      # if np.linalg.norm(goal[i]) < GOAL_THRESHOLD: #and theta < np.pi/18.: why pi/18
+      #   print("goal found")
+      #   formation[i] = static_obstacle_avoidance[i] = robot_avoidance[i] = np.array([0., 0.])
+      #   goal[i] = np.array([0.,0.])
 
+    # compute the weighted sum of all the competing velocities
+    weighted_sum = goal + formation + static_obstacle_avoidance + robot_avoidance
     return weighted_sum

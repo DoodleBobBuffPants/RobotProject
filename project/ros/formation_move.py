@@ -195,6 +195,9 @@ def run():
         position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
                              groundtruth_poses[i].pose[Y] + EPSILON*np.sin(groundtruth_poses[i].pose[YAW])], dtype=np.float32)
         v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
+
+        # TODO REMOVE THIS 
+        v = np.array([0., 1. ])
         rrt_velocities.append(v)
 
     rrt_velocities = np.array(rrt_velocities)
