@@ -15,7 +15,7 @@ import random
 import rospy
 import obstacle_avoidance
 import rrt_navigation
-import maintain_formation
+from maintain_formation import maintain_formation
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
@@ -37,38 +37,60 @@ YAW = 2
 # position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 
-def get_obstacle_avoidance_velocities(lasers):
+def get_obstacle_avoidance_velocities(robot_poses, lasers):
   """
   lasers: laser measurements as a list from all 5 robots
 
   Return obstacle avoidance velocities [[x,y], ...]
   """
   xyoa_velocities = []
-    for i in range(len(robot_poses)):
-        u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
+  for i in range(len(robot_poses)):
+      u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
-        # TODO change delta later?
-        delta = 0.5
-        x = u*np.cos(robot_poses[i][YAW] + delta*w)
-        y = u*np.sin(robot_poses[i][YAW] + delta*w)
+      # TODO change delta later?
+      delta = 0.5
+      x = u*np.cos(robot_poses[i][YAW] + delta*w)
+      y = u*np.sin(robot_poses[i][YAW] + delta*w)
 
-        xyoa_velocities.append(np.array([x,y]))
+      xyoa_velocities.append(np.array([x,y]))
 
   return np.array(xyoa_velocities)
+
+def scale_velocities(velocities, min = 0, max=3.5):
+  """
+  param:
+  min: velocities magnitude min = 0
+  max: theoretical max velocity magnitude, =3.5 assuming as velocity functions return a capped valocity 
+
+  Given a list of [[x,y], ...] velocities, scale magnitudes to be between 0 and 1
+  """
+  # Magnitudes of each of the velocities
+  magnitudes = np.array([[np.linalg.norm(v)] for v in velocities])
+
+  # Normalised magnitudes Min max scalar: x-min / max-min
+  scaled_magnitudes = (magnitudes - min) / (max - min)
+
+  # Scale velocities 
+  scaled_velocities = (velocities / magnitudes) * scaled_magnitudes
+
+  return scaled_velocities
+
 
 def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     """
     param robot_poses: the ground truth positions of the robot currently
-    param occupancy_grid: the C map used by RRT
+
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """
-    # TODO Update velocities come from rrt i.e. the velocity each robot is following to stay on the path
-    #rrt_velocities = [[0.5, 0.5] for robot in robot_poses]
-
     # Velocities needed to maintain formation
-    formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
+    formation_velocities = maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
 
-    obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(lasers)
+    obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(robot_poses, lasers)
+
+    # Scale velocties to be between 0 and 1
+    formation_velocities = scale_velocities(formation_velocities)
+    obstacle_avoidance_velocities = scale_velocities(obstacle_avoidance_velocities)
+    rrt_velocities = scale_velocities(rrt_velocities)
 
     combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_velocities(robot_poses))
 
