@@ -37,6 +37,25 @@ YAW = 2
 # position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
 GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 
+def get_obstacle_avoidance_velocities(lasers):
+  """
+  lasers: laser measurements as a list from all 5 robots
+
+  Return obstacle avoidance velocities [[x,y], ...]
+  """
+  xyoa_velocities = []
+    for i in range(len(robot_poses)):
+        u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
+
+        # TODO change delta later?
+        delta = 0.5
+        x = u*np.cos(robot_poses[i][YAW] + delta*w)
+        y = u*np.sin(robot_poses[i][YAW] + delta*w)
+
+        xyoa_velocities.append(np.array([x,y]))
+
+  return np.array(xyoa_velocities)
+
 def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     """
     param robot_poses: the ground truth positions of the robot currently
@@ -49,18 +68,9 @@ def get_combined_velocities(robot_poses, rrt_velocities, lasers):
     # Velocities needed to maintain formation
     formation_velocities = maintain_formation.maintain_formation(current_poses=robot_poses, update_velocities=rrt_velocities)
 
-    xyoa_velocities = []
-    for i in range(len(robot_poses)):
-        u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
+    obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(lasers)
 
-        delta = 0.5
-        x = u*np.cos(robot_poses[i][YAW] + delta*w)
-        y = u*np.sin(robot_poses[i][YAW] + delta*w)
-
-        xyoa_velocities.append(np.array([x,y]))
-    xyoa_velocities = np.array(xyoa_velocities)
-
-    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, xyoa_velocities, robot_avoidance_velocities(robot_poses))
+    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_velocities(robot_poses))
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
     # combined_velocities = rrt_velocities
@@ -138,9 +148,9 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
         obstacle.append(np.array([0., 0.]))
         robot_avoidance.append(np.array([0., 0.]))
       else:
-        formation.append(weighting(np.array([formation_velocities[i]]), .8).flatten())
-        obstacle.append(weighting(np.array([obstacle_velocities[i]]), .8).flatten())
-        robot_avoidance.append(weighting(np.array([robot_avoidance_velocities[i]]), .8).flatten())
+        formation.append(weighting(np.array([formation_velocities[i]]), 1.).flatten())
+        obstacle.append(weighting(np.array([obstacle_velocities[i]]), 1.5).flatten())
+        robot_avoidance.append(weighting(np.array([robot_avoidance_velocities[i]]), 2.).flatten())
 
     weighted_sum = goal + np.array(formation) + np.array(obstacle) + np.array(robot_avoidance)
 
