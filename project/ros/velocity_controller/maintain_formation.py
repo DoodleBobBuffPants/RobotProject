@@ -28,6 +28,8 @@ def get_desired_positions(formation, formation_pose):
     returns: 
     desired_positions: list of desired positions i.e. where each robot should be in the formation
     """
+    print("formation: ", formation)
+    print("formation pose: ", formation_pose)
     # Take formation and transform (rotate, translate) onto formation_pose
     # Rotate 
     theta = formation_pose[YAW]
@@ -39,17 +41,17 @@ def get_desired_positions(formation, formation_pose):
                                           [np.sin(theta),  np.cos(theta)]], formation[i])
 
         # Translate
-        desired_positions[i] = desired_positions[i] - formation_pose[:Y]
-
+        desired_positions[i] = desired_positions[i] + formation_pose[:YAW] # Should be :YAW not :Y
     return desired_positions
 
 def get_formation_orientation(average_update_velocity):
     # check if velocity is near zero:
-    threshold = 0.01
-    if np.sqrt(average_update_velocity[X]**2 + average_update_velocity[Y]**2) < threshold:
-        return 0.
-    else:
-        return np.arctan(average_update_velocity[Y]/average_update_velocity[X])
+    # threshold = 0.01
+    # if np.sqrt(average_update_velocity[X]**2 + average_update_velocity[Y]**2) < threshold:
+    #     return 0.
+    # else:
+    # TODO check why this pi/2 is needed? The formation orientation is off by pi/2 it seems
+    return np.arctan2(average_update_velocity[Y], average_update_velocity[X]) + (np.pi/2.)
  
 
 def maintain_formation(current_poses, update_velocities):
@@ -63,10 +65,14 @@ def maintain_formation(current_poses, update_velocities):
     # Unit reference
     # Use average of all the robot position to work out a unit center
     unit_reference = np.sum(current_poses, axis=0) / len(current_poses)
+    print("unit reference: ", unit_reference)
+
 
     # The orientation of this formation is defined by a line from the unit center to the next navigational waypoint
     # The unit center and formation orientation together define a local coordinate system around whih the new formation is based
     average_update_velocity = np.sum(update_velocities, axis=0) / len(update_velocities)
+    print("avg rrt velocity: ", average_update_velocity)
+
     # Formation orientation is the angle of average velocity 
     formation_orientation = get_formation_orientation(average_update_velocity)
     formation_pose = np.concatenate((unit_reference[:2], [formation_orientation]))
@@ -83,6 +89,8 @@ def maintain_formation(current_poses, update_velocities):
         # euclidian distance
         distance = np.sqrt(np.square(velocities[i][X]) + np.square(velocities[i][Y]))
 
+        print('rob_pos: %s, rob_despos: %s, form_orient: %s, in_ded_zone: %s' % (current_poses[i], desired_positions[i], formation_orientation, (distance < DEAD_ZONE)))
+
         # If a robot is within accepted radius of formation position, velocity should be 0
         # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
         if distance < DEAD_ZONE:
@@ -95,6 +103,9 @@ def maintain_formation(current_poses, update_velocities):
             # by the radius of the control zone.
             velocities[i] = velocities[i] / distance
             velocities[i] = velocities[i] * CONTROLLED_ZONE
+
+    print("----------------------------------")
+    print("----------------------------------")
 
 
     return velocities
