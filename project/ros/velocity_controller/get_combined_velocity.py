@@ -119,12 +119,29 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     param goal_velocities: the velocity directing the robot towards the goal (e.g to the next point on the path given by RRT)
     param formation_velocities: the velocities directing the robot to its desired position in the formation
     param obstacle_velocities: the velocities drecting the robot away from the obstacles.
-    return: normalized weighted sum of the robot velocities
+    return: weighted sum of the robot velocities
     """
-    # Using weights from Table 1 in paper
-    weighted_sum = weighting(obstacle_velocities, .8) + weighting(goal_velocities, .8) + \
-                   weighting(formation_velocities, .8) + weighting(robot_avoidance_velocities, .8)
 
-    normalized_velocities = weighted_sum
+    goal = weighting(goal_velocities, .8)
+    formation = []
+    obstacle = []
+    robot_avoidance = []
 
-    return normalized_velocities
+    #weight 0 if at goal to stop movement
+    for i in range(len(goal)):
+      theta = 0.
+      if np.sqrt(goal[i][X]**2 + goal[i][Y]**2) > THRESHOLD:
+        theta = np.abs(np.arctan(goal[i][Y]/goal[i][X]))
+
+      if np.linalg.norm(goal[i]) < 0.2 and theta < np.pi/18.:
+        formation.append(np.array([0., 0.]))
+        obstacle.append(np.array([0., 0.]))
+        robot_avoidance.append(np.array([0., 0.]))
+      else:
+        formation.append(weighting(np.array([formation_velocities[i]]), .8).flatten())
+        obstacle.append(weighting(np.array([obstacle_velocities[i]]), .8).flatten())
+        robot_avoidance.append(weighting(np.array([robot_avoidance_velocities[i]]), .8).flatten())
+
+    weighted_sum = goal + np.array(formation) + np.array(obstacle) + np.array(robot_avoidance)
+
+    return weighted_sum
