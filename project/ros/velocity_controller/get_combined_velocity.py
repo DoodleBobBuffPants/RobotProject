@@ -76,9 +76,14 @@ def scale_velocities(velocities, min = 0, max=3.5):
 
   return scaled_velocities
 
-def get_combined_velocities(robot_poses, rrt_velocities, lasers):
+def get_combined_velocities(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers, leader_id=LEADER_ID)
+:
     """
-    param robot_poses: the ground truth positions of the robot currently
+    param leader_pose: ground truth pose of the leader
+    param follower_poses: the ground truth poses of the followers
+    param leader_rrt_velocity: rrt_velocity of the leader
+    param LEADER_ID: the id of the leader into the lasers array
+    param lasers: the information from each robot on its sensors in the gazebo simulation.
 
     return: the updated feedback linearized velocities for each robot, combining all velocity objective components
     """

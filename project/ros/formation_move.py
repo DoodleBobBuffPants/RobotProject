@@ -48,6 +48,7 @@ GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
 EPSILON = .1
 MAX_SPEED = 0.25
 GOAL_TOLERANCE = 0.05
+LEADER_ID = 0
 
 X = 0
 Y = 1
@@ -179,15 +180,18 @@ def run():
       rate_limiter.sleep()
       continue
 
-    # get our RRT velocities
-    rrt_velocities = []
-    for i,_ in enumerate(robot_names):
-      #do rrt once
-      while not current_path[i]:
-        robot_goal = GOAL_POSITION-FORMATION[i]
-        start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, robot_goal, occupancy_grid)
+    leader = robot_names[LEADER_ID]
+    follwers = [robot_names[i] for i in range(len(robot_names)) if i != LEADER_ID]
 
-        # plot rrt paths
+    # Compute RRT on the leader only
+    current_path = None
+    robot_goal = GOAL_POSITION
+
+    while not current_path:
+        start_node, final_node = rrt.rrt(groundtruth_poses[LEADER_ID].pose, robot_goal, occupancy_grid)
+
+        # plot rrt path
+        # useful debug code
         fig, ax = plt.subplots()
         occupancy_grid.draw()
         plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
@@ -202,27 +206,34 @@ def run():
         plt.ylim([-.5 - 2., 2. + .5])
         plt.show()
 
-        current_path[i] = rrt_navigation.get_path(final_node)
-      
-      #stop if at goal
-      if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
-        vel_msgs[i] = stop_msg
-        rrt_velocities.append(np.array([0,0]))
-      else:
-        position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
-                             groundtruth_poses[i].pose[Y] + EPSILON*np.sin(groundtruth_poses[i].pose[YAW])], dtype=np.float32)
-        v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
+        current_path = rrt_navigation.get_path(final_node)
 
-        # TODO REMOVE THIS 
-        #v = np.array([0., 1. ])
-        rrt_velocities.append(v)
+    # get the RRT velocity for the leader robot
+    position = np.array([groundtruth_poses[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruth_poses[LEADER_ID].pose[YAW]),
+                          groundtruth_poses[LEADER_ID].pose[Y] + EPSILON*np.sin(groundtruth_poses[LEADER_ID].pose[YAW])], dtype=np.float32)
+    rrt_velocity = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
 
-    rrt_velocities = np.array(rrt_velocities)
 
-    # get our combined velocity for each robot
-    # get poses from ground truth objects
+    
+    # for i,_ in enumerate(robot_names):
+    #   #stop if at goal old code for reference ( we will take care of this in get_combined_velocities)
+    #   # if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
+    #   #   vel_msgs[i] = stop_msg
+    #   #   rrt_velocities.append(np.array([0,0]))
+    #   # else:
+    #   # position is the holonomic point in the global frame infront of the robots, per robot.
+
+
+    #   # get our combined velocity for each robot
+    #   # get poses from ground truth objects
+
+    # get leader and follower poses
     robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
-    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, rrt_velocities=rrt_velocities, lasers=lasers)
+    leader_pose = robot_poses[LEADER_ID]
+    follower_poses = np.array([robot_poses[i] for i in range(len(robot_names)) if i != LEADER_ID])
+
+    # get the velocities for all the robots
+    us, ws = gcv.get_combined_velocities(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers, leader_id=LEADER_ID)
 
     # cap and mod angle
     for i in range(len(us)):
