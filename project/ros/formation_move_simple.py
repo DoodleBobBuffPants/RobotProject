@@ -15,17 +15,11 @@ import os
 import re
 import random
 import rospy
-
+import obstacle_avoidance
+import rrt_navigation
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
-
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
-sys.path.insert(0, directory)
-import get_combined_velocity as gcv
-import rrt_navigation
-from init_formations import FORMATION
-
 try:
   import rrt
 except ImportError:
@@ -42,12 +36,9 @@ from gazebo_msgs.msg import ModelStates
 from tf.transformations import euler_from_quaternion
 
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
-# GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
-#GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
-GOAL_POSITION = np.array([0.96, 0.63], dtype=np.float32)
+GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 EPSILON = .1
-MAX_SPEED = 0.25
-GOAL_TOLERANCE = 0.05
+MAX_SPEED = 0.5
 
 X = 0
 Y = 1
@@ -140,26 +131,28 @@ def run():
   # Update control every 50 ms.
   rate_limiter = rospy.Rate(50)
   
-  publishers = [None] * len(robot_names)
-  lasers = [None] * len(robot_names)
+  publisher = [None] * len(robot_names)
+  laser = [None] * len(robot_names)
 
   # ground truth pose of robots
-  groundtruth_poses = [None] * len(robot_names)
+  groundtruth = [None] * len(robot_names)
 
   # the path RRT get_navigation returns
   current_path = [None] * len(robot_names)
 
-  vel_msgs = [None] * len(robot_names)
+  # cp_computed, has the current path been computed for each robot
+  cp_computed = [False] * len(robot_names)
+  vel_msg = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
-  	publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
-  	lasers[i] = SimpleLaser(name)
-  	groundtruth_poses[i] = GroundtruthPose(name)
+  	publisher[i-1] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
+  	laser[i-1] = SimpleLaser(name)
+  	groundtruth[i-1] = GroundtruthPose(name)
 
   stop_msg = Twist()
   stop_msg.linear.x = 0.
   stop_msg.angular.z = 0.
 
-  # Load map. (in here so it is only computed once)
+  # Load map.
   with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
     data = yaml.load(fp)
   img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.pgm'), data['image'])
@@ -175,66 +168,42 @@ def run():
 
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
-    if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
+    if not all(lasers.ready for lasers in laser) or not all(groundtruths.ready for groundtruths in groundtruth):
       rate_limiter.sleep()
       continue
 
-    # get our RRT velocities
-    rrt_velocities = []
     for i,_ in enumerate(robot_names):
       #do rrt once
-      while not current_path[i]:
-        robot_goal = GOAL_POSITION-FORMATION[i]
-        start_node, final_node = rrt.rrt(groundtruth_poses[i].pose, robot_goal, occupancy_grid)
-
-        # plot rrt paths
-        fig, ax = plt.subplots()
-        occupancy_grid.draw()
-        plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        rrt.draw_solution(start_node, final_node)
-        plt.scatter(groundtruth_poses[i].pose[0], groundtruth_poses[i].pose[1], s=10, marker='o', color='green', zorder=1000)
-        plt.scatter(robot_goal[0], robot_goal[1], s=10, marker='o', color='red', zorder=1000)
-        
-        plt.axis('equal')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.xlim([-.5 - 2., 2. + .5])
-        plt.ylim([-.5 - 2., 2. + .5])
-        plt.show()
-
-        current_path[i] = rrt_navigation.get_path(final_node)
+      if not cp_computed[i-1]:
+        start_node, final_node = rrt.rrt(groundtruth[i-1].pose, GOAL_POSITION, occupancy_grid)
+        current_path[i-1] = rrt_navigation.get_path(final_node)
+        cp_computed[i-1] = True
+        if not current_path[i-1]:
+          cp_computed[i-1] = False
+          print('Unable to reach goal position:', GOAL_POSITION)
       
       #stop if at goal
-      if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
-        vel_msgs[i] = stop_msg
-        rrt_velocities.append(np.array([0,0]))
-      else:
-        position = np.array([groundtruth_poses[i].pose[X] + EPSILON*np.cos(groundtruth_poses[i].pose[YAW]),
-                             groundtruth_poses[i].pose[Y] + EPSILON*np.sin(groundtruth_poses[i].pose[YAW])], dtype=np.float32)
-        v = rrt_navigation.get_velocity(position, np.array(current_path[i], dtype=np.float32))
+      if np.linalg.norm(groundtruth[i-1].pose[:2] - GOAL_POSITION) < .2:
+        vel_msg[i-1] = stop_msg
+        continue
 
-        # TODO REMOVE THIS 
-        #v = np.array([0., 1. ])
-        rrt_velocities.append(v)
+      position = np.array([groundtruth[i-1].pose[X] + EPSILON*np.cos(groundtruth[i-1].pose[YAW]),
+    		               groundtruth[i-1].pose[Y] + EPSILON*np.sin(groundtruth[i-1].pose[YAW])], dtype=np.float32)
+      v = rrt_navigation.get_velocity(position, np.array(current_path[i-1], dtype=np.float32))
+      
+      #velocities from each component
+      ur, wr = rrt_navigation.feedback_linearized(groundtruth[i-1].pose, v, epsilon=EPSILON)
+      uo, wo = obstacle_avoidance.rule_based(*laser[i-1].measurements)
 
-    rrt_velocities = np.array(rrt_velocities)
+      u = cap(0.2*ur + 0.8*uo, MAX_SPEED)
+      w = (0.2*wr + 0.8*wo) % (2.*np.pi)
 
-    # get our combined velocity for each robot
-    # get poses from ground truth objects
-    robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
-    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, rrt_velocities=rrt_velocities, lasers=lasers)
-
-    # cap and mod angle
-    for i in range(len(us)):
-      us[i] = cap(us[i], MAX_SPEED)
-
-      # get results and publish them
-      vel_msgs[i] = Twist()
-      vel_msgs[i].linear.x = us[i]
-      vel_msgs[i].angular.z = ws[i]
+      vel_msg[i-1] = Twist()
+      vel_msg[i-1].linear.x = u
+      vel_msg[i-1].angular.z = w
 
     for i,_ in enumerate(robot_names):
-      publishers[i].publish(vel_msgs[i])
+      publisher[i-1].publish(vel_msg[i-1])
 
     rate_limiter.sleep()
 

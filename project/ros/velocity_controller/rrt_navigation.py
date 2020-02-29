@@ -94,7 +94,7 @@ def get_velocity(position, path_points):
   vec = vec / np.linalg.norm(vec)
 
   return SPEED * vec
-
+  
 
 def get_path(final_node):
   # Construct path from RRT solution.

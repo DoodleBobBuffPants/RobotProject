@@ -10,8 +10,6 @@ import os
 import re
 import scipy.signal
 import yaml
-import random
-import time
 
 
 # Constants used for indexing.
@@ -25,28 +23,56 @@ UNKNOWN = 1
 OCCUPIED = 2
 
 ROBOT_RADIUS = 0.105 / 2.
-GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)  # Any orientation is good.
+# GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)  # Any orientation is good.
 START_POSE = np.array([-1.5, -1.5, 0.], dtype=np.float32)
 MAX_ITERATIONS = 500
 
 
 def sample_random_position(occupancy_grid):
+  position = np.zeros(2, dtype=np.float32)
 
   # MISSING: Sample a valid random position (do not sample the yaw).
   # The corresponding cell must be free in the occupancy grid.
 
-  x = random.uniform(-2, 2)
-  y = random.uniform(-2, 2)
-  while not occupancy_grid.is_free(np.array([x, y])):
-    x = random.uniform(-2, 2)
-    y = random.uniform(-2, 2)
+  # This is implementing the first primitive of the RRT algorithm: sample configurations in free C-space.
+  # C free = C \ C obs, the occupancy_grid function is giving us a nice 
 
-  return np.array([x, y])
+  # sample function not including yaw, capped at dimensions of the arena
+  sample_pos = lambda: np.random.uniform(low=-2, high=2, size=2)
+
+  position = sample_pos()
+  while not is_valid(position, occupancy_grid):
+    position = sample_pos()
+
+  return position
+
+ # function to check that this position is valid for the robot to be in (check points at the robot's circumpherence)
+def is_valid(position, occupancy_grid):
+  # function for checking if a position is valid
+  pos_is_valid = lambda pos: occupancy_grid.is_free(pos) and not occupancy_grid.is_occupied(pos)
+
+  # check 4 corners (and the centre itself) (for now), this can be extended
+  r = ROBOT_RADIUS
+  rob_radius_points = [[0,0], [0, r], [0, -r], [r, 0], [-r, 0]]
+  for radius_marker in rob_radius_points:
+    # get radius position
+    radius_pos = position + radius_marker
+    # check if it is valid
+    if not pos_is_valid(radius_pos):
+      return False
+    
+    # no obstacles found at this position, return true
+    return True
 
 
 def adjust_pose(node, final_position, occupancy_grid):
+  node._pose[YAW] = (node._pose[YAW] + (2.*np.pi)) % (2.*np.pi)
+
   final_pose = node.pose.copy()
   final_pose[:2] = final_position
+  # final node is constructed using the final_position x and y components
+  # the aim of this task is to find out if it is valid, and if so compute a corresponding valid YAW
+  final_node = Node(final_pose)
 
   # MISSING: Check whether there exists a simple path that links node.pose
   # to final_position. This function needs to return a new node that has
@@ -56,25 +82,192 @@ def adjust_pose(node, final_position, occupancy_grid):
   # Assume that the robot always goes forward.
   # Feel free to use the find_circle() function below.
 
-  vec = final_position - node.position
-  vec = vec / np.linalg.norm(vec)
-  theta = np.arccos(np.dot(vec, node.direction))
-  if np.cross(node.direction, vec).item() > 0.:
-    final_pose[YAW] = node.yaw + 2.*theta
+
+  # use the current node and the next node, check if there is a circle
+  # if no arc return None
+  # can the circle function return more than one value... who knowns
+  # can you not I do not
+
+  # okay to do list
+  # func to get points on a circle (find which value divides up the most since if no chnge in x big change in y)
+  # func to check if a point is valid for the robot (from above)
+  # code to check if the points are on the diameter of the circle
+  # code to find out which way the robot is facing and if it matches (by rotating the stuff on the circle)
+  # we know if it matches if the yaw matches the direction angle or the direction angle plus pi
+  # code to compute the new yaw, the current direction plus pi
+
+  # get the circle that connects the robot to the result node
+  centre, radius = find_circle(node, final_node)
+
+  # theta of the robot from the starting node YAW
+  theta_robot = node.pose[YAW]
+
+  # compute if theta direction is valid given the circle
+  # first get the vector from the robot to the centre
+  radius_vec = - node.pose[:2] + centre
+
+  # get radius angle
+  theta_rad = get_angle_of_vector(radius_vec)
+  
+  # rotate the vector by -pi/2 to get the tangent of the circle
+  p_div_2 = np.pi / 2.
+  tangent_vec = np.matmul([
+    [np.cos(p_div_2), np.sin(p_div_2)],
+    [-np.sin(p_div_2), np.cos(p_div_2)]
+  ],
+   radius_vec)
+
+  # check if the robot's  yaw is within pi/4 rads either side of the radius angle
+  # if not, the arc is not valid, return None
+  pi_div2 = np.pi / 2
+  # the robot must be within this range otherwise it would have to modify w as it was moving between points
+  # to smoothly curve between them, here we are just assuming a constant w between positions I think.
+  if theta_rad - pi_div2 <= theta_robot <= theta_rad + pi_div2:
+    # the angle is valid, compute the new yaw
+
+    # see paper write up, the new yaw is 2 * theta_radius - theta_robot
+    # if (thetar - theta robot) > 0, its going anticlockwise, yaw = theta r + (theta r - theta robot) = 2 theta r - theta robot
+    # if (thetar - theta robot) < 0, its going clockwise, yaw = theta r - (theta robot - theta r) = 2 theta r - theta robot
+    final_pose[YAW] = (2 * theta_rad) - theta_robot
+
+    # now we need to sample this arc to check that there are no collisions
+    # make the image much bigger with more obstacles so that in the report, you can show that your rrt really does go around the obstacles.
+
+    # get the new centre of the circle given the arc that the robot actually will traverse
+    centre = get_new_circle_centre(node.pose, final_pose)
+
+    dist_between_points = lambda a, b: np.sqrt(np.square(a[X]-b[X]) + np.square(a[Y]-b[Y]))
+    # next get the angle that subtends the arc of the circle
+    #print(dist_between_points(centre, final_position))
+    #print(dist_between_points(node.position, centre))
+    assert dist_between_points(centre, final_position) - dist_between_points(node.position, centre) < 0.001
+
+    # opp = distance between final position and starting position
+    # hype = distance between centre and either of the poses
+    opp = dist_between_points(final_position, node.position) / 2.
+    hyp = dist_between_points(final_position, centre)
+
+    # angle that subtends the arc is two times the angle in the triangle defined using opp and hyp
+    phi = np.arcsin(opp/hyp) * 2.
+    #print("ratio:", opp/hyp)
+    #print("phi: ", phi)
+    # if np.isnan(phi):
+    #   phi = np.pi
+
+    # step size at which to check points on the line between start and finish for occupancy
+    step_size = 0.1
+
+    # check for straight line case (infinte new circle radius):
+    straight_tolerance = 0.01
+    if abs(theta_rad - theta_robot) < straight_tolerance:
+      #print("Picked straight line")
+      # if there is a straight line between the points, check validity on points on the line between them
+      distance = opp * 2.
+      vector = final_position - node.position
+      steps = distance / step_size
+      for step in range(0, int(round(steps+1))):
+        step_position = node.position + step * step_size * vector
+        if not is_valid(step_position, occupancy_grid):
+          print("a: fail")
+          return None, np.float("inf")
+
+      # here our arc length is just the distance between the points
+      arc_length  = np.sqrt(np.square(final_position[X] - node.position[X]) + np.square(final_position[Y]- node.position[Y]))
+    
+    elif dist_between_points(final_position, node.position) < 2. * ROBOT_RADIUS:
+      # tiny circle, just compute is valid at the destination
+      if not is_valid(final_position, occupancy_grid):
+        print("b: fail")
+        return None, np.float("inf")
+    
+    else: # we are going in a clockwise or anticlockwise circle
+      # compute new arc length
+      new_radius_length = hyp
+      arc_length = new_radius_length * phi
+      steps = arc_length / step_size
+      step_angle = phi / steps
+
+      #print("radisu length: ", new_radius_length)
+      #print("arc length: ", arc_length)
+      #print("steps: ", steps)
+
+      points = []
+
+      # offset is pi/2 if going clockwise, or -pi/2 if going anticlockwise
+      # using the **origianl** circle's theta radius
+      offset = -np.pi/2. if (theta_rad - theta_robot) > 0 else +np.pi/2. # theta_rad-theta_tobot is < 0 for anticlockwise
+      direction = 1 if (theta_rad - theta_robot) > 0 else -1. # theta_rad-theta_tobot is < 0 for anticlockwise
+  
+      # step along the arc, looking for collisions
+      for step in range(0, int(round(steps+1))):
+        angle = node.pose[YAW] + offset + (step * step_angle * direction)
+        
+        # compute x, y, coords
+        x = centre[X] + new_radius_length * np.cos(angle)
+        y = centre[Y] + new_radius_length * np.sin(angle)
+
+        points.append([x, y])
+
+        # compute the position is okay in the map
+        # if it is not, return False
+        if not is_valid(np.array([x,y]), occupancy_grid):
+          print("c: fail")
+          return None,  np.float("inf")
+
+      # check the destination
+      if not is_valid(final_position, occupancy_grid):
+        print("d: fail")
+        return None,  np.float("inf")
+
+      #print("#######################")
+      #print("a: ", node.position)
+      #print("b: ", final_position)
+      #print("step points: ", points)
+      #print("#######################")
+
   else:
-    final_pose[YAW] = node.yaw - 2.*theta
+    print("e: fail")
+    return None,  np.float("inf")
 
+  #print("robot theta:   ", theta_robot)
+  #print("tangent theta: ", theta_rad)
+  #print("------------------------------")
+  #print("------------------------------")
+
+  #print("arc length: ", arc_length)
   final_node = Node(final_pose)
-  center, radius = find_circle(node, final_node)
+  return final_node, arc_length
 
-  for x in np.arange(-2, 2+occupancy_grid.resolution, occupancy_grid.resolution):
-    for y in np.arange(-2, 2+occupancy_grid.resolution, occupancy_grid.resolution):
-      if (x-center[X])**2 + (y-center[Y])**2 == radius**2:
-        if not occupancy_grid.is_free(np.array([x, y])):
-          return None
+def get_new_circle_centre(pose_a, pose_b):
+  # get gradients of radius lines from points a and b, by shifting tangent gradient by pi/4 degrees
 
-  return final_node
+  m_a = np.tan(pose_a[YAW] + (np.pi/2.))
+  m_b = np.tan(pose_b[YAW] + (np.pi/2.))
+  #m_a = np.tan(pose_a[YAW])
+  #m_b = np.tan(pose_b[YAW])
 
+  # compute constant c components using the pose coords and the gradients
+  # y = mx + c, => c = y - mx
+  c_a = pose_a[Y] - m_a * pose_a[X]
+  c_b = pose_b[Y] - m_b * pose_b[X]
+
+  # compute the centre of the new circle
+  centre = np.array([
+    (c_b - c_a) / (m_a - m_b),
+    (c_a - m_a * c_b / m_b) / (1 - m_a / m_b)
+  ])
+
+  return centre
+
+
+def get_angle_of_vector(vector):
+  angle = np.arctan(vector[Y]/vector[X])
+  # make sure our angle is positive only
+  if vector[X] < 0:
+    angle = np.pi + angle
+  angle = (angle + (np.pi * 2)) % (np.pi * 2)
+
+  return angle
 
 # Defines an occupancy grid.
 class OccupancyGrid(object):
@@ -113,6 +306,7 @@ class OccupancyGrid(object):
     plt.set_cmap('gray_r')
 
   def get_index(self, position):
+    # computes an index into the values table for that position.
     idx = ((position - self._origin) / self._resolution).astype(np.int32)
     if len(idx.shape) == 2:
       idx[:, 0] = np.clip(idx[:, 0], 0, self._values.shape[0] - 1)
@@ -147,6 +341,9 @@ class Node(object):
   def add_neighbor(self, node):
     self._neighbors.append(node)
 
+  def remove_neighbour(self, node):
+    self._neighbors.remove(node)
+
   @property
   def parent(self):
     return self._parent
@@ -179,35 +376,23 @@ class Node(object):
   def cost(self, c):
     self._cost = c
 
-
-def adjust_neighbors(m, occupancy_grid):
-  for n in m.neighbors:
-    adj_n = adjust_pose(m, n.position, occupancy_grid)
-    if adj_n is None:
-      m.neighbors.remove(n)
-      n.parent = None
-      n.neighbors = None
-      continue
-    for neighbor in n.neighbors:
-      adj_n.add_neighbor(neighbor)
-    adj_n.cost = n.cost
-    n = adj_n
-    n.parent = m
-    for neighbor in n.neighbors:
-      adjust_neighbors(neighbor, occupancy_grid)
+  @yaw.setter
+  def yaw(self, y):
+    self._pose[YAW] = y
 
 
 def rrt(start_pose, goal_position, occupancy_grid):
   # RRT builds a graph one node at a time.
   graph = []
   start_node = Node(start_pose)
+  # cost of the start node is 0
+  start_node.cost = 0
   final_node = None
   if not occupancy_grid.is_free(goal_position):
     print('Goal position is not in the free space.')
     return start_node, final_node
   graph.append(start_node)
-  start_time = time.time()
-  while time.time() - start_time < 30: 
+  for _ in range(MAX_ITERATIONS): 
     position = sample_random_position(occupancy_grid)
     # With a random chance, draw the goal position.
     if np.random.rand() < .05:
@@ -215,50 +400,93 @@ def rrt(start_pose, goal_position, occupancy_grid):
     # Find closest node in graph.
     # In practice, one uses an efficient spatial structure (e.g., quadtree).
     potential_parent = sorted(((n, np.linalg.norm(position - n.position)) for n in graph), key=lambda x: x[1])
-    # Pick a node at least some distance away but not too far.
+    
+    ## STEP 1 OF RRT*
+    # Pick potential nodes at least some distance away but not too far.
     # We also verify that the angles are aligned (within pi / 4).
-    u = None
+    potentials_in_radius = []
+    search_radius = 1.5
     for n, d in potential_parent:
-      if d > .2 and d < 1.5 and n.direction.dot(position - n.position) / d > 0.70710678118:
-        u = n
-        break
-    else:
+      #if d < search_radius:
+      if d > .2 and d < search_radius and n.direction.dot(position - n.position) / d > 0.70710678118:
+        potentials_in_radius.append(n)
+      #else:
+        # no longer in the search radius, so break
+        #break
+    # else:
+    #   continue
+
+
+    # if the list is empty, no suitable parent found, continue
+    if len(potentials_in_radius) == 0:
       continue
-    min_n = u
-    near_n = []
-    for n in graph:
-      if np.linalg.norm(n.position - position) < .3:
-        if adjust_pose(n, position, occupancy_grid) is None:
-          continue
-        if n.cost < min_n.cost:
-          near_n.append(min_n)
-          min_n = n
-        else:
-          near_n.append(n)
-    v = adjust_pose(min_n, position, occupancy_grid)
+
+    # now find the best parent node for the new position, using the cost function
+    # using the nearest neighbour (first in the list) as the default
+    u = potentials_in_radius[0]
+    v, arc_length = adjust_pose(u, position, occupancy_grid)
+    # cost(node_n+1) = cost(node_n) + arc_length(node_n, node_n+1)
+    cost = u.cost + arc_length
+
+    for i in range(1, len(potentials_in_radius)):
+      potential_u = potentials_in_radius[i]
+      potential_v, arc_length = adjust_pose(potential_u, position, occupancy_grid)
+      potential_cost = potential_u.cost + arc_length
+
+      # a better node has been found, update u, v, cost
+      if potential_cost < cost and v is not None:
+        u = potential_u
+        v = potential_v
+        cost = potential_cost
+
+    # if all v's are None, no good v found, continue
     if v is None:
+      print("NOTE: NO GOOD NODES FOUND!!!")
       continue
-    min_n.add_neighbor(v)
-    v.parent = min_n
-    v.cost = min_n.cost + np.linalg.norm(v.position - min_n.position)
-    if min_n in near_n:
-      near_n.remove(min_n)
-    for n in near_n:
-      if v.cost + np.linalg.norm(v.position - n.position) < n.cost:
-        m = adjust_pose(v, n.position, occupancy_grid)
-        if m is None:
-          continue
-        for neighbor in n.neighbors:
-          m.add_neighbor(neighbor)
-          neighbor.parent = m
-        n = m
-        n.parent = v
-        n.cost = v.cost + np.linalg.norm(v.position - n.position)
-        adjust_neighbors(n, occupancy_grid)
+
+    # found the u with the minimum cost, using the RRT* adjustments above
+    # now set the cost using this parent u and update the cost
+    u.add_neighbor(v)
+    v.parent = u
+    # set the cost
+    v.cost = cost
+
     graph.append(v)
+
+    ## STEP 2 OF RRT*
+    # we go through our list of potential us, ignoring the chosen u
+    # if the potential node's cost is lower if its parent is the new node v,
+    # update its parent to be v
+    # 1) change the parent
+    # 2) update the cost
+    # 3) update the neighbours list of the old parent
+    for w in potentials_in_radius:
+      # get a new w at the same position
+      w_new, arc_length = adjust_pose(v, w.position, occupancy_grid)
+      print(v._pose[YAW] * 180./np.pi, v.position, w.position)
+      # get the new cost and compare to the old
+      old_cost = w.cost
+      new_cost = v.cost + arc_length
+      print("old cost: ", old_cost, " | new cost: ", new_cost, " | picked: ", new_cost < old_cost)
+      if new_cost < old_cost:
+        # w would be better with the new node as its parent!
+        # 1. update its parent
+        old_parent = w.parent
+        w.parent = v
+        v.add_neighbor(w)
+        # update its cost
+        w.cost = new_cost
+        # update its yaw
+        w.yaw = w_new.yaw
+
+        # update its old parent
+        old_parent.remove_neighbour(w)
+
+    
     if np.linalg.norm(v.position - goal_position) < .2:
       final_node = v
       break
+  # okay, so I have done the first part of RRT*, now I need to do the second part of RRT*... hmmm okay...
   return start_node, final_node
 
 
@@ -349,3 +577,42 @@ def draw_solution(start_node, final_node=None):
     while v.parent is not None:
       draw_path(v.parent, v, color='k', lw=2)
       v = v.parent
+
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Uses RRT to reach the goal.')
+  parser.add_argument('--map', action='store', default='map', help='Which map to use.')
+  args, unknown = parser.parse_known_args()
+
+  # Load map.
+  with open(args.map + '.yaml') as fp:
+    data = yaml.load(fp)
+  img = read_pgm(os.path.join(os.path.dirname(args.map), data['image']))
+  occupancy_grid = np.empty_like(img, dtype=np.int8)
+  occupancy_grid[:] = UNKNOWN
+  occupancy_grid[img < .1] = OCCUPIED
+  occupancy_grid[img > .9] = FREE
+  # Transpose (undo ROS processing).
+  occupancy_grid = occupancy_grid.T
+  # Invert Y-axis.
+  occupancy_grid = occupancy_grid[:, ::-1]
+  occupancy_grid = OccupancyGrid(occupancy_grid, data['origin'], data['resolution'])
+
+  # Run RRT.
+  start_node, final_node = rrt(START_POSE, GOAL_POSITION, occupancy_grid)
+
+  # Plot environment.
+  fig, ax = plt.subplots()
+  occupancy_grid.draw()
+  plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
+  draw_solution(start_node, final_node)
+  plt.scatter(START_POSE[0], START_POSE[1], s=10, marker='o', color='green', zorder=1000)
+  plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
+  
+  plt.axis('equal')
+  plt.xlabel('x')
+  plt.ylabel('y')
+  plt.xlim([-.5 - 2., 2. + .5])
+  plt.ylim([-.5 - 2., 2. + .5])
+  plt.show()
+  
