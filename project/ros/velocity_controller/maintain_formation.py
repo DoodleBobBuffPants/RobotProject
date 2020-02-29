@@ -44,14 +44,14 @@ def get_desired_positions(formation, formation_pose):
         desired_positions[i] = desired_positions[i] + formation_pose[:YAW] # Should be :YAW not :Y
     return desired_positions
 
-def get_formation_orientation(average_update_velocity):
+def get_formation_orientation(average_update_velocity, average_pose):
     # check if velocity is near zero:
     # threshold = 0.01
     # if np.sqrt(average_update_velocity[X]**2 + average_update_velocity[Y]**2) < threshold:
     #     return 0.
     # else:
     # TODO check why this pi/2 is needed? The formation orientation is off by pi/2 it seems
-    return np.arctan2(average_update_velocity[Y], average_update_velocity[X]) + (np.pi/2.)
+    return np.arctan2(average_update_velocity[Y], average_update_velocity[X]) + average_pose #+ (np.pi/2.) 
  
 
 def maintain_formation(current_poses, update_velocities):
@@ -62,9 +62,14 @@ def maintain_formation(current_poses, update_velocities):
     returns: 
     velocities: list of vectors [x, y] indicating the velocities of each robot needed to maintain formation
     """
+    # make all robot yaws positive
+    for i in range(0, len(current_poses)):
+        current_poses[i][YAW] = (current_poses[i][YAW] + (2.*np.pi)) % (2.*np.pi)
+
     # Unit reference
     # Use average of all the robot position to work out a unit center
     unit_reference = np.sum(current_poses, axis=0) / len(current_poses)
+    average_pose = unit_reference[YAW]  # Assuming all the robot yaws are positive when this is computed (from above for loop)
     print("unit reference: ", unit_reference)
 
 
@@ -74,7 +79,7 @@ def maintain_formation(current_poses, update_velocities):
     print("avg rrt velocity: ", average_update_velocity)
 
     # Formation orientation is the angle of average velocity 
-    formation_orientation = get_formation_orientation(average_update_velocity)
+    formation_orientation = get_formation_orientation(average_update_velocity, average_pose)
     formation_pose = np.concatenate((unit_reference[:2], [formation_orientation]))
 
     # Desired positions of each of the robots in the formation
