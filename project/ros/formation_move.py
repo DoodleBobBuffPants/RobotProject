@@ -43,8 +43,8 @@ from tf.transformations import euler_from_quaternion
 
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 # GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
-#GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
-GOAL_POSITION = np.array([0.96, 0.63], dtype=np.float32)
+GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
+#GOAL_POSITION = np.array([0.96, 0.63], dtype=np.float32)
 EPSILON = .1
 MAX_SPEED = 0.25
 GOAL_TOLERANCE = 0.05
