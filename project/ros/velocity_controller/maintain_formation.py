@@ -20,9 +20,8 @@ def get_desired_positions(formation, formation_pose):
     returns: 
     desired_positions: list of desired positions i.e. where each robot should be in the formation
     """
-
     # Take formation and transform (rotate, translate) onto formation_pose
-    theta = formation_pose[YAW] - INITIAL_YAW
+    theta = formation_pose[YAW]
 
     desired_positions = np.zeros_like(formation)
     for i in range(len(formation)):
@@ -35,7 +34,7 @@ def get_desired_positions(formation, formation_pose):
 
 def get_formation_orientation(velocity, leader_pose):
     # Just use leader pose to simulate robots catching up to leader
-    return leader_pose 
+    return leader_pose - INITIAL_YAW
  
 
 def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):

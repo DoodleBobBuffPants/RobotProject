@@ -99,10 +99,10 @@ def robot_avoidance_weights(robot_poses):
   v = np.array(v)
   return v
 
-def weighting(velocities, weights):
+def weighting(velocities, weight):
   wv = np.array(velocities)
   for i in range(len(velocities)):
-    wv[i] = velocities[i] * weights[i]
+    wv[i] = velocities[i] * weight
   return wv
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
@@ -113,21 +113,32 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: weighted sum of the robot velocities
     """
 
-    # formation is the goal for followers
-    goal = weighting(goal_velocities, 0. * robot_avoidance_weights)
-    formation = weighting(formation_velocities, .8 * robot_avoidance_weights)
+    # weights
+    goal_w = 0.8
+    formation_w = 0.8
+    static_obs_avoid_w = 0.8
+    robot_avoid_w = 0.8 # not used currently
 
-    # Stop moving if at destination
-    obst_weight = np.array(robot_avoidance_weights)
-    for i in range(len(goal)):
-      obst_weight[i] = 0.
-      if i == LEADER_ID:
-        if np.linalg.norm(goal[i]) == 0.:
-          obst_weight[i] = 0.
-      else:
-        if np.linalg.norm(formation[i]) == 0.:
-          obst_weight[i] = 0.
-    static_obstacle_avoidance = weighting(obstacle_velocities, obst_weight * robot_avoidance_weights)
+    # formation is the goal for followers
+    goal = weighting(goal_velocities, goal_w)
+    formation = weighting(formation_velocities, formation_w)
+    static_obstacle_avoidance = weighting(obstacle_velocities, static_obs_avoid_w)
+
+    # only leader has the goal, the rest have formation constraints
+    objective = goal + formation
+
+    # sum of all velocity components
+    weighted_sum = objective + static_obstacle_avoidance
+
+    # RULE: For each robot, if it is nearer other robots, let the first robot (by id) pass
+    for i in range(len(objective)):
+      if robot_avoidance_weights[i] == 0.:
+        weighted_sum[i] = np.zeros_like(weighted_sum[i])
+
+    # RULE: For each robot, if it has reached its objective, stop (ignore obstacle input)
+    for i in range(len(objective)):
+      if np.linalg.norm(objective[i]) == 0.:
+        weighted_sum[i] = np.zeros_like(weighted_sum[i])
 
     # print([np.linalg.norm(goal[i]) for i in range(len(goal))])
 
@@ -135,7 +146,5 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     # print("formation: ", formation)
     # print("soa: ", static_obstacle_avoidance)
     # print("robot_avoidance: ", robot_avoidance)
-
-    weighted_sum = goal + formation + static_obstacle_avoidance
 
     return weighted_sum
