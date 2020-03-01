@@ -24,6 +24,7 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers):
   for i in range(len(robot_poses)):
       u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
+      # Adjustable deltas that affect the contribution of obstacle avoidance
       du, dw = .4, .2
       x = du*u*np.cos(robot_poses[i][YAW] + dw*w)
       y = du*u*np.sin(robot_poses[i][YAW] + dw*w)
