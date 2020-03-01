@@ -114,13 +114,13 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     """
 
     # formation is the goal for followers
-    goal = weighting(goal_velocities, .8 * robot_avoidance_weights)
+    goal = weighting(goal_velocities, 0. * robot_avoidance_weights)
     formation = weighting(formation_velocities, .8 * robot_avoidance_weights)
 
     # Stop moving if at destination
     obst_weight = np.array(robot_avoidance_weights)
     for i in range(len(goal)):
-      obst_weight[i] = 2.
+      obst_weight[i] = 0.
       if i == LEADER_ID:
         if np.linalg.norm(goal[i]) == 0.:
           obst_weight[i] = 0.
