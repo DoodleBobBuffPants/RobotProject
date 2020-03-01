@@ -115,7 +115,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
 
     # weights
     goal_w = 0.8
-    formation_w = 0.8
+    formation_w = 1.2
     static_obs_avoid_w = 0.8
     robot_avoid_w = 0.8 # not used currently
 
