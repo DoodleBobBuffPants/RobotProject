@@ -30,9 +30,6 @@ MAX_ITERATIONS = 750
 def sample_random_position(occupancy_grid):
   position = np.zeros(2, dtype=np.float32)
 
-  # 3 -1 y
-  # -12 -2 x 
-
   # MISSING: Sample a valid random position (do not sample the yaw).
   # The corresponding cell must be free in the occupancy grid.
 
@@ -40,6 +37,9 @@ def sample_random_position(occupancy_grid):
   # C free = C \ C obs, the occupancy_grid function is giving us a nice 
 
   # sample function not including yaw, capped at dimensions of the arena
+  # simple world dimensions: -2..2 in x, -2..2 in y
+  # corridoor dimensions: -12..-2 in x, -1..3 in y
+  # sample_pos = lambda: np.array([np.random.uniform(low=-2, high=2), np.random.uniform(low=-2, high=2)])
   sample_pos = lambda: np.array([np.random.uniform(low=-12, high=-2), np.random.uniform(low=-1, high=3)])
 
   position = sample_pos()
