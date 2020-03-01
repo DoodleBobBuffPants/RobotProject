@@ -1,5 +1,5 @@
 import numpy as np
-from init_formations import FORMATION, SPACING_DIST
+from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW
 
 X = 0
 Y= 1
@@ -22,16 +22,15 @@ def get_desired_positions(formation, formation_pose):
     """
 
     # Take formation and transform (rotate, translate) onto formation_pose
-    theta = formation_pose[YAW]
+    theta = formation_pose[YAW] - INITIAL_YAW
 
     desired_positions = np.zeros_like(formation)
     for i in range(len(formation)):
         # Rotate
         desired_positions[i] = np.matmul([[np.cos(theta), -np.sin(theta)],
                                           [np.sin(theta),  np.cos(theta)]], formation[i])
-
         # Translate
-        desired_positions[i] = (formation_pose[:2] + formation[i]) - desired_positions[i]
+        desired_positions[i] = formation_pose[:2] + desired_positions[i]
     return desired_positions
 
 def get_formation_orientation(velocity, leader_pose):
