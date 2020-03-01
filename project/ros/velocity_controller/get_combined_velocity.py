@@ -48,14 +48,6 @@ def scale_velocities(velocities, min=0., max=3.5):
   return scaled_velocities
 
 def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
-    """
-    param leader_pose: ground truth pose of the leader
-    param follower_poses: the ground truth poses of the followers
-    param leader_rrt_velocity: rrt_velocity of the leader
-    param lasers: the information from each robot on its sensors in the gazebo simulation.
-
-    return: the updated feedback linearized velocities for each robot, combining all velocity objective components
-    """
 
     # get leader and follower poses
     leader_pose = robot_poses[LEADER_ID]
@@ -106,18 +98,12 @@ def weighting(velocities, weight):
   return wv
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
-    """
-    param goal_velocities: the velocity directing the robot towards the goal (e.g to the next point on the path given by RRT)
-    param formation_velocities: the velocities directing the robot to its desired position in the formation
-    param obstacle_velocities: the velocities drecting the robot away from the obstacles.
-    return: weighted sum of the robot velocities
-    """
 
     # weights
-    goal_w = 0.8
+    goal_w = .8
     formation_w = 1.2
-    static_obs_avoid_w = 0.8
-    robot_avoid_w = 0.8 # not used currently
+    static_obs_avoid_w = .8
+    # robot_avoid_w = .8
 
     # formation is the goal for followers
     goal = weighting(goal_velocities, goal_w)
@@ -139,12 +125,5 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     for i in range(len(objective)):
       if np.linalg.norm(objective[i]) == 0.:
         weighted_sum[i] = np.zeros_like(weighted_sum[i])
-
-    # print([np.linalg.norm(goal[i]) for i in range(len(goal))])
-
-    # print("goal: ", goal)
-    # print("formation: ", formation)
-    # print("soa: ", static_obstacle_avoidance)
-    # print("robot_avoidance: ", robot_avoidance)
 
     return weighted_sum
