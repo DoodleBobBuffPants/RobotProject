@@ -4,11 +4,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
-import scipy.signal
 import sys
 import yaml
 import os
@@ -16,20 +14,15 @@ import re
 import random
 import rospy
 
-
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
+import rrt
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
 sys.path.insert(0, directory)
 import get_combined_velocity as gcv
 import rrt_navigation
 from init_formations import FORMATION, LEADER_ID
-
-try:
-  import rrt
-except ImportError:
-  raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -142,12 +135,10 @@ def run():
   
   publishers = [None] * len(robot_names)
   lasers = [None] * len(robot_names)
-
-  # ground truth pose of robots
   groundtruth_poses = [None] * len(robot_names)
 
-  # the path RRT get_navigation returns
-  current_path = [None] * len(robot_names)
+  # RRT path
+  current_path = None
 
   vel_msgs = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
@@ -173,8 +164,6 @@ def run():
   occupancy_grid = occupancy_grid[:, ::-1]
   occupancy_grid = rrt.OccupancyGrid(occupancy_grid, data['origin'], data['resolution'])
 
-  current_path = None
-
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
     if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
@@ -182,11 +171,10 @@ def run():
       continue
 
     leader = robot_names[LEADER_ID]
-    follwers = [robot_names[i] for i in range(len(robot_names)) if i != LEADER_ID]
+    followers = [robot_names[i] for i in range(len(robot_names)) if i != LEADER_ID]
 
     # Compute RRT on the leader only
     robot_goal = GOAL_POSITION
-
     while not current_path:
         start_node, final_node = rrt.rrt(groundtruth_poses[LEADER_ID].pose, robot_goal, occupancy_grid)
 
@@ -210,11 +198,11 @@ def run():
 
     # get the RRT velocity for the leader robot
     position = np.array([groundtruth_poses[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruth_poses[LEADER_ID].pose[YAW]),
-                          groundtruth_poses[LEADER_ID].pose[Y] + EPSILON*np.sin(groundtruth_poses[LEADER_ID].pose[YAW])], dtype=np.float32)
+                         groundtruth_poses[LEADER_ID].pose[Y] + EPSILON*np.sin(groundtruth_poses[LEADER_ID].pose[YAW])], dtype=np.float32)
     rrt_velocity = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
 
 
-    
+
     # for i,_ in enumerate(robot_names):
     #   #stop if at goal old code for reference ( we will take care of this in get_combined_velocities)
     #   # if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
