@@ -1,18 +1,10 @@
-# 5 robots, POSE(X, Y, YAW)
-
-# TODO parameters
-# spacing parameter for formation
-
 import numpy as np
-import sys, os
-
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
-sys.path.insert(0, directory)
 from init_formations import FORMATION, SPACING_DIST
 
 X = 0
 Y= 1
 YAW = 2
+
 ROBOT_RADIUS = 0.105 / 2.
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
@@ -32,6 +24,7 @@ def get_desired_positions(formation, formation_pose):
     print("formation pose: ", formation_pose)
     # Take formation and transform (rotate, translate) onto formation_pose
     # Rotate 
+
     theta = formation_pose[YAW]
 
     desired_positions = np.zeros_like(formation)
@@ -41,7 +34,7 @@ def get_desired_positions(formation, formation_pose):
                                           [np.sin(theta),  np.cos(theta)]], formation[i])
 
         # Translate
-        desired_positions[i] = desired_positions[i] + formation_pose[:YAW] # Should be :YAW not :Y
+        desired_positions[i] = (formation_pose[:2] + formation[i]) - desired_positions[i]
     return desired_positions
 
 def get_formation_orientation(velocity, pose):
@@ -50,8 +43,7 @@ def get_formation_orientation(velocity, pose):
     # if np.sqrt(average_update_velocity[X]**2 + average_update_velocity[Y]**2) < threshold:
     #     return 0.
     # else:
-    # TODO check why this pi/2 is needed? The formation orientation is off by pi/2 it seems
-    return np.arctan2(velocity[Y], velocity[X]) + pose #+ (np.pi/2.) 
+    return pose 
  
 
 def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
@@ -66,14 +58,14 @@ def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
     # Formation orientation is the angle of formation given the update velocity and the robots direction.
     formation_orientation = get_formation_orientation(leader_rrt_velocity, leader_pose[YAW])
 
-    formation_pose = np.concatenate((leader_pose[0:2], [formation_orientation]))
+    formation_pose = np.concatenate((leader_pose[:2], [formation_orientation]))
     # Could we just substitute formation pose for leader pose? DONT DO THIS WITHOUT TESTING FOR ROBUSTNESS
 
     # Desired positions of each of the follower robots in the formation (see comment above about replacing formation pose with leader...)
     desired_positions = get_desired_positions(formation=FORMATION, formation_pose=formation_pose)
 
     # velocity directs the follower robots from their current position to their (desired position in the formation)
-    follower_positions = np.array([pose[0:2] for pose in follower_poses])
+    follower_positions = np.array([pose[:2] for pose in follower_poses])
     velocities = desired_positions - follower_positions
 
     # update each velocity (the displacement between the current and desired position) depending on the distance
