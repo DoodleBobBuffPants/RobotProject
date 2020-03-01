@@ -5,14 +5,14 @@ from __future__ import print_function
 import numpy as np
 import obstacle_avoidance
 import rrt_navigation
-from maintain_formation import maintain_formation
+from maintain_formation import maintain_formation, CONTROLLED_ZONE
 from init_formations import LEADER_ID
 
 # Feedback linearisation epsilon
 EPSILON = 0.1
 
 THRESHOLD = 0.01
-ROBOT_DISTANCE = 0.1
+ROBOT_DISTANCE = 0.125
 
 X = 0
 Y = 1
@@ -24,7 +24,7 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers):
   for i in range(len(robot_poses)):
       u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
-      du, dw = .25, .25
+      du, dw = .4, .2
       x = du*u*np.cos(robot_poses[i][YAW] + dw*w)
       y = du*u*np.sin(robot_poses[i][YAW] + dw*w)
 
@@ -32,7 +32,7 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers):
 
   return np.array(xyoa_velocities)
 
-def scale_velocities(velocities, min = 0, max=3.5):
+def scale_velocities(velocities, min=0., max=3.5):
 
   magnitudes = np.array([[np.linalg.norm(v)] for v in velocities])
 
@@ -42,7 +42,7 @@ def scale_velocities(velocities, min = 0, max=3.5):
     if magnitudes[i] > THRESHOLD:
       # Normalised magnitudes Min max scalar: x-min / max-min
       scaled_magnitude = (magnitudes[i] - min) / (max - min)
-      scaled_velocities[i] = (velocities[i] / magnitudes[i]) * scaled_magnitudes
+      scaled_velocities[i] = (velocities[i] / magnitudes[i]) * scaled_magnitude
 
   return scaled_velocities
 
@@ -64,15 +64,15 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     follower_formation_velocities = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
     obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(robot_poses, lasers)
 
-    # Scale velocties to be between 0 and 1
-    # formation_velocities = scale_velocities(formation_velocities)
-    # obstacle_avoidance_velocities = scale_velocities(obstacle_avoidance_velocities)
-    # rrt_velocities = scale_velocities(rrt_velocities, max=0.4)
-
     # NOTE: for numpy insert, obj is the index of insertion.
     formation_velocities = np.insert(arr=follower_formation_velocities, obj=LEADER_ID, values=np.array([0., 0.]), axis=0)
     # follower formation velocities is only 4 long
     rrt_velocities = np.insert(arr=np.zeros_like(follower_formation_velocities), obj=LEADER_ID, values=leader_rrt_velocity, axis=0)
+
+    # Scale velocties to be between 0 and 1
+    # formation_velocities = scale_velocities(formation_velocities, max=CONTROLLED_ZONE)
+    # obstacle_avoidance_velocities = scale_velocities(obstacle_avoidance_velocities, max=.5)
+    # rrt_velocities = scale_velocities(rrt_velocities, max=.5)
 
     combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_weights(robot_poses))
 
@@ -112,13 +112,14 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     return: weighted sum of the robot velocities
     """
 
-    goal = weighting(goal_velocities, 1. * robot_avoidance_weights)
-    formation = weighting(formation_velocities, 1. * robot_avoidance_weights)
+    # formation is the goal for followers
+    goal = weighting(goal_velocities, .8 * robot_avoidance_weights)
+    formation = weighting(formation_velocities, .8 * robot_avoidance_weights)
 
     # Stop moving if at destination
     obst_weight = np.array(robot_avoidance_weights)
     for i in range(len(goal)):
-      obst_weight[i] = .8
+      obst_weight[i] = 2.
       if i == LEADER_ID:
         if np.linalg.norm(goal[i]) == 0.:
           obst_weight[i] = 0.
