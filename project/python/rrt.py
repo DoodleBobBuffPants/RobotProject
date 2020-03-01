@@ -167,7 +167,7 @@ def adjust_pose(node, final_position, occupancy_grid):
       for step in range(0, int(round(steps+1))):
         step_position = node.position + step * step_size * vector
         if not is_valid(step_position, occupancy_grid):
-          print("a: fail")
+          # print("a: fail")
           return None, np.float("inf")
 
       # here our arc length is just the distance between the points
@@ -176,7 +176,7 @@ def adjust_pose(node, final_position, occupancy_grid):
     elif dist_between_points(final_position, node.position) < 2. * ROBOT_RADIUS:
       # tiny circle, just compute is valid at the destination
       if not is_valid(final_position, occupancy_grid):
-        print("b: fail")
+        # print("b: fail")
         return None, np.float("inf")
     
     else: # we are going in a clockwise or anticlockwise circle
@@ -210,12 +210,12 @@ def adjust_pose(node, final_position, occupancy_grid):
         # compute the position is okay in the map
         # if it is not, return False
         if not is_valid(np.array([x,y]), occupancy_grid):
-          print("c: fail")
+          # print("c: fail")
           return None,  np.float("inf")
 
       # check the destination
       if not is_valid(final_position, occupancy_grid):
-        print("d: fail")
+        # print("d: fail")
         return None,  np.float("inf")
 
       #print("#######################")
@@ -225,7 +225,7 @@ def adjust_pose(node, final_position, occupancy_grid):
       #print("#######################")
 
   else:
-    print("e: fail")
+    # print("e: fail")
     return None,  np.float("inf")
 
   #print("robot theta:   ", theta_robot)
@@ -388,7 +388,7 @@ def rrt(start_pose, goal_position, occupancy_grid):
   start_node.cost = 0
   final_node = None
   if not occupancy_grid.is_free(goal_position):
-    print('Goal position is not in the free space.')
+    # print('Goal position is not in the free space.')
     return start_node, final_node
   graph.append(start_node)
   for _ in range(MAX_ITERATIONS): 
@@ -440,7 +440,7 @@ def rrt(start_pose, goal_position, occupancy_grid):
 
     # if all v's are None, no good v found, continue
     if v is None:
-      print("NOTE: NO GOOD NODES FOUND!!!")
+      # print("NOTE: NO GOOD NODES FOUND!!!")
       continue
 
     # found the u with the minimum cost, using the RRT* adjustments above
@@ -462,11 +462,11 @@ def rrt(start_pose, goal_position, occupancy_grid):
     for w in potentials_in_radius:
       # get a new w at the same position
       w_new, arc_length = adjust_pose(v, w.position, occupancy_grid)
-      print(v._pose[YAW] * 180./np.pi, v.position, w.position)
+      # print(v._pose[YAW] * 180./np.pi, v.position, w.position)
       # get the new cost and compare to the old
       old_cost = w.cost
       new_cost = v.cost + arc_length
-      print("old cost: ", old_cost, " | new cost: ", new_cost, " | picked: ", new_cost < old_cost)
+      # print("old cost: ", old_cost, " | new cost: ", new_cost, " | picked: ", new_cost < old_cost)
       if new_cost < old_cost:
         # w would be better with the new node as its parent!
         # 1. update its parent

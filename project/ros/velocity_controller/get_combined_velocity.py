@@ -24,7 +24,7 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers):
   for i in range(len(robot_poses)):
       u, w = obstacle_avoidance.braitenberg(*lasers[i].measurements)
 
-      du, dw = 1., .5
+      du, dw = .25, .25
       x = du*u*np.cos(robot_poses[i][YAW] + dw*w)
       y = du*u*np.sin(robot_poses[i][YAW] + dw*w)
 
@@ -88,6 +88,7 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     return us, ws 
 
 def robot_avoidance_weights(robot_poses):
+  # Earlier robot stops to let other pass
   v = []
   for i in range(len(robot_poses)):
     v.append(1.)
@@ -113,7 +114,18 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
 
     goal = weighting(goal_velocities, 1. * robot_avoidance_weights)
     formation = weighting(formation_velocities, 1. * robot_avoidance_weights)
-    static_obstacle_avoidance = weighting(obstacle_velocities, 0. * robot_avoidance_weights)
+
+    # Stop moving if at destination
+    obst_weight = np.array(robot_avoidance_weights)
+    for i in range(len(goal)):
+      obst_weight[i] = .8
+      if i == LEADER_ID:
+        if np.linalg.norm(goal[i]) == 0.:
+          obst_weight[i] = 0.
+      else:
+        if np.linalg.norm(formation[i]) == 0.:
+          obst_weight[i] = 0.
+    static_obstacle_avoidance = weighting(obstacle_velocities, obst_weight * robot_avoidance_weights)
 
     # print([np.linalg.norm(goal[i]) for i in range(len(goal))])
 
