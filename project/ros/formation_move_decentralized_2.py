@@ -43,6 +43,7 @@ ROBOT_ID = 2
 # Belief of leader
 LEADER_NAME = ROBOT_NAMES[LEADER_ID]
 LEADER_POSE = [None, None, None]
+LEADER_VELOCITY = [None, None]
 
 GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
 # GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
@@ -111,41 +112,54 @@ class GroundtruthPose(object):
   def __init__(self, name='turtlebot3_burger'):
     rospy.Subscriber('/gazebo/model_states', ModelStates, self.callback)
     self._pose = np.array([np.nan, np.nan, np.nan], dtype=np.float32)
-    self._leader = np.array([np.nan, np.nan, np.nan], dtype=np.float32)
+    self._leader_pose = np.array([np.nan, np.nan, np.nan], dtype=np.float32)
+    self._leader_velocity = np.array([np.nan, np.nan], dtype=np.float32)
     self._name = name
 
   def callback(self, msg):
-  	# Store belief of current robot and leader, as it is the only state required
-    ind_name = [(i, n) for i, n in enumerate(msg.name) if (n == self._name) or (n == LEADER_NAME)]
+    # Store belief of current robot and leader, as it is the only state required
+    ind_name = [(i, n) for i, n in enumerate(msg.name) if n == self._name or n == LEADER_NAME]
     if not ind_name:
       raise ValueError('Specified name "{}" does not exist.'.format(self._name + " or " + LEADER_NAME))
     for ind, name in ind_name:
-    	pose = np.array(self._pose)
-    	pose[0] = msg.pose[ind].position.x
-    	pose[1] = msg.pose[ind].position.y
-    	_, _, yaw = euler_from_quaternion([
-    		msg.pose[ind].orientation.x,
-    		msg.pose[ind].orientation.y,
-    		msg.pose[ind].orientation.z,
-    		msg.pose[ind].orientation.w])
-    	pose[2] = yaw
-    	if name == self._name:
-    		self._pose = pose
-    	if name == LEADER_NAME:
-    		self._leader = pose
-    		
+        # Pose for current robot
+        pose = np.array(self._pose)
+        pose[0] = msg.pose[ind].position.x
+        pose[1] = msg.pose[ind].position.y
+        _, _, yaw = euler_from_quaternion([
+            msg.pose[ind].orientation.x,
+            msg.pose[ind].orientation.y,
+            msg.pose[ind].orientation.z,
+            msg.pose[ind].orientation.w])
+        pose[2] = yaw
+
+        # Velocity for leader (u,w)
+        velocity = np.array(self._leader_velocity)
+        velocity[0] = msg.twist[ind].linear.x
+        velocity[1] = msg.twist[ind].angular.z
+
+        if name == self._name:
+            self._pose = np.array(pose)
+        if name == LEADER_NAME:
+            self._leader_pose = np.array(pose)
+            self._leader_velocity = np.array(velocity)
+            
   @property
   def ready(self):
-    return not np.isnan(self._pose[0]) and not np.isnan(self._leader[0])
+    return not np.isnan(self._pose[0]) and not np.isnan(self._leader_pose[0]) and not np.isnan(self._leader_velocity[0])
 
   @property
   def pose(self):
     return self._pose
 
   @property
-  def leader(self):
-    return self._leader
-  
+  def leader_pose(self):
+    return self._leader_pose
+
+  @property
+  def leader_velocity(self):
+    return self._leader_velocity
+
 
 def run():
   rospy.init_node('obstacle_avoidance')
@@ -181,37 +195,45 @@ def run():
       rate_limiter.sleep()
       continue
 
-    LEADER_POSE = groundtruth.leader
+    LEADER_POSE = groundtruth.leader_pose
 
     # Compute RRT on the leader only
-    while not current_path:
-      start_node, final_node = rrt.rrt(LEADER_POSE, GOAL_POSITION, occupancy_grid)
+    if ROBOT_ID == LEADER_ID:
+        while not current_path:
+          start_node, final_node = rrt.rrt(groundtruth.pose, GOAL_POSITION, occupancy_grid)
 
-      # plot rrt path
-      # useful debug code
-      # fig, ax = plt.subplots()
-      # occupancy_grid.draw()
-      # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-      # rrt.draw_solution(start_node, final_node)
-      # plt.scatter(groundtruth.pose[0], groundtruth.pose[1], s=10, marker='o', color='green', zorder=1000)
-      # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
-      
-      # plt.axis('equal')
-      # plt.xlabel('x')
-      # plt.ylabel('y')
-      # plt.xlim([-.5 - 2., 2. + .5])
-      # plt.ylim([-.5 - 2., 2. + .5])
-      # plt.show()
+          # plot rrt path
+          # useful debug code
+          # fig, ax = plt.subplots()
+          # occupancy_grid.draw()
+          # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
+          # rrt.draw_solution(start_node, final_node)
+          # plt.scatter(groundtruth.pose[0], groundtruth.pose[1], s=10, marker='o', color='green', zorder=1000)
+          # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
+          
+          # plt.axis('equal')
+          # plt.xlabel('x')
+          # plt.ylabel('y')
+          # plt.xlim([-.5 - 2., 2. + .5])
+          # plt.ylim([-.5 - 2., 2. + .5])
+          # plt.show()
 
-      current_path = rrt_navigation.get_path(final_node)
+          current_path = rrt_navigation.get_path(final_node)
 
-    # get the RRT velocity for the leader robot
-    position = np.array([LEADER_POSE[X] + EPSILON*np.cos(LEADER_POSE[YAW]),
-                         LEADER_POSE[Y] + EPSILON*np.sin(LEADER_POSE[YAW])], dtype=np.float32)
-    rrt_velocity = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
+        # get the RRT velocity for the leader robot
+        position = np.array([groundtruth.pose[X] + EPSILON*np.cos(groundtruth.pose[YAW]),
+                             groundtruth.pose[Y] + EPSILON*np.sin(groundtruth.pose[YAW])], dtype=np.float32)
+        LEADER_VELOCITY = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
+    else:
+        # Get (x,y) velocity from (u,w) velocity for leader
+        u = groundtruth.leader_velocity[0]
+        w = groundtruth.leader_velocity[1]
+        yaw = groundtruth.leader_pose[YAW]
+        d = .2
+        LEADER_VELOCITY = u * np.array([np.cos(yaw + d*w), np.sin(yaw + d*w)])
 
     # get the velocity for this robot
-    u, w = gcv.get_combined_velocity(groundtruth.pose, LEADER_POSE, rrt_velocity, laser, ROBOT_ID)
+    u, w = gcv.get_combined_velocity(groundtruth.pose, LEADER_POSE, LEADER_VELOCITY, laser, ROBOT_ID)
 
     # cap speed
     vel_msg = Twist()
@@ -224,8 +246,7 @@ def run():
 
 
 if __name__ == '__main__':
-  try:
-    run()
-  except rospy.ROSInterruptException:
-    pass
-    
+    try:
+        run()
+    except rospy.ROSInterruptException:
+        pass
