@@ -1,6 +1,6 @@
+# Formation spacing parameter for the formation
 import numpy as np
 
-# Formation spacing parameter for the formation
 SPACING_DIST = 0.3
 
 # NOTE:
@@ -9,15 +9,14 @@ SPACING_DIST = 0.3
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
 
-# LEADER_ID = 2
-# INITIAL_YAW = 1.571
+#LEADER_ID = 2
+#INITIAL_YAW = 1.571
 LINE = np.array([[2*SPACING_DIST,0], 
 				 [SPACING_DIST, 0],
 				 [-SPACING_DIST, 0], 
 				 [-2*SPACING_DIST, 0]])
 
 # LEADER_ID = 2
-# INITIAL_YAW =
 COLUMN = np.array([[0, 2*SPACING_DIST], 
             	   [0, SPACING_DIST],
             	   [0,-SPACING_DIST], 
@@ -36,7 +35,6 @@ DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST],
 					 [SPACING_DIST, -SPACING_DIST]])
 
 # LEADER_ID = 2
-# INITIAL_YAW =
 WEDGE = np.array([[2*SPACING_DIST, -SPACING_DIST], 
 				  [SPACING_DIST, 0],
 				  [-SPACING_DIST, 0], 

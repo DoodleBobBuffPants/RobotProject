@@ -106,11 +106,18 @@ def weighting(velocities, weight):
   return wv
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
+    """
+    param goal_velocities: the velocity directing the robot towards the goal (e.g to the next point on the path given by RRT)
+    param formation_velocities: the velocities directing the robot to its desired position in the formation
+    param obstacle_velocities: the velocities drecting the robot away from the obstacles.
+    return: weighted sum of the robot velocities
+    """
 
     # weights
-    goal_w = .8
-    formation_w = .8
-    static_obs_avoid_w = .8
+    goal_w = 0.8
+    formation_w = 0.8
+    static_obs_avoid_w = 0.8
+    robot_avoid_w = 0.8 # not used currently
 
     # formation is the goal for followers
     goal = weighting(goal_velocities, goal_w)
