@@ -20,6 +20,7 @@ def get_desired_positions(formation, formation_pose):
     returns: 
     desired_positions: list of desired positions i.e. where each robot should be in the formation
     """
+
     # Take formation and transform (rotate, translate) onto formation_pose
     theta = formation_pose[YAW]
 
@@ -32,10 +33,6 @@ def get_desired_positions(formation, formation_pose):
         desired_positions[i] = formation_pose[:2] + desired_positions[i]
     return desired_positions
 
-def get_formation_orientation(velocity, leader_pose):
-    # Just use leader pose to simulate robots catching up to leader
-    return leader_pose - INITIAL_YAW
- 
 
 def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
     """
@@ -47,11 +44,9 @@ def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
     velocities for followers: list of vectors [x, y] indicating the velocities of each robot needed to maintain formation
     """
 
-    # Formation orientation is the angle of formation given the update velocity and the robots direction.
-    formation_orientation = get_formation_orientation(leader_rrt_velocity, leader_pose[YAW])
+    # Formation orientation is the angle of formation
+    formation_orientation = leader_pose[YAW] - INITIAL_YAW
     formation_pose = np.concatenate((leader_pose[:2], [formation_orientation]))
-
-    # Could we just substitute formation pose for leader pose? DONT DO THIS WITHOUT TESTING FOR ROBUSTNESS
 
     # Desired positions of each of the follower robots in the formation (see comment above about replacing formation pose with leader...)
     desired_positions = get_desired_positions(formation=FORMATION, formation_pose=formation_pose)
