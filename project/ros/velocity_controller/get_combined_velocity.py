@@ -2,28 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import numpy as np
-import matplotlib.pylab as plt
-import matplotlib.patches as patches
-import scipy.signal
-import sys
-import yaml
-import os
-import re
-import random
-import rospy
 import obstacle_avoidance
 import rrt_navigation
 from maintain_formation import maintain_formation
-
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
-sys.path.insert(0, directory)
-try:
-  import rrt
-except ImportError:
-  raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
-
 from init_formations import LEADER_ID
 
 # Feedback linearisation epsilon
@@ -36,9 +18,6 @@ GOAL_THRESHOLD = 0.1
 X = 0
 Y = 1
 YAW = 2
-
-# position for all robots to go to (for now - can change this to have a separate goal for every robot in the formation)
-GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)
 
 def get_obstacle_avoidance_velocities(robot_poses, lasers):
   """
@@ -70,11 +49,13 @@ def scale_velocities(velocities, min = 0, max=3.5):
   # Magnitudes of each of the velocities
   magnitudes = np.array([[np.linalg.norm(v)] for v in velocities])
 
-  # Normalised magnitudes Min max scalar: x-min / max-min
-  scaled_magnitudes = (magnitudes - min) / (max - min)
-
-  # Scale velocities 
-  scaled_velocities = (velocities / magnitudes) * scaled_magnitudes
+  scaled_velocities = np.array(velocities)
+  for i in range(len(magnitudes)):
+    # Don't divide by very small magnitudes
+    if magnitudes[i] > THRESHOLD:
+      # Normalised magnitudes Min max scalar: x-min / max-min
+      scaled_magnitude = (magnitudes[i] - min) / (max - min)
+      scaled_velocities[i] = (velocities[i] / magnitudes[i]) * scaled_magnitudes
 
   return scaled_velocities
 
@@ -170,7 +151,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     """
 
     goal = weighting(goal_velocities, 1.)
-    formation = weighting(formation_velocities, .6)
+    formation = weighting(formation_velocities, 1.)
     static_obstacle_avoidance = weighting(obstacle_velocities, 0.)
     robot_avoidance = weighting(robot_avoidance_velocities, 0.)
 
