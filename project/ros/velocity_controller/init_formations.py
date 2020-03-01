@@ -29,10 +29,10 @@ LEADER_ID = 0
 #               3
 #
 #
-DIAMOND =  np.array([[SPACING_DIST, -SPACING_DIST], 
-            [0, -SPACING_DIST], 
-            [0, -2.*SPACING_DIST], 
-            [-SPACING_DIST,-SPACING_DIST]])
+DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST], 
+					 [0, -SPACING_DIST], 
+					 [0, -2.*SPACING_DIST], 
+					 [SPACING_DIST, -SPACING_DIST]])
 
 # WEDGE =  np.array([[2*SPACING_DIST, -SPACING_DIST], 
 #             [SPACING_DIST, 0], 
