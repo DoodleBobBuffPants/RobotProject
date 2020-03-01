@@ -5,32 +5,9 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-import os
-import sys
-
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
-sys.path.insert(0, directory)
-try:
-  import rrt
-except ImportError:
-  raise ImportError('Unable to import rrt.py. Make sure this file is in "{}"'.format(directory))
-
-# Robot motion commands:
-# http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
-from geometry_msgs.msg import Twist
-# Occupancy grid.
-from nav_msgs.msg import OccupancyGrid
-# Position.
-from tf import TransformListener
-# Goal.
-from geometry_msgs.msg import PoseStamped
-# Path.
-from nav_msgs.msg import Path
-# For pose information.
-from tf.transformations import euler_from_quaternion
+import rrt
 
 SPEED = .5
-EPSILON = .1
 
 X = 0
 Y = 1
@@ -39,17 +16,8 @@ YAW = 2
 
 def feedback_linearized(pose, velocity, epsilon):
 
-  # u = velocity[X]*np.cos(pose[YAW]) + velocity[Y]*np.sin(pose[YAW])
-  # w = (velocity[Y]*np.cos(pose[YAW]) - velocity[X]*np.sin(pose[YAW]))/epsilon
-
-  # return u, w
-
   u = 0.  # [m/s]
   w = 0.  # [rad/s] going counter-clockwise.
-
-  # MISSING: Implement feedback-linearization to follow the velocity
-  # vector given as argument. Epsilon corresponds to the distance of
-  # linearized point in front of the robot.
 
   # check if velocity is near zero:
   threshold = 0.01
@@ -58,12 +26,10 @@ def feedback_linearized(pose, velocity, epsilon):
 
   d_xp_t = velocity[X]
   d_yp_t = velocity[Y]
-
-  # theta
   theta = pose[YAW]
 
-  u = d_xp_t * np.cos(theta) + d_yp_t * np.sin(theta)
-  w = (d_yp_t * np.cos(theta) - d_xp_t * np.sin(theta))/epsilon
+  u = d_xp_t*np.cos(theta) + d_yp_t*np.sin(theta)
+  w = (d_yp_t*np.cos(theta) - d_xp_t*np.sin(theta))/epsilon
 
   return u, w
 

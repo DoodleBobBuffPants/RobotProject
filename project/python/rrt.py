@@ -11,7 +11,6 @@ import re
 import scipy.signal
 import yaml
 
-
 # Constants used for indexing.
 X = 0
 Y = 1

@@ -3,23 +3,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import numpy as np
-import rospy
-
-# Robot motion commands:
-# http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
-from geometry_msgs.msg import Twist
-# Laser scan message:
-# http://docs.ros.org/api/sensor_msgs/html/msg/LaserScan.html
-from sensor_msgs.msg import LaserScan
-# For groundtruth information.
-from gazebo_msgs.msg import ModelStates
-from tf.transformations import euler_from_quaternion
 
 
 def braitenberg(front, front_left, front_right, left, right):
-  u = 0.5  # [m/s] so when not facing an obstacle the robot accelerates
+  u = .5  # [m/s] so when not facing an obstacle the robot accelerates
   w = 0.  # [rad/s] going counter-clockwise.
 
   # MISSING: Implement a braitenberg controller that takes the range
@@ -46,7 +34,7 @@ def braitenberg(front, front_left, front_right, left, right):
   # actually the plus on left and right makes sense, i want it to get smaller when it gets bigger
   weights = np.array([
   	[-0.3, -0.2, -0.2, 0., 0.],
-	[0.0, -5.0, 5.0, 0., 0.]
+	  [ 0.0, -5.0,  5.0, 0., 0.]
   ])
   # multiply sense inputs by the weights.
   params = np.matmul(weights, sens_inp)
