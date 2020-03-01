@@ -40,7 +40,6 @@ robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 GOAL_POSITION = np.array([-0.21, 1.3], dtype=np.float32)
 EPSILON = .1
 MAX_SPEED = 0.25
-GOAL_TOLERANCE = 0.05
 
 X = 0
 Y = 1
@@ -146,10 +145,6 @@ def run():
   	lasers[i] = SimpleLaser(name)
   	groundtruth_poses[i] = GroundtruthPose(name)
 
-  stop_msg = Twist()
-  stop_msg.linear.x = 0.
-  stop_msg.angular.z = 0.
-
   # Load map. (in here so it is only computed once)
   with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
     data = yaml.load(fp)
@@ -201,31 +196,16 @@ def run():
                          groundtruth_poses[LEADER_ID].pose[Y] + EPSILON*np.sin(groundtruth_poses[LEADER_ID].pose[YAW])], dtype=np.float32)
     rrt_velocity = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
 
-
-
-    # for i,_ in enumerate(robot_names):
-    #   #stop if at goal old code for reference ( we will take care of this in get_combined_velocities)
-    #   # if np.linalg.norm(groundtruth_poses[i].pose[:2] - robot_goal) < GOAL_TOLERANCE:
-    #   #   vel_msgs[i] = stop_msg
-    #   #   rrt_velocities.append(np.array([0,0]))
-    #   # else:
-    #   # position is the holonomic point in the global frame infront of the robots, per robot.
-
-
-    #   # get our combined velocity for each robot
-    #   # get poses from ground truth objects
-
     # get robot poses
     robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
 
     # get the velocities for all the robots
     us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers)
 
-    # cap and mod angle
+    # cap speed
     for i in range(len(us)):
       us[i] = cap(us[i], MAX_SPEED)
 
-      # get results and publish them
       vel_msgs[i] = Twist()
       vel_msgs[i].linear.x = us[i]
       vel_msgs[i].angular.z = ws[i]

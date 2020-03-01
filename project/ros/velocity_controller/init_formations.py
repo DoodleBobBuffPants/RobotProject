@@ -18,7 +18,7 @@ LINE = np.array([[2*SPACING_DIST,0],
 # LEADER_ID = 2
 COLUMN = np.array([[0, 2*SPACING_DIST], 
             	   [0, SPACING_DIST],
-            	   [0,-*SPACING_DIST], 
+            	   [0,-SPACING_DIST], 
             	   [0, -2*SPACING_DIST]])
 
 # DIAMOND
@@ -35,7 +35,7 @@ DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST],
 # LEADER_ID = 2
 WEDGE = np.array([[2*SPACING_DIST, -SPACING_DIST], 
 				  [SPACING_DIST, 0],
-				  [-*SPACING_DIST, 0], 
+				  [-SPACING_DIST, 0], 
 				  [-2*SPACING_DIST, -SPACING_DIST]])
 
 FORMATION = DIAMOND
