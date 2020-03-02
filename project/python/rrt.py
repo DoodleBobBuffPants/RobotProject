@@ -10,6 +10,13 @@ import os
 import re
 import scipy.signal
 import yaml
+import sys
+
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+sys.path.insert(0, directory)
+
+from init_formations import MAP_PARAMS
+
 
 # Constants used for indexing.
 X = 0
@@ -22,25 +29,20 @@ UNKNOWN = 1
 OCCUPIED = 2
 
 ROBOT_RADIUS = 0.105 / 2.
-# GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)  # Any orientation is good.
-START_POSE = np.array([-1.5, -1.5, 0.], dtype=np.float32)
-MAX_ITERATIONS = 750
+START_POSE = MAP_PARAMS["START_POSE"]
+BOUNDS = MAP_PARAMS["RRT_BOUNDS"]
+MAX_ITERATIONS = MAP_PARAMS["RRT_ITERATIONS"]
 
 
 def sample_random_position(occupancy_grid):
   position = np.zeros(2, dtype=np.float32)
 
-  # MISSING: Sample a valid random position (do not sample the yaw).
-  # The corresponding cell must be free in the occupancy grid.
-
   # This is implementing the first primitive of the RRT algorithm: sample configurations in free C-space.
   # C free = C \ C obs, the occupancy_grid function is giving us a nice 
 
   # sample function not including yaw, capped at dimensions of the arena
-  # simple world dimensions: -2..2 in x, -2..2 in y
-  # corridoor dimensions: -12..-2 in x, -1..3 in y
-  # sample_pos = lambda: np.array([np.random.uniform(low=-2, high=2), np.random.uniform(low=-2, high=2)])
-  sample_pos = lambda: np.array([np.random.uniform(low=-12, high=-2), np.random.uniform(low=-1, high=3)])
+
+  sample_pos = lambda: np.array([np.random.uniform(low=BOUNDS[X][0], high=BOUNDS[X][1]), np.random.uniform(low=BOUNDS[Y][0], high=BOUNDS[Y][1])])
 
   position = sample_pos()
   while not is_valid(position, occupancy_grid):
