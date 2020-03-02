@@ -2,11 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from init_formations import LEADER_ID
+from maintain_formation import maintain_formation, CONTROLLED_ZONE
+
 import numpy as np
 import obstacle_avoidance
 import rrt_navigation
-from maintain_formation import maintain_formation, CONTROLLED_ZONE
-from init_formations import LEADER_ID
 
 # Feedback linearisation epsilon
 EPSILON = 0.1

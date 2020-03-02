@@ -4,25 +4,26 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
+import numpy as np
+import os
+import random
+import re
+import rospy
 import sys
 import yaml
-import os
-import re
-import random
-import rospy
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
 import rrt
 
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/velocity_controller')
 sys.path.insert(0, directory)
+from init_formations import FORMATION, LEADER_ID, MAP_PARAMS
 import get_combined_velocity as gcv
 import rrt_navigation
-from init_formations import FORMATION, LEADER_ID, MAP_PARAMS
+
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -37,9 +38,6 @@ from tf.transformations import euler_from_quaternion
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 
 GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
-# GOAL_POSITION = np.array([0., 1.5], dtype=np.float32)
-# GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
-# GOAL_POSITION = np.array([-0.21, 1.3], dtype=np.float32)
 
 EPSILON = .1
 MAX_SPEED = 0.25
@@ -174,8 +172,8 @@ def run():
     while not current_path:
         start_node, final_node = rrt.rrt(groundtruths[LEADER_ID].pose, GOAL_POSITION, occupancy_grid)
 
-        # # plot rrt path
-        # # useful debug code
+        # plot rrt path
+        # useful debug code
         # fig, ax = plt.subplots()
         # occupancy_grid.draw()
         # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)

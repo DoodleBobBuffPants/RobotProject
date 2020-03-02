@@ -1,5 +1,6 @@
-import numpy as np
 from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW
+
+import numpy as np
 
 X = 0
 Y= 1
