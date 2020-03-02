@@ -22,7 +22,7 @@ directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/ve
 sys.path.insert(0, directory)
 import get_combined_velocity as gcv
 import rrt_navigation
-from init_formations import FORMATION, LEADER_ID, MAP_PARAMS
+from init_formations import FORMATION, LEADER_ID, MAP_PARAMS, RUN_RRT
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -142,7 +142,12 @@ def run():
   groundtruths = [None] * len(robot_names)
 
   # RRT path
-  current_path = None
+  # if RUN_RRT is False, load the predefined path from the MAP_PARAMS (which will prevent rrt from being run)
+  if not RUN_RRT:
+    current_path = MAP_PARAMS["RRT_PATH"]
+  else:
+    current_path = None
+  
 
   vel_msgs = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
@@ -174,23 +179,24 @@ def run():
     while not current_path:
         start_node, final_node = rrt.rrt(groundtruths[LEADER_ID].pose, GOAL_POSITION, occupancy_grid)
 
-        # # plot rrt path
-        # # useful debug code
-        # fig, ax = plt.subplots()
-        # occupancy_grid.draw()
-        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        # rrt.draw_solution(start_node, final_node)
-        # plt.scatter(groundtruths[i].pose[0], groundtruths[i].pose[1], s=10, marker='o', color='green', zorder=1000)
-        # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
+        # plot rrt path
+        # useful debug code
+        fig, ax = plt.subplots()
+        occupancy_grid.draw()
+        plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
+        rrt.draw_solution(start_node, final_node)
+        plt.scatter(groundtruths[i].pose[0], groundtruths[i].pose[1], s=10, marker='o', color='green', zorder=1000)
+        plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
         
-        # plt.axis('equal')
-        # plt.xlabel('x')
-        # plt.ylabel('y')
-        # plt.xlim([-.5 - 2., 2. + .5])
-        # plt.ylim([-.5 - 2., 2. + .5])
-        # plt.show()
+        plt.axis('equal')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.xlim([-.5 - 2., 2. + .5])
+        plt.ylim([-.5 - 2., 2. + .5])
+        plt.show()
 
         current_path = rrt_navigation.get_path(final_node)
+        print("CURRENT PATH: ", current_path)
 
     # get the RRT velocity for the leader robot
     position = np.array([groundtruths[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruths[LEADER_ID].pose[YAW]),
