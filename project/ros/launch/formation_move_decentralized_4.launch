@@ -1,3 +1,0 @@
-<launch>
-	<node pkg="exercises" type="formation_move_decentralized_4.py" name="formation_move_decentralized_4" output="screen"></node>
-</launch>

@@ -1,5 +1,6 @@
-import numpy as np
 from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW, LEADER_ID
+
+import numpy as np
 
 X = 0
 Y= 1
@@ -8,7 +9,7 @@ YAW = 2
 ROBOT_RADIUS = 0.105 / 2.
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
-DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
+DEAD_ZONE = 1.5 * ROBOT_RADIUS
 # CONTROL_ZONE (if robot is within the controlled zone, velocity towards position linearly increases the further away it is)
 CONTROLLED_ZONE = DEAD_ZONE + SPACING_DIST
 
@@ -46,7 +47,7 @@ def maintain_formation(leader_pose, follower_pose, leader_rrt_velocity, robot_id
 
     # update the velocity (the displacement between the current and desired position) depending on the distance
 
-    distance = np.sqrt(np.square(velocity[X]) + np.square(velocity[Y]))
+    distance = np.linalg.norm(velocity)
 
     # If a robot is within accepted radius of formation position, velocity should be 0
     # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)

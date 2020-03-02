@@ -4,25 +4,27 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
+import argparse
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
+import numpy as np
+import os
+import random
+import re
+import rospy
 import sys
 import yaml
-import os
-import re
-import random
-import rospy
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
 import rrt
 
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/velocity_controller')
 sys.path.insert(0, directory)
+from init_formations import FORMATION, LEADER_ID, MAP_PARAMS, RUN_RRT
 import get_combined_velocity_decentralized as gcv
 import rrt_navigation
-from init_formations import FORMATION, LEADER_ID
+
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -36,21 +38,21 @@ from tf.transformations import euler_from_quaternion
 
 ROBOT_NAMES = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 
-# This robot's information
-ROBOT_NAME = "tb3_2"
-ROBOT_ID = 2
+# This robot's information, default to robot 0
+ROBOT_ID = 0
+ROBOT_NAME = ROBOT_NAMES[ROBOT_ID]
 
 # Belief of leader
 LEADER_NAME = ROBOT_NAMES[LEADER_ID]
 LEADER_POSE = [None, None, None]
 LEADER_VELOCITY = [None, None]
 
-GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
-# GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
-# GOAL_POSITION = np.array([-0.21, 1.3], dtype=np.float32)
+GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
 EPSILON = .1
 MAX_SPEED = 0.25
+
+MAP = MAP_PARAMS["MAP_NAME"]
 
 X = 0
 Y = 1
@@ -113,7 +115,6 @@ class GroundtruthPose(object):
     rospy.Subscriber('/gazebo/model_states', ModelStates, self.callback)
     self._pose = np.array([np.nan, np.nan, np.nan], dtype=np.float32)
     self._leader_pose = np.array([np.nan, np.nan, np.nan], dtype=np.float32)
-    self._leader_velocity = np.array([np.nan, np.nan], dtype=np.float32)
     self._name = name
 
   def callback(self, msg):
@@ -133,20 +134,14 @@ class GroundtruthPose(object):
             msg.pose[ind].orientation.w])
         pose[2] = yaw
 
-        # Velocity for leader (u,w)
-        velocity = np.array(self._leader_velocity)
-        velocity[0] = msg.twist[ind].linear.x
-        velocity[1] = msg.twist[ind].angular.z
-
         if name == self._name:
             self._pose = np.array(pose)
         if name == LEADER_NAME:
             self._leader_pose = np.array(pose)
-            self._leader_velocity = np.array(velocity)
             
   @property
   def ready(self):
-    return not np.isnan(self._pose[0]) and not np.isnan(self._leader_pose[0]) and not np.isnan(self._leader_velocity[0])
+    return not np.isnan(self._pose[0]) and not np.isnan(self._leader_pose[0])
 
   @property
   def pose(self):
@@ -155,10 +150,6 @@ class GroundtruthPose(object):
   @property
   def leader_pose(self):
     return self._leader_pose
-
-  @property
-  def leader_velocity(self):
-    return self._leader_velocity
 
 
 def run():
@@ -173,12 +164,16 @@ def run():
   vel_msg = None
 
   # RRT path
-  current_path = None
+  # If RUN_RRT is False, load the predefined path
+  if not RUN_RRT:
+    current_path = MAP_PARAMS["RRT_PATH"]
+  else:
+    current_path = None
   
   # Load map. (in here so it is only computed once)
-  with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
+  with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/{}.yaml'.format(MAP))) as fp:
     data = yaml.load(fp)
-  img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.pgm'), data['image'])
+  img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/{}.pgm'.format(MAP)), data['image'])
   occupancy_grid = np.empty_like(img, dtype=np.int8)
   occupancy_grid[:] = UNKNOWN
   occupancy_grid[img < .1] = OCCUPIED
@@ -200,10 +195,11 @@ def run():
     # Compute RRT on the leader only
     if ROBOT_ID == LEADER_ID:
         while not current_path:
-          start_node, final_node = rrt.rrt(groundtruth.pose, GOAL_POSITION, occupancy_grid)
+          start_node, final_node = rrt.rrt(LEADER_POSE, GOAL_POSITION, occupancy_grid)
 
           # plot rrt path
           # useful debug code
+
           # fig, ax = plt.subplots()
           # occupancy_grid.draw()
           # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
@@ -219,18 +215,16 @@ def run():
           # plt.show()
 
           current_path = rrt_navigation.get_path(final_node)
+          # print("CURRENT PATH: ", current_path)
 
         # get the RRT velocity for the leader robot
-        position = np.array([groundtruth.pose[X] + EPSILON*np.cos(groundtruth.pose[YAW]),
-                             groundtruth.pose[Y] + EPSILON*np.sin(groundtruth.pose[YAW])], dtype=np.float32)
+        position = np.array([LEADER_POSE[X] + EPSILON*np.cos(LEADER_POSE[YAW]),
+                             LEADER_POSE[Y] + EPSILON*np.sin(LEADER_POSE[YAW])], dtype=np.float32)
         LEADER_VELOCITY = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
     else:
-        # Get (x,y) velocity from (u,w) velocity for leader
-        u = groundtruth.leader_velocity[0]
-        w = groundtruth.leader_velocity[1]
-        yaw = groundtruth.leader_pose[YAW]
-        d = .2
-        LEADER_VELOCITY = u * np.array([np.cos(yaw + d*w), np.sin(yaw + d*w)])
+        # Let the leader velocity be 0, since the leader pose will update and the
+        # formation velocity will correctly move the robot
+        LEADER_VELOCITY = np.array([0., 0.])
 
     # get the velocity for this robot
     u, w = gcv.get_combined_velocity(groundtruth.pose, LEADER_POSE, LEADER_VELOCITY, laser, ROBOT_ID)
@@ -246,7 +240,14 @@ def run():
 
 
 if __name__ == '__main__':
-    try:
-        run()
-    except rospy.ROSInterruptException:
-        pass
+  parser = argparse.ArgumentParser(description='Runs decentralized formation control')
+  parser.add_argument('--id', action='store', default='0', help='Method.', choices=[str(i) for i,_ in enumerate(ROBOT_NAMES)])
+  args, unknown = parser.parse_known_args()
+
+  ROBOT_ID = int(args.id)
+  ROBOT_NAME = ROBOT_NAMES[ROBOT_ID]
+
+  try:
+    run()
+  except rospy.ROSInterruptException:
+    pass

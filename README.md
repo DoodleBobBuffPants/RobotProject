@@ -18,4 +18,5 @@ Predefined paths are stored in the `precomputed_rrt_paths.py` file.
 NOTE: If you change the starting positions of the robots in the environment, you need to recompute a new path, then either store it in the precomputed paths file or reset the starting positions.
 
 ## Decentralized
-* To run the decentralized branch, start any map as usual then launch each py file, one for each robot
+* To run the decentralized branch, start any map as usual then launch `formation_move_decentralized.launch` for each robot, supplying `id` as an arg (e.g id:=1)
+

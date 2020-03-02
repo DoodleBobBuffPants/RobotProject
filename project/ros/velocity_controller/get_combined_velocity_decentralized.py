@@ -2,11 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from init_formations import LEADER_ID
+from maintain_formation_decentralized import maintain_formation, CONTROLLED_ZONE
+
 import numpy as np
 import obstacle_avoidance
 import rrt_navigation
-from maintain_formation_decentralized import maintain_formation, CONTROLLED_ZONE
-from init_formations import LEADER_ID
 
 # Feedback linearisation epsilon
 EPSILON = 0.1
@@ -37,7 +38,6 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
     if robot_id != LEADER_ID:
       rrt_velocity = np.array([0., 0.])
       formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id)
-      formation_velocity = formation_velocity[0]
 
     obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
 
@@ -54,8 +54,9 @@ def weighting(velocity, weight):
 def weight_velocities(goal_velocity, formation_velocity, obstacle_velocity):
 
     goal_w = .8
-    formation_w = .8
+    formation_w = 1.2
     static_obs_avoid_w = .8
+    # currently no robot avoidance in decentralized algorithm as we do not keep all robot poses
 
     goal = weighting(goal_velocity, goal_w)
     formation = weighting(formation_velocity, formation_w)
