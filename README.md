@@ -8,10 +8,11 @@ MRS Project
 
 ## When running the code
 Launch gazebo using the environment you wish.
-Go to `init_formations.py` and set MAP_PARAMS to the map you want (e.g SIMPLE_MAP or CORRIDOR_MAP)
 
-If you want to run RRT, set the parameter RUN_RRT to True. This will display the path and print out the points.
+Go to `init_formations.py` and set MAP\_PARAMS to the map you want (e.g SIMPLE\_MAP)
+
+If you want to run RRT, set RUN\_RRT to True.
 
 Predefined paths are stored in the `precomputed_rrt_paths.py` file.
 
-NOTE: if you change the starting position of the robots in the environment, you need to precompute a new path (either store it in the precomputed paths file or put the starting position back after).
+NOTE: If you change the starting positions of the robots in the environment, you need to recompute a new path, then either store it in the precomputed paths file or reset the starting positions.
