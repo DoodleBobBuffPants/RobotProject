@@ -1,5 +1,6 @@
-import numpy as np
 from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW
+
+import numpy as np
 
 X = 0
 Y= 1
@@ -8,18 +9,11 @@ YAW = 2
 ROBOT_RADIUS = 0.105 / 2.
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
-DEAD_ZONE = ROBOT_RADIUS + (ROBOT_RADIUS / 2.)
+DEAD_ZONE = 1.5 * ROBOT_RADIUS
 # CONTROL_ZONE (if robot is within the controlled zone, velocity towards position linearly increases the further away it is)
 CONTROLLED_ZONE = DEAD_ZONE + SPACING_DIST
 
 def get_desired_positions(formation, formation_pose):
-    """
-    formation: a list of points defining each robot position in the formation relative to the formation origin
-    formation_pose: origin of formation (unit-reference) where YAW is the orientation of the formation
-
-    returns: 
-    desired_positions: list of desired positions i.e. where each robot should be in the formation
-    """
 
     # Take formation and transform (rotate, translate) onto formation_pose
     theta = formation_pose[YAW]
@@ -35,16 +29,8 @@ def get_desired_positions(formation, formation_pose):
 
 
 def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
-    """
-    param leader_pose: ground truth pose of the leader
-    param follower_poses: the ground truth poses of the followers
-    param leader_rrt_velocity: rrt_velocity of the leader
 
-    returns: 
-    velocities for followers: list of vectors [x, y] indicating the velocities of each robot needed to maintain formation
-    """
-
-    # Formation orientation is the angle of formation
+    # Formation orientation is the angle of the formation given the leader's direction.
     formation_orientation = leader_pose[YAW] - INITIAL_YAW
     formation_pose = np.concatenate((leader_pose[:2], [formation_orientation]))
 
@@ -57,10 +43,8 @@ def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
 
     # update each velocity (the displacement between the current and desired position) depending on the distance
     for i in range(len(velocities)):
-        # euclidian distance
-        distance = np.sqrt(np.square(velocities[i][X]) + np.square(velocities[i][Y]))
 
-        # print('rob_pos: %s, rob_despos: %s, form_orient: %s, in_ded_zone: %s' % (follower_poses[i], desired_positions[i], formation_orientation, (distance < DEAD_ZONE)))
+        distance = np.linalg.norm(velocities[i])
 
         # If a robot is within accepted radius of formation position, velocity should be 0
         # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
@@ -74,8 +58,5 @@ def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
             # by the radius of the control zone.
             velocities[i] = velocities[i] / distance
             velocities[i] = velocities[i] * CONTROLLED_ZONE
-
-    # print("----------------------------------")
-    # print("----------------------------------")
 
     return velocities

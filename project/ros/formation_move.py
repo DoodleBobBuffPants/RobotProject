@@ -4,25 +4,26 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
+import numpy as np
+import os
+import random
+import re
+import rospy
 import sys
 import yaml
-import os
-import re
-import random
-import rospy
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../python')
 sys.path.insert(0, directory)
 import rrt
 
-directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/velocity_controller')
 sys.path.insert(0, directory)
+from init_formations import FORMATION, LEADER_ID, MAP_PARAMS, RUN_RRT
 import get_combined_velocity as gcv
 import rrt_navigation
-from init_formations import FORMATION, LEADER_ID
+
 
 # Robot motion commands:
 # http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html
@@ -36,12 +37,12 @@ from tf.transformations import euler_from_quaternion
 
 robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 
-GOAL_POSITION = np.array([0, 1.5], dtype=np.float32)
-# GOAL_POSITION = np.array([-1, 1.5], dtype=np.float32)
-# GOAL_POSITION = np.array([-0.21, 1.3], dtype=np.float32)
+GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
 EPSILON = .1
 MAX_SPEED = 0.25
+
+MAP = MAP_PARAMS["MAP_NAME"]
 
 X = 0
 Y = 1
@@ -136,21 +137,25 @@ def run():
   
   publishers = [None] * len(robot_names)
   lasers = [None] * len(robot_names)
-  groundtruth_poses = [None] * len(robot_names)
+  groundtruths = [None] * len(robot_names)
 
   # RRT path
-  current_path = None
-
+  # If RUN_RRT is False, load the predefined path
+  if not RUN_RRT:
+    current_path = MAP_PARAMS["RRT_PATH"]
+  else:
+    current_path = None
+  
   vel_msgs = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
   	publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
   	lasers[i] = SimpleLaser(name)
-  	groundtruth_poses[i] = GroundtruthPose(name)
+  	groundtruths[i] = GroundtruthPose(name)
 
   # Load map. (in here so it is only computed once)
-  with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.yaml')) as fp:
+  with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/{}.yaml'.format(MAP))) as fp:
     data = yaml.load(fp)
-  img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/map.pgm'), data['image'])
+  img = rrt.read_pgm(os.path.expanduser('~/catkin_ws/src/exercises/project/python/{}.pgm'.format(MAP)), data['image'])
   occupancy_grid = np.empty_like(img, dtype=np.int8)
   occupancy_grid[:] = UNKNOWN
   occupancy_grid[img < .1] = OCCUPIED
@@ -163,43 +168,41 @@ def run():
 
   while not rospy.is_shutdown():
     # Make sure all measurements are ready.
-    if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruth_poses):
+    if not all(laser.ready for laser in lasers) or not all(groundtruth.ready for groundtruth in groundtruths):
       rate_limiter.sleep()
       continue
 
-    leader = robot_names[LEADER_ID]
-    followers = [robot_names[i] for i in range(len(robot_names)) if i != LEADER_ID]
-
-    # Compute RRT on the leader only
-    robot_goal = GOAL_POSITION
+    # Compute RRT for the leader only
     while not current_path:
-        start_node, final_node = rrt.rrt(groundtruth_poses[LEADER_ID].pose, robot_goal, occupancy_grid)
+        start_node, final_node = rrt.rrt(groundtruths[LEADER_ID].pose, GOAL_POSITION, occupancy_grid)
 
         # plot rrt path
         # useful debug code
-        fig, ax = plt.subplots()
-        occupancy_grid.draw()
-        plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        rrt.draw_solution(start_node, final_node)
-        plt.scatter(groundtruth_poses[i].pose[0], groundtruth_poses[i].pose[1], s=10, marker='o', color='green', zorder=1000)
-        plt.scatter(robot_goal[0], robot_goal[1], s=10, marker='o', color='red', zorder=1000)
+
+        # fig, ax = plt.subplots()
+        # occupancy_grid.draw()
+        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
+        # rrt.draw_solution(start_node, final_node)
+        # plt.scatter(groundtruths[i].pose[0], groundtruths[i].pose[1], s=10, marker='o', color='green', zorder=1000)
+        # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
         
-        plt.axis('equal')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.xlim([-.5 - 2., 2. + .5])
-        plt.ylim([-.5 - 2., 2. + .5])
-        plt.show()
+        # plt.axis('equal')
+        # plt.xlabel('x')
+        # plt.ylabel('y')
+        # plt.xlim([-.5 - 2., 2. + .5])
+        # plt.ylim([-.5 - 2., 2. + .5])
+        # plt.show()
 
         current_path = rrt_navigation.get_path(final_node)
+        # print("CURRENT PATH: ", current_path)
 
     # get the RRT velocity for the leader robot
-    position = np.array([groundtruth_poses[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruth_poses[LEADER_ID].pose[YAW]),
-                         groundtruth_poses[LEADER_ID].pose[Y] + EPSILON*np.sin(groundtruth_poses[LEADER_ID].pose[YAW])], dtype=np.float32)
+    position = np.array([groundtruths[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruths[LEADER_ID].pose[YAW]),
+                         groundtruths[LEADER_ID].pose[Y] + EPSILON*np.sin(groundtruths[LEADER_ID].pose[YAW])], dtype=np.float32)
     rrt_velocity = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
 
     # get robot poses
-    robot_poses = np.array([groundtruth_poses[i].pose for i in range(len(groundtruth_poses))])
+    robot_poses = np.array([groundtruths[i].pose for i in range(len(groundtruths))])
 
     # get the velocities for all the robots
     us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers)

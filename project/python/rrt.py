@@ -2,42 +2,43 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
 import numpy as np
 import os
 import re
 import scipy.signal
-import yaml
+import sys
 
-# Constants used for indexing.
+directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../ros/velocity_controller')
+sys.path.insert(0, directory)
+from init_formations import MAP_PARAMS
+
 X = 0
 Y = 1
 YAW = 2
 
-# Constants for occupancy grid.
 FREE = 0
 UNKNOWN = 1
 OCCUPIED = 2
 
 ROBOT_RADIUS = 0.105 / 2.
-# GOAL_POSITION = np.array([1.5, 1.5], dtype=np.float32)  # Any orientation is good.
-START_POSE = np.array([-1.5, -1.5, 0.], dtype=np.float32)
-MAX_ITERATIONS = 500
+
+# START_POSE = MAP_PARAMS["START_POSE"]
+BOUNDS = MAP_PARAMS["RRT_BOUNDS"]
+MAX_ITERATIONS = MAP_PARAMS["RRT_ITERATIONS"]
 
 
 def sample_random_position(occupancy_grid):
   position = np.zeros(2, dtype=np.float32)
 
-  # MISSING: Sample a valid random position (do not sample the yaw).
-  # The corresponding cell must be free in the occupancy grid.
-
   # This is implementing the first primitive of the RRT algorithm: sample configurations in free C-space.
   # C free = C \ C obs, the occupancy_grid function is giving us a nice 
 
   # sample function not including yaw, capped at dimensions of the arena
-  sample_pos = lambda: np.random.uniform(low=-2, high=2, size=2)
+
+  sample_pos = lambda: np.array([np.random.uniform(low=BOUNDS[X][0], high=BOUNDS[X][1]),
+                                 np.random.uniform(low=BOUNDS[Y][0], high=BOUNDS[Y][1])])
 
   position = sample_pos()
   while not is_valid(position, occupancy_grid):
@@ -576,42 +577,3 @@ def draw_solution(start_node, final_node=None):
     while v.parent is not None:
       draw_path(v.parent, v, color='k', lw=2)
       v = v.parent
-
-
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Uses RRT to reach the goal.')
-  parser.add_argument('--map', action='store', default='map', help='Which map to use.')
-  args, unknown = parser.parse_known_args()
-
-  # Load map.
-  with open(args.map + '.yaml') as fp:
-    data = yaml.load(fp)
-  img = read_pgm(os.path.join(os.path.dirname(args.map), data['image']))
-  occupancy_grid = np.empty_like(img, dtype=np.int8)
-  occupancy_grid[:] = UNKNOWN
-  occupancy_grid[img < .1] = OCCUPIED
-  occupancy_grid[img > .9] = FREE
-  # Transpose (undo ROS processing).
-  occupancy_grid = occupancy_grid.T
-  # Invert Y-axis.
-  occupancy_grid = occupancy_grid[:, ::-1]
-  occupancy_grid = OccupancyGrid(occupancy_grid, data['origin'], data['resolution'])
-
-  # Run RRT.
-  start_node, final_node = rrt(START_POSE, GOAL_POSITION, occupancy_grid)
-
-  # Plot environment.
-  fig, ax = plt.subplots()
-  occupancy_grid.draw()
-  plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-  draw_solution(start_node, final_node)
-  plt.scatter(START_POSE[0], START_POSE[1], s=10, marker='o', color='green', zorder=1000)
-  plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
-  
-  plt.axis('equal')
-  plt.xlabel('x')
-  plt.ylabel('y')
-  plt.xlim([-.5 - 2., 2. + .5])
-  plt.ylim([-.5 - 2., 2. + .5])
-  plt.show()
-  
