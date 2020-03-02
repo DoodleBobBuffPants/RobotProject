@@ -111,9 +111,9 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     formation = weighting(formation_velocities, formation_w)
     static_obstacle_avoidance = weighting(obstacle_velocities, static_obs_avoid_w)
 
-    print("goal: ", goal)
-    print("formation: ", formation)
-    print("static obstacles: ", static_obstacle_avoidance)
+    # print("goal: ", goal)
+    # print("formation: ", formation)
+    # print("static obstacles: ", static_obstacle_avoidance)
 
     # only leader has the goal, the rest have formation constraints
     objective = goal + formation
