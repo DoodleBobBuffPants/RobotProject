@@ -20,7 +20,7 @@ import rrt
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/velocity_controller')
 sys.path.insert(0, directory)
-from init_formations import FORMATION, LEADER_ID, MAP_PARAMS
+from init_formations import FORMATION, LEADER_ID, MAP_PARAMS, RUN_RRT
 import get_combined_velocity as gcv
 import rrt_navigation
 
@@ -140,8 +140,12 @@ def run():
   groundtruths = [None] * len(robot_names)
 
   # RRT path
-  current_path = None
-
+  # If RUN_RRT is False, load the predefined path
+  if not RUN_RRT:
+    current_path = MAP_PARAMS["RRT_PATH"]
+  else:
+    current_path = None
+  
   vel_msgs = [None] * len(robot_names)
   for i,name in enumerate(robot_names):
   	publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
@@ -174,6 +178,7 @@ def run():
 
         # plot rrt path
         # useful debug code
+
         # fig, ax = plt.subplots()
         # occupancy_grid.draw()
         # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
@@ -189,6 +194,7 @@ def run():
         # plt.show()
 
         current_path = rrt_navigation.get_path(final_node)
+        # print("CURRENT PATH: ", current_path)
 
     # get the RRT velocity for the leader robot
     position = np.array([groundtruths[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruths[LEADER_ID].pose[YAW]),
