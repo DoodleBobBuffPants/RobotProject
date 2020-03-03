@@ -1,4 +1,4 @@
-from precomputed_rrt_paths import SIMPLE_PATH, CORRIDOR_PATH, MAZE_PATH, DIAMOND_PATH
+from precomputed_rrt_paths import *
 
 import numpy as np
 

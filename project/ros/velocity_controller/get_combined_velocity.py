@@ -23,12 +23,12 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers):
 
   xyoa_velocities = []
   for i in range(len(robot_poses)):
-      u, w = obstacle_avoidance.rule_based(*lasers[i].measurements)
+    u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
 
-      x = u*np.cos(robot_poses[i][YAW] + w)
-      y = u*np.sin(robot_poses[i][YAW] + w)
+    x = u*np.cos(robot_poses[i][YAW] + EPSILON*w)
+    y = u*np.sin(robot_poses[i][YAW] + EPSILON*w)
 
-      xyoa_velocities.append(np.array([x,y]))
+    xyoa_velocities.append(np.array([x,y]))
 
   return np.array(xyoa_velocities)
 
@@ -37,10 +37,11 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     # get leader and follower poses
     leader_pose = robot_poses[LEADER_ID]
     follower_poses = np.array([robot_poses[i] for i in range(len(robot_poses)) if i != LEADER_ID])
+    follower_lasers = [lasers[i] for i in range(len(lasers)) if i != LEADER_ID]
 
     # Velocities
     follower_formation_velocities = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
-    follower_obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(follower_poses, lasers)
+    follower_obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(follower_poses, follower_lasers)
 
     # NOTE: for numpy insert, obj is the index of insertion.
     formation_velocities = np.insert(arr=follower_formation_velocities, obj=LEADER_ID, values=np.array([0., 0.]), axis=0)
