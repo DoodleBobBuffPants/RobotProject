@@ -20,12 +20,10 @@ YAW = 2
 
 def get_obstacle_avoidance_velocity(robot_pose, laser):
 
-  u, w = obstacle_avoidance.braitenberg(*laser.measurements)
+  u, w = obstacle_avoidance.rule_based(*laser.measurements)
   
-  # Adjustable deltas that affect the contribution of obstacle avoidance
-  du, dw = .4, .2
-  x = du*u*np.cos(robot_pose[YAW] + dw*w)
-  y = du*u*np.sin(robot_pose[YAW] + dw*w)
+  x = u*np.cos(robot_pose[YAW] + EPSILON*w)
+  y = u*np.sin(robot_pose[YAW] + EPSILON*w)
 
   return np.array([x, y])
 
@@ -55,7 +53,7 @@ def weight_velocities(goal_velocity, formation_velocity, obstacle_velocity):
 
     goal_w = .8
     formation_w = 1.2
-    static_obs_avoid_w = .8
+    static_obs_avoid_w = 3.
     # currently no robot avoidance in decentralized algorithm as we do not keep all robot poses
 
     goal = weighting(goal_velocity, goal_w)

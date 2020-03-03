@@ -12,7 +12,6 @@ import rrt_navigation
 # Feedback linearisation epsilon
 EPSILON = .1
 
-THRESHOLD = .01
 ROBOT_DISTANCE = .125
 
 X = 0

@@ -78,6 +78,6 @@ DIAMOND_MAP = {
 MAP_PARAMS = SIMPLE_MAP
 
 # Set to false to use the predefined path
-RUN_RRT = False
+RUN_RRT = True
 
 FORMATION = DIAMOND
