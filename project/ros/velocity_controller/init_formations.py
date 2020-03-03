@@ -1,4 +1,4 @@
-from precomputed_rrt_paths import SIMPLE_PATH, CORRIDOR_PATH, DIAMOND_PATH
+from precomputed_rrt_paths import SIMPLE_PATH, CORRIDOR_PATH, MAZE_PATH
 
 import numpy as np
 
@@ -60,22 +60,22 @@ CORRIDOR_MAP = {
  	"RRT_PATH": CORRIDOR_PATH}
 
 MAZE_MAP = {
-	"GOAL_POSITION": np.array([-0.9, -3.0], dtype=np.float32),
- 	"RRT_BOUNDS": [[-12, -2], [-1, 3]],
+	"GOAL_POSITION": np.array([-1.0, -3.2], dtype=np.float32),
+ 	"RRT_BOUNDS": [[-4.3, -0.3], [-5.8, -2.5]],
  	"MAP_NAME": "maze",
- 	"RRT_ITERATIONS": 500,
- 	"RRT_PATH": None}
+ 	"RRT_ITERATIONS": 1000,
+ 	"RRT_PATH": MAZE_PATH}
 
 DIAMOND_MAP = {
 	"GOAL_POSITION": np.array([3.3, -4.0], dtype=np.float32),
- 	"RRT_BOUNDS": [[-8, 4], [-6, -2]],
+ 	"RRT_BOUNDS": [[-12, -2], [-1, 3]],
  	"MAP_NAME": "diamond",
- 	"RRT_ITERATIONS": 1500,
- 	"RRT_PATH": DIAMOND_PATH}
+ 	"RRT_ITERATIONS": 50,
+ 	"RRT_PATH": None}
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = SIMPLE_MAP
+MAP_PARAMS = MAZE_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False
