@@ -8,13 +8,13 @@
   <arg name="fourth_tb3" default="tb3_3"/>
   <arg name="fifth_tb3"  default="tb3_4"/>
 
-  <arg name="first_tb3_x_pos" default="-6.3"/>
-  <arg name="first_tb3_y_pos" default="-3.6"/>
+  <arg name="first_tb3_x_pos" default="-6.0"/>
+  <arg name="first_tb3_y_pos" default="-3.9"/>
   <arg name="first_tb3_z_pos" default=" 0.0"/>
   <arg name="first_tb3_yaw_pos" default="0.0"/>
 
-  <arg name="second_tb3_x_pos" default="-6.6"/>
-  <arg name="second_tb3_y_pos" default="-3.9"/>
+  <arg name="second_tb3_x_pos" default="-6.3"/>
+  <arg name="second_tb3_y_pos" default="-3.6"/>
   <arg name="second_tb3_z_pos" default=" 0.0"/>
   <arg name="second_tb3_yaw_pos" default="0.0"/>
 
@@ -23,15 +23,16 @@
   <arg name="third_tb3_z_pos" default=" 0.0"/>
   <arg name="third_tb3_yaw_pos" default="0.0"/>
 
-  <arg name="fourth_tb3_x_pos" default="-6.3"/>
-  <arg name="fourth_tb3_y_pos" default="-4.2"/>
+  <arg name="fourth_tb3_x_pos" default="-6.6"/>
+  <arg name="fourth_tb3_y_pos" default="-3.9"/>
   <arg name="fourth_tb3_z_pos" default=" 0.0"/>
   <arg name="fourth_tb3_yaw_pos" default="0.0"/>
 
-  <arg name="fifth_tb3_x_pos" default="-6.0"/>
-  <arg name="fifth_tb3_y_pos" default="-3.9"/>
+  <arg name="fifth_tb3_x_pos" default="-6.3"/>
+  <arg name="fifth_tb3_y_pos" default="-4.2"/>
   <arg name="fifth_tb3_z_pos" default=" 0.0"/>
   <arg name="fifth_tb3_yaw_pos" default="0.0"/>
+
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find exercises)/project/ros/worlds/diamond.world"/>
