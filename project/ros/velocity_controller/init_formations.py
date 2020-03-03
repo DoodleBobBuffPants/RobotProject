@@ -30,7 +30,7 @@ COLUMN = np.array([[0, 2*SPACING_DIST],
 
 LEADER_ID = 0
 INITIAL_YAW = 1.571
-# INITIAL_YAW=0.
+# INITIAL_YAW = 0.
 DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST], 
 					 [0, -SPACING_DIST], 
 					 [0, -2.*SPACING_DIST], 
