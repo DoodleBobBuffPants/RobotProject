@@ -24,7 +24,6 @@ OCCUPIED = 2
 
 ROBOT_RADIUS = 0.105 / 2.
 
-# START_POSE = MAP_PARAMS["START_POSE"]
 BOUNDS = MAP_PARAMS["RRT_BOUNDS"]
 MAX_ITERATIONS = MAP_PARAMS["RRT_ITERATIONS"]
 
@@ -199,6 +198,8 @@ def adjust_pose(node, final_position, occupancy_grid):
       direction = 1 if (theta_rad - theta_robot) > 0 else -1. # theta_rad-theta_tobot is < 0 for anticlockwise
   
       # step along the arc, looking for collisions
+      if np.isnan(steps):
+        steps = 0
       for step in range(0, int(round(steps+1))):
         angle = node.pose[YAW] + offset + (step * step_angle * direction)
         

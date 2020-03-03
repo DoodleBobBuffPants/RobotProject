@@ -40,7 +40,6 @@ robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
 EPSILON = .1
-MAX_SPEED = 0.25
 
 MAP = MAP_PARAMS["MAP_NAME"]
 
@@ -51,12 +50,6 @@ YAW = 2
 FREE = 0
 UNKNOWN = 1
 OCCUPIED = 2
-
-def cap(v, max_speed):
-  n = np.linalg.norm(v)
-  if n > max_speed:
-    return v / n * max_speed
-  return v
 
 class SimpleLaser(object):
   def __init__(self, name):
@@ -207,10 +200,7 @@ def run():
     # get the velocities for all the robots
     us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers)
 
-    # cap speed
     for i in range(len(us)):
-      us[i] = cap(us[i], MAX_SPEED)
-
       vel_msgs[i] = Twist()
       vel_msgs[i].linear.x = us[i]
       vel_msgs[i].angular.z = ws[i]
