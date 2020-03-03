@@ -178,19 +178,20 @@ def run():
 
         # plot rrt path
         # useful debug code
-        fig, ax = plt.subplots()
-        occupancy_grid.draw()
-        plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        rrt.draw_solution(start_node, final_node)
-        plt.scatter(groundtruths[i].pose[0], groundtruths[i].pose[1], s=10, marker='o', color='green', zorder=1000)
-        plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
+
+        # fig, ax = plt.subplots()
+        # occupancy_grid.draw()
+        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
+        # rrt.draw_solution(start_node, final_node)
+        # plt.scatter(groundtruths[i].pose[0], groundtruths[i].pose[1], s=10, marker='o', color='green', zorder=1000)
+        # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
         
-        plt.axis('equal')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.xlim([-.5 - 2., 2. + .5])
-        plt.ylim([-.5 - 2., 2. + .5])
-        plt.show()
+        # plt.axis('equal')
+        # plt.xlabel('x')
+        # plt.ylabel('y')
+        # plt.xlim([-.5 - 2., 2. + .5])
+        # plt.ylim([-.5 - 2., 2. + .5])
+        # plt.show()
 
         current_path = rrt_navigation.get_path(final_node)
         # print("CURRENT PATH: ", current_path)
@@ -208,10 +209,8 @@ def run():
 
     # cap speed
     for i in range(len(us)):
-      us[i] = cap(us[i], MAX_SPEED)
-
       vel_msgs[i] = Twist()
-      vel_msgs[i].linear.x = us[i]
+      vel_msgs[i].linear.x = cap(us[i], MAX_SPEED)
       vel_msgs[i].angular.z = ws[i]
 
     for i,_ in enumerate(robot_names):
