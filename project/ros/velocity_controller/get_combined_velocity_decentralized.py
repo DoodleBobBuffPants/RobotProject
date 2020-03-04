@@ -22,8 +22,8 @@ def get_obstacle_avoidance_velocity(robot_pose, laser):
 
   u, w = obstacle_avoidance.rule_based(*laser.measurements)
   
-  x = u*np.cos(robot_pose[YAW] + EPSILON*w)
-  y = u*np.sin(robot_pose[YAW] + EPSILON*w)
+  x = u*np.cos(robot_pose[YAW]) - EPSILON*w*np.sin(robot_pose[YAW])
+  y = u*np.sin(robot_pose[YAW]) + EPSILON*w*np.cos(robot_pose[YAW])
 
   return np.array([x, y])
 
