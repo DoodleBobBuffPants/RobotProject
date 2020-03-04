@@ -34,81 +34,61 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
-This electronic document is a live template. The various components of your paper [title, text, heads, etc.] are already defined on the style sheet, as illustrated by the portions given in this document.
+TODO:
+
+\begin{itemize}
+\item Only the bare minimal of words have been used so far, each section needs more detail and more maths.
+\end{itemize}
 
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
 
-This template provides authors with most of the formatting specifications needed for preparing electronic versions of their papers. All standard paper components have been specified for three reasons: (1) ease of use when formatting individual papers, (2) automatic compliance to electronic requirements that facilitate the concurrent or later production of electronic products, and (3) conformity of style throughout a conference proceedings. Margins, column widths, line spacing, and type styles are built-in; examples of the type styles are provided throughout this document and are identified in italic type, within parentheses, following the example. Some components, such as multi-leveled equations, graphics, and tables are not prescribed, although the various table text styles are provided. The formatter will need to create these components, incorporating the applicable criteria that follow.
+Robots may need to navigate in formation, perhaps as part of a display or to guarantee 360$^{\circ}$ coverage. However, staying in formation while navigating may not be possible. Take tight corridors for example. A wide diamond formation may not fit, thus preventing the robots from fulfilling their purpose. The problem here is finding a way to split and merge the robots, so that they can navigate around obstacles and through limited space to get back into formation.
 
-\section{PROCEDURE FOR PAPER SUBMISSION}
+\section{APPROACH}
 
-\subsection{Selecting a Template (Heading 2)}
+In order to solve the problem of formation control, we took the approach outlined in this$^{\cite{c1}}$ paper which defines behaviors for our robots. Each behavior generates a motor schema - a velocity for the robot. These behaviors are: formation maintenance, goal navigation, static obstacle avoidance, and dynamic obstacle avoidance. Finally, the resulting velocity vectors are weighted and summed to give the overall robot behavior. Both a centralized and decentralized solution was implemented.
 
-First, confirm that you have the correct template for your paper size. This template has been tailored for output on the US-letter paper size. 
-It may be used for A4 paper size if the paper size setting is suitably modified.
+\subsection{Formation Maintenance}
 
-\subsection{Maintaining the Integrity of the Specifications}
-
-The template is used to format your paper and style the text. All margins, column widths, line spaces, and text fonts are prescribed; please do not alter them. You may note peculiarities. For example, the head margin in this template measures proportionately more than is customary. This measurement and others are deliberate, using specifications that anticipate your paper as one part of the entire proceedings, and not as an independent document. Please do not revise any of the current designations
-
-\section{MATH}
-
-Before you begin to format your paper, first write and save the content as a separate text file. Keep your text and graphic files separate until after the text has been formatted and styled. Do not use hard tabs, and limit use of hard returns to only one return at the end of a paragraph. Do not add any kind of pagination anywhere in the paper. Do not number text heads-the template will do that for you.
-
-Finally, complete content and organizational editing before formatting. Please take note of the following items when proofreading spelling and grammar:
-
-\subsection{Abbreviations and Acronyms} Define abbreviations and acronyms the first time they are used in the text, even after they have been defined in the abstract. Abbreviations such as IEEE, SI, MKS, CGS, sc, dc, and rms do not have to be defined. Do not use abbreviations in the title or heads unless they are unavoidable.
-
-\subsection{Units}
+First we defined the formations we would like to move in, and these are listed below.
 
 \begin{itemize}
-
-\item Use either SI (MKS) or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as 3.5-inch disk drive.
-\item Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation.
-\item Do not mix complete spellings and abbreviations of units: Wb/m2 or webers per square meter, not webers/m2.  Spell out units when they appear in text: . . . a few henries, not . . . a few H.
-\item Use a zero before decimal points: 0.25, not .25. Use cm3, not cc. (bullet list)
-
+\item Line - The robots move through space side by side.
+\item Column - The robots move through space one after the other.
+\item Diamond - The robots move in a square-like form
+\item Wedge - The robots move in a distorted line, similar to the shape of a arrowhead or boomerang.
 \end{itemize}
 
-\subsection{Equations}
+Two methods for keeping the robots in formation were considered. The first is called unit reference, where the average position taken across all robots is used to define the point around which the formation is held. Each robot then generates a velocity to an offset from this position, which defines their place in the formation as given by a robot ID preassigned to each of them. Whilst this solution is straightforward to implement in a centralized fashion, its major disadvantage is that in a decentralized implementation every robot is required to know the position of every other robot in order find the formation center.
 
-The equations are an exception to the prescribed specifications of this template. You will need to determine whether or not your equation should be typed using either the Times New Roman or the Symbol font (please no other font). To create multileveled equations, it may be necessary to treat the equation as a graphic and insert it into the text after your paper is styled. Number equations consecutively. Equation numbers, within parentheses, are to position flush right, as in (1), using a right tab stop. To make your equations more compact, you may use the solidus ( / ), the exp function, or appropriate exponents. Italicize Roman symbols for quantities and variables, but not Greek symbols. Use a long dash rather than a hyphen for a minus sign. Punctuate equations with commas or periods when they are part of a sentence, as in
+The approach we took is called leader-follower. With this, a certain robot is designated the leader, which we chose based on their ID and predefined this for each formation. The leader does not need to calculate a formation velocity, as it is always considered to be in formation. The other `follower' robots then use the leader's position to generate the velocity to their position, which is an offset based on their ID as defined in the unit reference method. When decentralized, the robots only need to learn the leader's position which is achieved via message passing.
 
-$$
-\alpha + \beta = \chi \eqno{(1)}
-$$
+\subsection{Goal Navigation}
 
-Note that the equation is centered using a center tab stop. Be sure that the symbols in your equation have been defined before or immediately following the equation. Use (1), not Eq. (1) or equation (1), except at the beginning of a sentence: Equation (1) is . . .
+With the leader-follower approach to formation control, only the leader needs a goal velocity, as the followers' goal is defined by their position in the formation, which is the only place they need to aim to be. Our leader runs the RRT* algorithm once to compute an obstacle free path to a goal.
 
-\subsection{Some Common Mistakes}
-\begin{itemize}
+\subsection{Static Obstacle Avoidance}
 
-\item The word data is plural, not singular.
-\item The subscript for the permeability of vacuum ?0, and other common scientific constants, is zero with subscript formatting, not a lowercase letter o.
-\item In American English, commas, semi-/colons, periods, question and exclamation marks are located within quotation marks only when a complete thought or name is cited, such as a title or full quotation. When quotation marks are used, instead of a bold or italic typeface, to highlight a word or phrase, punctuation should appear outside of the quotation marks. A parenthetical phrase or statement at the end of a sentence is punctuated outside of the closing parenthesis (like this). (A parenthetical sentence is punctuated within the parentheses.)
-\item A graph within a graph is an inset, not an insert. The word alternatively is preferred to the word alternately (unless you really mean something that alternates).
-\item Do not use the word essentially to mean approximately or effectively.
-\item In your paper title, if the words that uses can accurately replace the word using, capitalize the u; if not, keep using lower-cased.
-\item Be aware of the different meanings of the homophones affect and effect, complement and compliment, discreet and discrete, principal and principle.
-\item Do not confuse imply and infer.
-\item The prefix non is not a word; it should be joined to the word it modifies, usually without a hyphen.
-\item There is no period after the et in the Latin abbreviation et al..
-\item The abbreviation i.e. means that is, and the abbreviation e.g. means for example.
+Our implementation of RRT* has built-in obstacle avoidance, so the leader does not need to compute velocity vector for static obstacles. Each follower robot however uses laser measurements to determine its distance to obstacles within a 180$^{\circ}$ cone in front of it. These measurements are fed into a rule based obstacle avoidance method which steers the robot away from static obstacles such as walls.
 
-\end{itemize}
+\subsection{Dynamic Obstacle Avoidance}
 
-\section{USING THE TEMPLATE}
+The dynamic obstacles are other robots, and the laser sensors do not detect the other robots which is why a separate implementation is required. Our implementation of this uses the position of each robot to produce a weight vector instead of a velocity vector. This weight acts as an `on-off' switch which stops a robot from moving if it is too close to another robot. We stop the robot with the lowest ID, as this reduces the combinatorial complexity to $O(n^{2})$ as we only need to consider each possible pair of robots.
 
-Use this sample document as your LaTeX source file to create your document. Save this file as {\bf root.tex}. You have to make sure to use the cls file that came with this distribution. If you use a different style file, you cannot expect to get required margins. Note also that when you are creating your out PDF file, the source file is only part of the equation. {\it Your \TeX\ $\rightarrow$ PDF filter determines the output file size. Even if you make all the specifications to output a letter file in the source - if your filter is set to produce A4, you will only get A4 output. }
+\subsection{Combining Velocities}
 
-It is impossible to account for all possible situation, one would encounter using \TeX. If you are using multiple \TeX\ files you must make sure that the ``MAIN`` source file is called root.tex - this is particularly important if your conference is using PaperPlaza's built in \TeX\ to PDF conversion tool.
+Each velocity component is combined with a weight. This weight affects the nature of the robots movement. The weights we used were $0.8$ for the goal velocity, $1.2$ for the formation velocity, and $3.0$ for the static obstacle avoidance velocity. The resulting behavior forces the robots to stay in formation when there is free space, with the added effect of the followers playing `catch-up' with the leader to avoid being left behind. In the presence of obstacles, the robots will split to avoid the obstacles and merge once they are free again. The vector of dynamic obstacle avoidance weights will stop the robots from moving, and the robots also stop moving once they are at their goal, to avoid other velocity components from leading to erroneous movements.
 
-\subsection{Headings, etc}
+\section{RESULTS}
 
-Text heads organize the topics on a relational, hierarchical basis. For example, the paper title is the primary text head because all subsequent material relates and elaborates on this one topic. If there are two or more sub-topics, the next level head (uppercase Roman numerals) should be used and, conversely, if there are not at least two sub-topics, then no subheads should be introduced. Styles named Heading 1, Heading 2, Heading 3, and Heading 4 are prescribed.
+TODO - talk about map, error etc.
+
+\section{CONCLUSION}
+
+TODO - success, robustness (completeness), future work
 
 \subsection{Figures and Tables}
 
@@ -131,16 +111,10 @@ Three & Four\\
 \begin{figure}[thpb]
 	\centering
 	\framebox{\parbox{3in}{We suggest that you use a text box to insert a graphic (which is ideally a 300 dpi TIFF or EPS file, with all
-		fonts embedded) because, in an document, this method is somewhat more stable than directly inserting a picture.}}
+		fonts embedded) because, in a document, this method is somewhat more stable than directly inserting a picture.}}
 	\caption{Inductance of oscillation winding on amorphous magnetic core versus DC bias magnetic field}
 	\label{figurelabel}
 \end{figure}
-   
-Figure Labels: Use 8 point Times New Roman for Figure labels. Use words rather than symbols or abbreviations when writing Figure axis labels to avoid confusing the reader. As an example, write the quantity Magnetization, or Magnetization, M, not just M. If including units in the label, present them within parentheses. Do not label axes only with units. In the example, write Magnetization (A/m) or Magnetization {A[m(1)]}, not just A/m. Do not label axes with a ratio of quantities and units. For example, write Temperature (K), not Temperature/K.
-
-\section{CONCLUSIONS}
-
-A conclusion section is not required. Although a conclusion may review the main points of the paper, do not replicate the abstract as the conclusion. A conclusion might elaborate on the importance of the work or suggest applications and extensions. 
 
 \addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
                                                % on the last page of the document manually. It shortens
@@ -150,13 +124,14 @@ A conclusion section is not required. Although a conclusion may review the main 
                                                % sure that you do not shorten the textheight too much.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{APPENDIX}
 
-Appendixes should appear before the acknowledgment.
+\section{ACKNOWLEDGMENT}
 
-\section*{ACKNOWLEDGMENT}
-
-Big up Amanda for the unit. Real G.
+\begin{itemize}
+\item Ajay Ahir - 
+\item Ben Philps - 
+\item Sumaiyah Kola - 
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
