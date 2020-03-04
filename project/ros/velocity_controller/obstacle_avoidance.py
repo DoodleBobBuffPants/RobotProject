@@ -15,11 +15,11 @@ def rule_based(front, front_left, front_right, left, right):
 
   # if close to front, move away
   if sens_inp[0] < np.tanh(.4):
-    u = -.25
+    u = -.5
     if sens_inp[1] < sens_inp[2]:
-      w = w - (np.pi/2.)
+      w = -np.pi
     else:
-      w = w + (np.pi/2.)
+      w =  np.pi
     return u, w
 
   return u, w

@@ -83,7 +83,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     # weights
     goal_w = .8
     formation_w = 1.2
-    static_obs_avoid_w = 3.
+    static_obs_avoid_w = 2.
 
     # formation is the goal for followers
     goal = weighting(goal_velocities, goal_w)
