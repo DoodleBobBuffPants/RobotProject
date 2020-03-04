@@ -75,7 +75,7 @@ DIAMOND_MAP = {
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = MAZE_MAP
+MAP_PARAMS = DIAMOND_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False

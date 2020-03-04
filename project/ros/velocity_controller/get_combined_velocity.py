@@ -24,8 +24,8 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers):
   for i in range(len(robot_poses)):
     u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
 
-    x = u*np.cos(robot_poses[i][YAW] + EPSILON*w)
-    y = u*np.sin(robot_poses[i][YAW] + EPSILON*w)
+    x = u*np.cos(robot_poses[i][YAW]) - EPSILON*w*np.sin(robot_poses[i][YAW])
+    y = u*np.sin(robot_poses[i][YAW]) + EPSILON*w*np.cos(robot_poses[i][YAW])
 
     xyoa_velocities.append(np.array([x,y]))
 
