@@ -53,7 +53,7 @@ def weight_velocities(goal_velocity, formation_velocity, obstacle_velocity):
 
     goal_w = .8
     formation_w = 1.2
-    static_obs_avoid_w = 3.
+    static_obs_avoid_w = 2.
     # currently no robot avoidance in decentralized algorithm as we do not keep all robot poses
 
     goal = weighting(goal_velocity, goal_w)
