@@ -14,12 +14,13 @@
 % See the \addtolength command later in the file to balance the column lengths
 % on the last page of the document
 
-\usepackage{graphics}    % for pdf, bitmapped graphics files
+\usepackage{graphicx}    % for pdf, bitmapped graphics files
 %\usepackage{epsfig}    % for postscript graphics files
 \usepackage{mathptmx} % assumes new font selection scheme installed
 \usepackage{times}        % assumes new font selection scheme installed
 \usepackage{amsmath}  % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
+\usepackage{listings}
 
 \title{\LARGE \bf Formation Control}
 
@@ -34,10 +35,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
-TODO:
+TODO: check that the contents of this report match with the implementation as we tweak things towards the end
 
 \begin{itemize}
-\item Only the bare minimal of words have been used so far, each section needs more detail and more maths.
+\item Multi-robot teams may need to move in formation for various reasons such as surveillance or purely for display. This report describes a project undertaken to perform the navigation of multi-robot teams with formation control using a behavior based approach. These behaviors generate velocities that combine to lead each robot, such as by generating a velocity to avoid obstacles and a velocity to remain in formation. Both a centralized and decentralized solution are shown.
 \end{itemize}
 
 \end{abstract}
@@ -45,46 +46,114 @@ TODO:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
 
-Robots may need to navigate in formation, perhaps as part of a display or to guarantee 360$^{\circ}$ coverage. However, staying in formation while navigating may not be possible. Take tight corridors for example. A wide diamond formation may not fit, thus preventing the robots from fulfilling their purpose. The problem here is finding a way to split and merge the robots, so that they can navigate around obstacles and through limited space to get back into formation.
+Robots that are part of a multi-robot team may need to navigate an environment in formation, perhaps as part of a display or to guarantee 360$^{\circ}$ coverage during surveillance. However, staying in formation while navigating may not be possible. Take tight corridors for example - a wide diamond formation may not fit, thus preventing the robots from fulfilling their purpose and leading to a state where they are stuck. The problem here is finding a way to split and merge the robots, so that they can navigate around obstacles and through limited space by momentarily breaking formation before getting back into formation. \\
+
+In order to solve this problem, we use the approach taken in this$^{\cite{behaviorpaper}}$ paper which defines behaviors for each robot. These behaviors break down the task of formation control into behavioral components, and these are: formation maintenance, goal navigation, and static/dynamic obstacle avoidance. Each behavior generates a velocity, also called a `motor schema', and these are summed to generate the overall motion of each robot. By weighting each component velocity differently in the sum, the behavior of the resulting motion can be altered, and this is detailed under \textit{APPROACH}. \\
+
+Both a centralized and decentralized solution are viable options, as any practical scenario may not have guaranteed centralized communication, so both approaches are considered and shown. Where the centralized solution uses the knowledge of all robots positions and their combined view of the world, the decentralized solution shows how this can be achieved by each individual robot and using limited message passing. \\
+
+Our setup uses ROS$^{\cite{ros}}$ to control our robots, which are standard Turtlebot3's$^{\cite{turtlebot}}$. We use Gazebo$^{\cite{gazebo}}$ as our simulation environment. With these tools we can launch multiple robots into a world which run our algorithms. These worlds are created by defining the objects within the world using `world' files which Gazebo understands. Fig. \ref{corridorworld} shows such an example world.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[width=\linewidth]{corridorworld}
+\caption{Example world in Gazebo}
+\label{corridorworld}
+\end{figure}
+
+With this setup we begin our implementation.
 
 \section{APPROACH}
 
-In order to solve the problem of formation control, we took the approach outlined in this$^{\cite{c1}}$ paper which defines behaviors for our robots. Each behavior generates a motor schema - a velocity for the robot. These behaviors are: formation maintenance, goal navigation, static obstacle avoidance, and dynamic obstacle avoidance. Finally, the resulting velocity vectors are weighted and summed to give the overall robot behavior. Both a centralized and decentralized solution was implemented.
+\subsection{Formations}
 
-\subsection{Formation Maintenance}
-
-First we defined the formations we would like to move in, and these are listed below.
+For our solution$^{\cite{repository}}$, we first define the formations we will be using, and these are:
 
 \begin{itemize}
-\item Line - The robots move through space side by side.
-\item Column - The robots move through space one after the other.
-\item Diamond - The robots move in a square-like form
-\item Wedge - The robots move in a distorted line, similar to the shape of a arrowhead or boomerang.
+\item Line - The robots move side by side.
+\item Column - The robots move one after the other.
+\item Diamond - The robots move in a square-like form.
+\item Wedge - The robots move similar to an arrowhead.
 \end{itemize}
 
-Two methods for keeping the robots in formation were considered. The first is called unit reference, where the average position taken across all robots is used to define the point around which the formation is held. Each robot then generates a velocity to an offset from this position, which defines their place in the formation as given by a robot ID preassigned to each of them. Whilst this solution is straightforward to implement in a centralized fashion, its major disadvantage is that in a decentralized implementation every robot is required to know the position of every other robot in order find the formation center.
+TODO: vector of relative positions for each formation
 
-The approach we took is called leader-follower. With this, a certain robot is designated the leader, which we chose based on their ID and predefined this for each formation. The leader does not need to calculate a formation velocity, as it is always considered to be in formation. The other `follower' robots then use the leader's position to generate the velocity to their position, which is an offset based on their ID as defined in the unit reference method. When decentralized, the robots only need to learn the leader's position which is achieved via message passing.
+TODO: define the `links' in the formation for decentralized message passing \\
 
-\subsection{Goal Navigation}
+With these formations ready, we move on to generating each of the behaviors that define our motion.
 
-With the leader-follower approach to formation control, only the leader needs a goal velocity, as the followers' goal is defined by their position in the formation, which is the only place they need to aim to be. Our leader runs the RRT* algorithm once to compute an obstacle free path to a goal.
+\subsection{Formation Velocity}
 
-\subsection{Static Obstacle Avoidance}
+Two methods for keeping the robots in formation were considered. The first is called Unit Reference, where the average position taken across all robots is used to define the point around which the formation is held. Each robot then generates a velocity to an offset from this position, which defines their place in the formation as given by a robot ID preassigned to each of them. This ID is used to index the list of positions defined for each formation to get this offset. Whilst this solution is straightforward to implement in a centralized fashion, its major disadvantage is that in a decentralized implementation every robot is required to know the position of every other robot in order to find the formation center. \\
 
-Our implementation of RRT* has built-in obstacle avoidance, so the leader does not need to compute velocity vector for static obstacles. Each follower robot however uses laser measurements to determine its distance to obstacles within a 180$^{\circ}$ cone in front of it. These measurements are fed into a rule based obstacle avoidance method which steers the robot away from static obstacles such as walls.
+TODO: do we want equations here that show how to generate robot positions using averages+offset? \\
 
-\subsection{Dynamic Obstacle Avoidance}
+The approach we took is called Leader-Follower. With this approach, a certain robot is designated the leader, which we chose based on their ID and predefined this for each formation to correspond to the $(0,0)$ offset. The leader does not need to calculate a formation velocity, as it is always considered to be in formation. The other `follower' robots then use the leader's position to generate the velocity to their position, which is again an offset based on their ID.
 
-The dynamic obstacles are other robots, and the laser sensors do not detect the other robots which is why a separate implementation is required. Our implementation of this uses the position of each robot to produce a weight vector instead of a velocity vector. This weight acts as an `on-off' switch which stops a robot from moving if it is too close to another robot. We stop the robot with the lowest ID, as this reduces the combinatorial complexity to $O(n^{2})$ as we only need to consider each possible pair of robots.
+The direction is easily calculated by subtraction of position vectors. This vector is normalized after calculating its magnitude, which is the distance from the robot to the target position. The final speed is determined by this distance and where it lies within two `zones'. These zones are called the `dead zone' and `control zone'. The dead zone is a small region around the goal at which the velocity is considered zero, which deals with positional noise and error when moving to the target position. Inside the control zone the velocity is linearly scaled proportional to this distance to control speed, and outside the control zone the velocity is capped to what it would be if it were on the edge of the control zone. Fig. \ref{zonecode} shows this in pseudocode.
+
+\begin{figure}[thpb]
+\centering
+\lstset{language=python}
+\begin{lstlisting}
+if distance < DEAD_ZONE:
+  velocity = velocity * 0.
+else if distance < CONTROL_ZONE:
+  velocity = velocity * distance
+else
+  velocity = velocity * CONTROL_ZONE
+\end{lstlisting}
+\caption{Formation velocity pseudocode}
+\label{zonecode}
+\end{figure}
+
+TODO: define zone values here \\
+
+Decentralizing the Leader-Follower solution is a much easier task, as only the leader robot's position is required. Each robot then participates in message passing to get the position from the leader, and uses this to execute exactly the same code.
+
+\subsection{Goal Velocity}
+
+With the Leader-Follower approach to formation control, only the leader needs a goal velocity as the followers' goal is defined by their position in the formation, and this velocity component comes from the Formation Velocity behavior. Our leader runs the RRT* algorithm once to compute an obstacle free path to a goal. \\
+
+This solution naturally extends to being decentralized, as it is only executed for one robot in the centralized case, and therefore only the leader needs to execute it in the decentralized case. \\
+
+TODO: brief explanation of RRT* and how the vector to the path is generated
+
+\subsection{Static/Dynamic Obstacle Avoidance Velocity}
+
+TODO: update this first paragraph with details on the leader's obstacle avoidance \\
+
+Our implementation of RRT* has built-in obstacle avoidance, so the leader does not need to compute a velocity vector for static obstacles. Each follower robot however uses laser sensors to obtain measurements that determine its distance to obstacles within a 180$^{\circ}$ cone in front of it. These measurements are fed into a rule based obstacle avoidance method which steers the robot away from static obstacles such as walls. \\
+
+TODO: need to determine the level of detail or if any pseudocode is provided for this
+
+TODO: update the following paragraph with details of new robot avoidance \\
+
+The dynamic obstacles are other robots, and the laser sensors are quite poor at detecting other robots which is why a separate implementation is required. Our implementation of this uses the position of each robot to produce a weight vector instead of a velocity vector. This weight acts as an `on-off' switch which stops a robot from moving if it is too close to another robot. We stop the robot with the lowest ID, as this reduces the combinatorial complexity to $O(n^{2})$ as we only need to consider each possible pair of robots. While there are edge cases to this approach, the weak sensor measurements should still activate the obstacle avoidance to allow the robot that is not left stationary to move. \\
+
+One downside to this however is that decentralizing this method cannot currently be achieved, as each robot in the decentralized implementation only maintains a belief of the leader's position, and not any other robot. Therefore there is more dependence on the sensors and the obstacle avoidance's robustness.
 
 \subsection{Combining Velocities}
 
-Each velocity component is combined with a weight. This weight affects the nature of the robots movement. The weights we used were $0.8$ for the goal velocity, $1.2$ for the formation velocity, and $3.0$ for the static obstacle avoidance velocity. The resulting behavior forces the robots to stay in formation when there is free space, with the added effect of the followers playing `catch-up' with the leader to avoid being left behind. In the presence of obstacles, the robots will split to avoid the obstacles and merge once they are free again. The vector of dynamic obstacle avoidance weights will stop the robots from moving, and the robots also stop moving once they are at their goal, to avoid other velocity components from leading to erroneous movements.
+TODO: check the weights in here match the final version of the code \\
+
+Each velocity component is combined with a weight. This weight affects the nature of the robots movement. The weights we used were $0.8$ for the goal velocity, $1.2$ for the formation velocity, and $3.0$ for the static obstacle avoidance velocity. The resulting behavior forces the robots to stay in formation when there is free space, with the added effect of the followers playing `catch-up' with the leader to avoid being left behind. In the presence of obstacles, the robots will split to avoid the obstacles and merge once they are free again. The vector of dynamic obstacle avoidance weights will stop robots that get too close from moving, and the robots also stop moving once they are at their goal to avoid other velocity components from leading to erroneous and spurious movements. \\
+
+TODO: perhaps some pseudocode
+
+TODO: need to add that these are [x,y] velocities later turned into [u,w]
+
+\subsection{Centralized and Decentralized solution}
+
+The centralized solution uses main algorithms defined above and the known position of each robot, called the `ground truth', to compute their velocity vectors in $(x,y)$ position coordinates. \\
+
+The decentralized solution is a modified version of the centralized solution that is only designed to run for a single robot using the modified versions of the above algorithms that are described. The implementation is then ran on each robot. What it does is maintains a belief of the leader's position which is updated via message passing and limited by the link constraints on the formation. With just the leader's position, the desired velocity to get to the goal can be computed. \\
+
+TODO: might need more of an explanation, or none if this is explained throughout this section
 
 \section{RESULTS}
 
-TODO - talk about map, error etc.
+TODO - show maps, image traces of simulations, talk about accuracy, robustness, efficiency
 
 \section{CONCLUSION}
 
@@ -108,14 +177,6 @@ Three & Four\\
 \end{center}
 \end{table}
 
-\begin{figure}[thpb]
-	\centering
-	\framebox{\parbox{3in}{We suggest that you use a text box to insert a graphic (which is ideally a 300 dpi TIFF or EPS file, with all
-		fonts embedded) because, in a document, this method is somewhat more stable than directly inserting a picture.}}
-	\caption{Inductance of oscillation winding on amorphous magnetic core versus DC bias magnetic field}
-	\label{figurelabel}
-\end{figure}
-
 \addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
                                                % on the last page of the document manually. It shortens
                                                % the textheight of the last page by a suitable amount.
@@ -137,7 +198,11 @@ Three & Four\\
 
 \begin{thebibliography}{99}
 
-\bibitem{c1} T. Balch and R. C. Arkin. Behavior-based Formation Control for Multi-robot Teams. IEEE Transactions on Robotics and Automation, 1999.
+\bibitem{behaviorpaper} T. Balch and R. C. Arkin. Behavior-based Formation Control for Multi-robot Teams. IEEE Transactions on Robotics and Automation, 1999.
+\bibitem{ros} ROS - Robot Operating System. https://www.ros.org/
+\bibitem{turtlebot} Turtlebot3. http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/
+\bibitem{gazebo} Gazebo. http://gazebosim.org/
+\bibitem{repository} Code Repository. https://github.com/DoodleBobBuffPants/RobotProject
 
 \end{thebibliography}
 
