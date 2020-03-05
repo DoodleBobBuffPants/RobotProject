@@ -19,18 +19,45 @@ def feedback_linearized(pose, velocity, epsilon):
 
   # check if velocity is near zero:
   threshold = 0.01
-  if np.linalg.norm(velocity) < threshold:
+  if np.sqrt(velocity[X]**2 + velocity[Y]**2) < threshold:
     return u, w 
 
+  d_xp_t = velocity[X]
+  d_yp_t = velocity[Y]
   theta = pose[YAW]
 
-  u =  velocity[X]*np.cos(theta) + velocity[Y]*np.sin(theta)
-  w = (velocity[Y]*np.cos(theta) - velocity[X]*np.sin(theta)) / epsilon
+  u = d_xp_t*np.cos(theta) + d_yp_t*np.sin(theta)
+  w = (d_yp_t*np.cos(theta) - d_xp_t*np.sin(theta))/epsilon
 
   return u, w
 
 
 def get_velocity(position, path_points):
+  # v = np.zeros_like(position)
+  # if len(path_points) == 0:
+  #   return v
+  # # Stop moving if the goal is reached.
+  # if np.linalg.norm(position - path_points[-1]) < .2:
+  #   return v
+
+  # # MISSING: Return the velocity needed to follow the
+  # # path defined by path_points. Assume holonomicity of the
+  # # point located at position.
+
+  # minp = path_points[0]
+  # mind = np.linalg.norm(path_points[0]-position)
+  # nextp = path_points[1]
+
+  # for u, v in zip(path_points[1:], path_points[2:]):
+  #   if np.linalg.norm(u-position) < mind:
+  #     minp = u
+  #     mind = np.linalg.norm(u-position)
+  #     nextp = v
+
+  # vec = nextp - position
+  # vec = vec / np.linalg.norm(vec)
+
+  # return SPEED * vec
   v = np.zeros_like(position)
   if len(path_points) == 0:
     return v
@@ -42,20 +69,51 @@ def get_velocity(position, path_points):
   # path defined by path_points. Assume holonomicity of the
   # point located at position.
 
-  minp = path_points[0]
-  mind = np.linalg.norm(path_points[0]-position)
-  nextp = path_points[1]
+  # the robot is somewhere near the position
+  # this position is some point infront of the robot at distance epsilon.
+  # this point can be moved holonomically, the robot is pulled by a rod.
+  # this allows us to approximate holonomic motion of the robot
+  # by formulating its control inputs as functions of the velocity of the
+  # point position (lecture 3, feed back linearization slides)...
+  #print(position)
 
-  for u, v in zip(path_points[1:], path_points[2:]):
-    if np.linalg.norm(u-position) < mind:
-      minp = u
-      mind = np.linalg.norm(u-position)
-      nextp = v
+  # so now we're gonna DRAGGGGGGG that point to point in the best direction of the robot
+  # our method for doing this is compute the euclidean distance between all the points
+  # so that we can figure out which point is the best point to drag it to.
+  #print(path_points)
 
-  vec = nextp - position
-  vec = vec / np.linalg.norm(vec)
+  # to figure out which point to pull it to, we first compute the distance between the position and all the points
+  # that are on the curve
+  distance = lambda pos, path_point: np.sqrt(np.square(pos[X] - path_point[X]) + np.square(pos[Y] - path_point[Y]))
+  distances = np.array([distance(position, path_p) for path_p in path_points])
 
-  return SPEED * vec
+  if len(path_points) > 1:
+    # now find the index of the two points it is closest to
+    closest_index = np.argmin(distances)
+    close_1_distance = distances[closest_index]
+    # change the distance value at the closest element so that it is not the min anymore
+    distances[closest_index] = np.max(distances)
+    #print("closest: ", closest_index)
+    #print("distances: ", distances)
+    second_closest_index = np.argmin(distances)
+
+    # pick the index that is the furthest along the path
+    path_index = closest_index if closest_index > second_closest_index else second_closest_index
+    
+    if path_index < len(path_points) - 1:
+      path_index += 1 # pick the next one along
+    
+    # get the point on the path
+    path_point = path_points[path_index]
+
+  else:
+    # the path only has one element in the list
+    path_point = path_points[0]
+
+  v = path_point - position
+  k = 2.
+
+  return v * k
   
 
 def get_path(final_node):
