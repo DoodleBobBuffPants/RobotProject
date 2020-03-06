@@ -10,7 +10,7 @@ import obstacle_avoidance
 import rrt_navigation
 
 # Feedback linearisation epsilon
-EPSILON = .1
+EPSILON = .2
 
 ROBOT_DISTANCE = .125 * 2
 ROBOT_EXTRA_DISTANCE = 0.29
@@ -20,20 +20,60 @@ Y = 1
 YAW = 2
 
 def get_obstacle_avoidance_velocities(robot_poses, lasers, formation_pose):
+
+  # xyoa_velocities = []
+  # for i in range(len(robot_poses)):
+  #   obs_velocity = obstacle_avoidance.get_obstacle_velocity(robot_poses, i, *(lasers[i].measurements))
+  #   xyoa_velocities.append(obs_velocity)
+
   xyoa_velocities = []
+  min_distances = []
   for i in range(len(robot_poses)):
-    if i == LEADER_ID:
-      u, w = obstacle_avoidance.rule_based_leader(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
-    else:
-      u, w = obstacle_avoidance.rule_based_followers(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
-      # u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
+    u, w, min_distance = obstacle_avoidance.braitenburg(robot_poses, i, *(lasers[i].measurements))
+    # u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
 
     x = u*np.cos(robot_poses[i][YAW]) - EPSILON*w*np.sin(robot_poses[i][YAW])
     y = u*np.sin(robot_poses[i][YAW]) + EPSILON*w*np.cos(robot_poses[i][YAW])
 
     xyoa_velocities.append(np.array([x,y]))
+    min_distances.append(min_distance)
 
-  return np.array(xyoa_velocities)
+    # if i == 0:
+    #   print("magnitude: ", np.linalg.norm([x,y]))
+
+  # xyoa_velocities = []
+  # for i in range(len(robot_poses)):
+  #   if i == LEADER_ID:
+  #     # u, w = obstacle_avoidance.rule_based_leader(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
+  #   else:
+  #     u, w = obstacle_avoidance.rule_based_followers(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
+  #     # u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
+
+  #   x = u*np.cos(robot_poses[i][YAW]) - EPSILON*w*np.sin(robot_poses[i][YAW])
+  #   y = u*np.sin(robot_poses[i][YAW]) + EPSILON*w*np.cos(robot_poses[i][YAW])
+
+  #   xyoa_velocities.append(np.array([x,y]))
+
+  return np.array(xyoa_velocities), np.array(min_distances)
+
+def get_noise():
+  noise = np.random.uniform(low=-1., high=1., size=[5, 2])
+  noise = normalise_velocities(noise)
+
+  return noise
+
+def normalise_velocities(velocities):
+  # Accounts for small magnitudes
+  for i in range(len(velocities)):
+    n = np.linalg.norm(velocities[i])
+
+    if n < 1e-2: 
+      velocities[i] = np.zeros_like(velocities[i])
+    else:
+      velocities[i] = velocities[i] / n
+    
+  return velocities
+      
 
 def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
 
@@ -43,9 +83,9 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     follower_lasers = [lasers[i] for i in range(len(lasers)) if i != LEADER_ID]
 
     # Velocities
-    follower_formation_velocities, formation_pose, in_corridor_zone, entered_corridor = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity, lasers=lasers)
+    follower_formation_velocities, formation_pose, in_dead_zone = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
     
-    obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(robot_poses, lasers, formation_pose)
+    obstacle_avoidance_velocities, min_obstacle_distances = get_obstacle_avoidance_velocities(robot_poses, lasers, formation_pose)
 
     # NOTE: for numpy insert, obj is the index of insertion.
     formation_velocities = np.insert(arr=follower_formation_velocities, obj=LEADER_ID, values=np.array([0., 0.]), axis=0)
@@ -53,21 +93,10 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     rrt_velocities = np.insert(arr=np.zeros_like(follower_formation_velocities), obj=LEADER_ID, values=leader_rrt_velocity, axis=0)
     #obstacle_avoidance_velocities = np.insert(arr=follower_obstacle_avoidance_velocities, obj=LEADER_ID, values=np.array([0., 0.]), axis=0)
 
-    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_weights(robot_poses))
+    noise_velocities = get_noise()
+    rrt_velocities = normalise_velocities(rrt_velocities)
 
-    # Corridor control state
-    # RULE: if entered corridor, leader slows down, everyone else waits for robot infront to enter new formation
-    if entered_corridor and not in_corridor_zone.all():
-      corridor_weights = corridor_entrance_weights(in_corridor_zone)
-      for i in range(len(combined_velocities)):
-        combined_velocities[i] = combined_velocities[i] * corridor_weights[i]
-
-    # # RULE: if follower robots not within the "corridor zone" - a larger dead zone, the leader slows down
-    # all_in_zone = np.insert(arr=in_corridor_zone, obj=LEADER_ID, values=True, axis=0)
-    # for i in range(len(combined_velocities)):
-    #   if i != LEADER_ID:
-    #     if not all_in_zone[i]:
-    #       combined_velocities[LEADER_ID] = combined_velocities[LEADER_ID] * 0.7
+    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_weights(robot_poses), noise_velocities, in_dead_zone, min_obstacle_distances)
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
     us = []
@@ -75,9 +104,9 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     for i in range(len(combined_velocities)):
       u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
 
-      if u < 0.05 and u != 0.:
-        u = 0.05
-        w = w * 0.7
+    #   if u < 0.05:
+    #     u = 0.05
+    #     w = w * 0.7
 
       us.append(u)
       ws.append(w)
@@ -115,33 +144,17 @@ def robot_avoidance_weights(robot_poses):
 
         if -np.pi/2. < angle_to_robot < np.pi/2. and distance < ROBOT_EXTRA_DISTANCE:
           # stop dealock (if angle is big, i.e robots are next to each other, let the one with lower id go first.)
-          # if abs(angle_to_robot) > np.pi/4. and i < j:
-          if i < j:
-            # print("AVOIDING DEADLOCK: {} {}".format(i, j))
+          if abs(angle_to_robot) > np.pi/3. and i > j:
+            #print("AVOIDING DEADLOCK: {} {}".format(i, j))
             continue
 
           # if the robots are very close (or quite close but next to each other)
           elif distance < ROBOT_DISTANCE or abs(angle_to_robot) > np.pi/3:
-            # print("STOPPING ROBOT: ", i)
+            #print("STOPPING ROBOT: ", i)
             v[i] = 0.
           break
   
   return v
-
-def corridor_entrance_weights(in_corridor_zone):
-  print(in_corridor_zone)
-  corridor_entrance_weights = np.zeros(shape=[len(in_corridor_zone) + 1])
-  corridor_entrance_weights[0] = 0.5 # slow down the leader
-  for i in range(len(in_corridor_zone)):
-    if in_corridor_zone[i]:
-      corridor_entrance_weights[i+1] = 1.
-    else:
-      print("ROBOT GOING TO FORMATION: ", i+1)
-      corridor_entrance_weights[i+1] = 1.
-      break
-
-  print("corridor entrance weights: ", corridor_entrance_weights)
-  return corridor_entrance_weights
 
 def weighting(velocities, weight):
   wv = np.array(velocities)
@@ -149,29 +162,25 @@ def weighting(velocities, weight):
     wv[i] = velocities[i] * weight
   return wv
 
-def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
+def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights, noise_velocities, in_dead_zone, distances_to_obstacle):
 
     # weights
-    goal_w = .6
-    # goal_w = .8
-    # goal_w = 1.2
-    # formation_w = 1.2
+    goal_w = 0.2
     formation_w = 0.9
     # formation_w = 0.
-    static_obs_avoid_w = 6.
+    static_obs_avoid_w = 1.
+    # static_obs_avoid_w = 0.0
+    # noise_w = 0.1
+    noise_w = 0.0
 
     # formation is the goal for followers
-    # goal_velocities[LEADER_ID] = np.array([1., 0.]) / 4.
+    # goal_velocities[LEADER_ID] = np.array([1., -1.]) / np.linalg.norm(np.array([1., -1.]))
+    # goal_velocities[LEADER_ID] = np.array([0., 1.])
     goal = weighting(goal_velocities, goal_w)
-
-    # goal = weighting(goal, goal_w)
-    # for i in range(len(formation_velocities)):
-    #   if i != LEADER_ID:
-    #     formation_velocities[i] = np.array([1., 0.])
 
     formation = weighting(formation_velocities, formation_w)
     static_obstacle_avoidance = weighting(obstacle_velocities, static_obs_avoid_w)
-
+    noise = weighting(noise_velocities, noise_w)
     # print("goal: ", goal)
     # print("formation: ", formation)
     # print("static obstacles: ", static_obstacle_avoidance)
@@ -179,8 +188,18 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     # only leader has the goal, the rest have formation constraints
     objective = goal + formation
 
+    # RULE: if the follower robots are not in the deadzone and have a low minimum distance, tell the leader to stop, and give the follower goal velocity not formation.
+    all_robots_deadzone = np.insert(arr=in_dead_zone, obj=LEADER_ID, values=True, axis=0)
+    for i in range(len(objective)):
+      if i != LEADER_ID:
+        if not all_robots_deadzone[i] and distances_to_obstacle[i] < 0.22:
+          objective[i] = objective[LEADER_ID]
+          objective[LEADER_ID] = np.zeros_like(goal[LEADER_ID])
+          static_obstacle_avoidance[LEADER_ID] = np.zeros_like(goal[LEADER_ID])
+          
+
     # sum of all velocity components
-    weighted_sum = objective + static_obstacle_avoidance
+    weighted_sum = objective + static_obstacle_avoidance + noise
 
     # RULE: For each robot, if it is nearer other robots, let the first robot (by id) pass
     for i in range(len(objective)):
@@ -192,4 +211,15 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
       if np.linalg.norm(objective[i]) == 0.:
         weighted_sum[i] = np.zeros_like(weighted_sum[i])
 
+    # print([np.linalg.norm(o) for o in objective])
+
+    # RULE: if the robots are outside the deadzone, the leader has to slow down, by how many robots are missing from the dead zone
+    not_in_dead_zone = len(in_dead_zone) - sum(in_dead_zone)
+    if not_in_dead_zone > 0:
+      weighted_sum[LEADER_ID] = weighted_sum[LEADER_ID] * 0.3
+    # weighted_sum[LEADER_ID] = weighted_sum[LEADER_ID] - ((weighted_sum[LEADER_ID]) * (not_in_dead_zone / len(in_dead_zone)))
+          
+
+    # goal[0] += static_obstacle_avoidance[0] + noise[0]
+    # return goal
     return weighted_sum

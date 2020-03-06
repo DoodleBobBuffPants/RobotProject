@@ -4,6 +4,7 @@ import numpy as np
 
 # Formation spacing parameter for the formation
 SPACING_DIST = 0.3
+# SPACING_DIST = 0.8
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -23,22 +24,6 @@ COLUMN = np.array([[0, 2*SPACING_DIST],
             	   [0,-SPACING_DIST], 
             	   [0, -2*SPACING_DIST]])
 
-CORRIDOR_COLUMN = np.array([[0, -1*SPACING_DIST],
-				   [0, -2*SPACING_DIST],
-				   [0, -4*SPACING_DIST],
-				   [0,-3*SPACING_DIST]])
-
-
-# CORRIDOR DIAMOND
-#       LEADER (0) not defined
-#       1       3       2
-#               4
-
-CORRIDOR_DIAMOND =  np.array([[0, -SPACING_DIST], 
-					 [-SPACING_DIST, -SPACING_DIST], 
-					 [SPACING_DIST, -SPACING_DIST], 
-					 [0, -2.*SPACING_DIST]])
-
 # DIAMOND
 #       LEADER (0) not defined
 #       1       2       4
@@ -46,7 +31,7 @@ CORRIDOR_DIAMOND =  np.array([[0, -SPACING_DIST],
 
 LEADER_ID = 0
 INITIAL_YAW = 1.571
-
+# INITIAL_YAW = 0.
 DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST], 
 					 [0, -SPACING_DIST], 
 					 [0, -2.*SPACING_DIST], 
@@ -91,7 +76,7 @@ DIAMOND_MAP = {
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = SIMPLE_MAP
+MAP_PARAMS = CORRIDOR_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False

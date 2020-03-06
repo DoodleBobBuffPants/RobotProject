@@ -1,4 +1,4 @@
-from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW, CORRIDOR_COLUMN, LEADER_ID
+from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW
 
 import numpy as np
 
@@ -7,7 +7,6 @@ Y= 1
 YAW = 2
 
 ROBOT_RADIUS = 0.105 / 2.
-RIGHT, FRONT_RIGHT, FRONT, FRONT_LEFT, LEFT = 0, 1, 2, 3, 4
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
 DEAD_ZONE = 1.5 * ROBOT_RADIUS
@@ -18,8 +17,8 @@ def get_desired_positions(formation, formation_pose):
 
     # Take formation and transform (rotate, translate) onto formation_pose
     theta = formation_pose[YAW]
-    # theta = -INITIAL_YAW
-    # theta = 0.
+    # theta = -0.8 - INITIAL_YAW
+    theta = 0.
 
     desired_positions = np.zeros_like(formation)
     for i in range(len(formation)):
@@ -31,55 +30,26 @@ def get_desired_positions(formation, formation_pose):
     return desired_positions
 
 
-def detect_corridor(robot_poses, lasers):
-  extract_lasers = (lambda f, fl, fr, l, r: [r, fr, f, fl, l])
-  # lasers are in order front, front_left, front_right, left, right
-
-  # its a corridor if the majority think it is a corridor, or if the leader thinks its a corridor
-  # this approximates waiting until the half the robots leave the corridor to switch back to the normal formation
-
-  believe_in_corridor = []
-  for i in range(len(robot_poses)):
-    sens_inp = extract_lasers(*(lasers[i].measurements))
-    #print("front: {}  | front left: {}  | front right:  {}|".format(sens_inp[FRONT], sens_inp[FRONT_LEFT], sens_inp[FRONT_RIGHT]))
-    sens_inp = np.tanh(sens_inp)
-
-    # corridor detected if front is big and front left and front right are small
-    if sens_inp[FRONT] and sens_inp[FRONT_LEFT] < 0.4 and sens_inp[FRONT_RIGHT] < 0.4:
-      believe_in_corridor.append(1)
-    else:
-      believe_in_corridor.append(0)
-
-  total_in_corridor = np.sum(np.array(believe_in_corridor))
-
-  if believe_in_corridor[LEADER_ID] == 1 or total_in_corridor > len(robot_poses) / 2.:
-    return CORRIDOR_COLUMN, True
-  else:
-    return FORMATION, False
-
-
-
-
-def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity, lasers):
+def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
 
     # Formation orientation is the angle of the formation given the leader's direction.
     formation_orientation = leader_pose[YAW] - INITIAL_YAW
     formation_pose = np.concatenate((leader_pose[:2], [formation_orientation]))
-
+    
     # Desired positions of each of the follower robots in the formation (see comment above about replacing formation pose with leader...)
-    formation, entering_corridor = detect_corridor(leader_pose, lasers)
-    desired_positions = get_desired_positions(formation=formation, formation_pose=formation_pose)
+    desired_positions = get_desired_positions(formation=FORMATION, formation_pose=formation_pose)
 
     # velocity directs the follower robots from their current position to their (desired position in the formation)
     follower_positions = np.array([pose[:2] for pose in follower_poses])
     velocities = desired_positions - follower_positions
 
+    distances = []
+
     # update each velocity (the displacement between the current and desired position) depending on the distance
-    distances = np.array([])
     for i in range(len(velocities)):
 
         distance = np.linalg.norm(velocities[i])
-        distances = np.append(distances, distance)
+        distances.append(distance)
 
         # If a robot is within accepted radius of formation position, velocity should be 0
         # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
@@ -94,8 +64,12 @@ def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity, lasers)
             velocities[i] = velocities[i] / distance
             velocities[i] = velocities[i] * CONTROLLED_ZONE
 
-    # in_corridor_zone is used for rearranging the robots when entering a corridor
-    in_corridor_zone = distances < DEAD_ZONE * 3.5
+    # scale to be between 0 and 1
+    velocities = velocities / CONTROLLED_ZONE
+
+    # in dead zone vector
+    distances = np.array(distances)
+    in_dead_zone = distances < DEAD_ZONE * 3.
 
     # formation_pose is later used for obstacle avoidance
-    return velocities, formation_pose, in_corridor_zone, entering_corridor
+    return velocities, formation_pose, in_dead_zone
