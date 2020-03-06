@@ -62,6 +62,13 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
       for i in range(len(combined_velocities)):
         combined_velocities[i] = combined_velocities[i] * corridor_weights[i]
 
+    # # RULE: if follower robots not within the "corridor zone" - a larger dead zone, the leader slows down
+    # all_in_zone = np.insert(arr=in_corridor_zone, obj=LEADER_ID, values=True, axis=0)
+    # for i in range(len(combined_velocities)):
+    #   if i != LEADER_ID:
+    #     if not all_in_zone[i]:
+    #       combined_velocities[LEADER_ID] = combined_velocities[LEADER_ID] * 0.7
+
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
     us = []
     ws = []
@@ -108,7 +115,8 @@ def robot_avoidance_weights(robot_poses):
 
         if -np.pi/2. < angle_to_robot < np.pi/2. and distance < ROBOT_EXTRA_DISTANCE:
           # stop dealock (if angle is big, i.e robots are next to each other, let the one with lower id go first.)
-          if abs(angle_to_robot) > np.pi/4. and i < j:
+          # if abs(angle_to_robot) > np.pi/4. and i < j:
+          if i < j:
             # print("AVOIDING DEADLOCK: {} {}".format(i, j))
             continue
 
@@ -144,7 +152,7 @@ def weighting(velocities, weight):
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
 
     # weights
-    goal_w = .8
+    goal_w = .05
     # goal_w = .8
     # goal_w = 1.2
     # formation_w = 1.2
@@ -153,7 +161,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     static_obs_avoid_w = 6.
 
     # formation is the goal for followers
-    goal_velocities[LEADER_ID] = np.array([1., 0.]) / 4.
+    # goal_velocities[LEADER_ID] = np.array([1., 0.]) / 4.
     goal = weighting(goal_velocities, goal_w)
 
     # goal = weighting(goal, goal_w)
