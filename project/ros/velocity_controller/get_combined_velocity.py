@@ -10,7 +10,7 @@ import obstacle_avoidance
 import rrt_navigation
 
 # Feedback linearisation epsilon
-EPSILON = .1
+EPSILON = .2
 
 ROBOT_DISTANCE = .125 * 2
 ROBOT_EXTRA_DISTANCE = 0.29
@@ -20,18 +20,24 @@ Y = 1
 YAW = 2
 
 def get_obstacle_avoidance_velocities(robot_poses, lasers, formation_pose):
+
   xyoa_velocities = []
   for i in range(len(robot_poses)):
-    if i == LEADER_ID:
-      u, w = obstacle_avoidance.rule_based_leader(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
-    else:
-      u, w = obstacle_avoidance.rule_based_followers(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
-      # u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
+    obs_velocity = obstacle_avoidance.get_obstacle_velocity(robot_poses, i, *(lasers[i].measurements))
+    xyoa_velocities.append(obs_velocity)
 
-    x = u*np.cos(robot_poses[i][YAW]) - EPSILON*w*np.sin(robot_poses[i][YAW])
-    y = u*np.sin(robot_poses[i][YAW]) + EPSILON*w*np.cos(robot_poses[i][YAW])
+  # xyoa_velocities = []
+  # for i in range(len(robot_poses)):
+  #   if i == LEADER_ID:
+  #     # u, w = obstacle_avoidance.rule_based_leader(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
+  #   else:
+  #     u, w = obstacle_avoidance.rule_based_followers(*(lasers[i].measurements), formation_pose=formation_pose, robot_poses=robot_poses, robot_id=i)
+  #     # u, w = obstacle_avoidance.rule_based(*(lasers[i].measurements))
 
-    xyoa_velocities.append(np.array([x,y]))
+  #   x = u*np.cos(robot_poses[i][YAW]) - EPSILON*w*np.sin(robot_poses[i][YAW])
+  #   y = u*np.sin(robot_poses[i][YAW]) + EPSILON*w*np.cos(robot_poses[i][YAW])
+
+  #   xyoa_velocities.append(np.array([x,y]))
 
   return np.array(xyoa_velocities)
 
@@ -61,9 +67,9 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     for i in range(len(combined_velocities)):
       u, w = rrt_navigation.feedback_linearized(pose=robot_poses[i], velocity=combined_velocities[i], epsilon=EPSILON)
 
-      if u < 0.05:
-        u = 0.05
-        w = w * 0.7
+    #   if u < 0.05:
+    #     u = 0.05
+    #     w = w * 0.7
 
       us.append(u)
       ws.append(w)
@@ -96,8 +102,8 @@ def robot_avoidance_weights(robot_poses):
 
         angle_to_robot = np.arctan2(vector_to_robot[Y], vector_to_robot[X]) - robot_poses[i][YAW]
 
-        print("distance {}, {}: ".format(i, j), distance)
-        print("angle to robot: ", angle_to_robot)
+        # print("distance {}, {}: ".format(i, j), distance)
+        # print("angle to robot: ", angle_to_robot)
 
         if -np.pi/2. < angle_to_robot < np.pi/2. and distance < ROBOT_EXTRA_DISTANCE:
           # stop dealock (if angle is big, i.e robots are next to each other, let the one with lower id go first.)
@@ -113,8 +119,6 @@ def robot_avoidance_weights(robot_poses):
   
   return v
 
-
-
 def weighting(velocities, weight):
   wv = np.array(velocities)
   for i in range(len(velocities)):
@@ -124,16 +128,15 @@ def weighting(velocities, weight):
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
 
     # weights
-    goal_w = .8
-    formation_w = .9
+    goal_w = 0.02
+    formation_w = 1.2
     # formation_w = 0.
-    static_obs_avoid_w = 6.
+    static_obs_avoid_w = 0.
 
     # formation is the goal for followers
-    # goal_velocities[LEADER_ID] = np.array([1., 0.])
+    goal_velocities[LEADER_ID] = np.array([-1., 0.])
+    # goal_velocities[LEADER_ID] = np.array([0., 1.])
     goal = weighting(goal_velocities, goal_w)
-
-    goal = weighting(goal, goal_w)
 
     formation = weighting(formation_velocities, formation_w)
     static_obstacle_avoidance = weighting(obstacle_velocities, static_obs_avoid_w)
@@ -158,4 +161,5 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
       if np.linalg.norm(objective[i]) == 0.:
         weighted_sum[i] = np.zeros_like(weighted_sum[i])
 
-    return weighted_sum
+    goal[0] += static_obstacle_avoidance[0]
+    return goal

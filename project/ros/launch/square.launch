@@ -8,33 +8,33 @@
   <arg name="fourth_tb3" default="tb3_3"/>
   <arg name="fifth_tb3"  default="tb3_4"/>
 
-  <arg name="first_tb3_x_pos" default="-6.06"/>
-  <arg name="first_tb3_y_pos" default="0.3"/>
+  <arg name="first_tb3_x_pos" default="-2.3"/>
+  <arg name="first_tb3_y_pos" default="-2.8"/>
   <arg name="first_tb3_z_pos" default=" 0.0"/>
-  <arg name="first_tb3_yaw_pos" default=" 0.0"/>
+  <arg name="first_tb3_yaw_pos" default="-0.8"/>
 
-  <arg name="second_tb3_x_pos" default="-6.3"/>
-  <arg name="second_tb3_y_pos" default="0.61"/>
+  <arg name="second_tb3_x_pos" default="-2.189073"/>
+  <arg name="second_tb3_y_pos" default="-1.704170"/>
   <arg name="second_tb3_z_pos" default=" 0.0"/>
-  <arg name="second_tb3_yaw_pos" default=" 0.0"/>
+  <arg name="second_tb3_yaw_pos" default="-0.8"/>
 
-  <arg name="third_tb3_x_pos" default="-6.3"/>
-  <arg name="third_tb3_y_pos" default="0.3"/>
+  <arg name="third_tb3_x_pos" default="-2.814766"/>
+  <arg name="third_tb3_y_pos" default="-2.211731"/>
   <arg name="third_tb3_z_pos" default=" 0.0"/>
-  <arg name="third_tb3_yaw_pos" default=" 0.0"/>
+  <arg name="third_tb3_yaw_pos" default="-0.8"/>
 
-  <arg name="fourth_tb3_x_pos" default="-6.6"/>
-  <arg name="fourth_tb3_y_pos" default="0.3"/>
+  <arg name="fourth_tb3_x_pos" default="-3.266513"/>
+  <arg name="fourth_tb3_y_pos" default="-1.566839"/>
   <arg name="fourth_tb3_z_pos" default=" 0.0"/>
-  <arg name="fourth_tb3_yaw_pos" default=" 0.0"/>
+  <arg name="fourth_tb3_yaw_pos" default="-0.8"/>
 
-  <arg name="fifth_tb3_x_pos" default="-6.3"/>
-  <arg name="fifth_tb3_y_pos" default="0"/>
+  <arg name="fifth_tb3_x_pos" default="-3.382666"/>
+  <arg name="fifth_tb3_y_pos" default="-2.693825"/>
   <arg name="fifth_tb3_z_pos" default=" 0.0"/>
-  <arg name="fifth_tb3_yaw_pos" default=" 0.0"/>
+  <arg name="fifth_tb3_yaw_pos" default="-0.8"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find exercises)/project/ros/worlds/corridor.world"/>
+    <arg name="world_name" value="$(find exercises)/project/ros/worlds/square.world"/>
     <arg name="paused" value="true"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="$(arg use_gui)"/>
