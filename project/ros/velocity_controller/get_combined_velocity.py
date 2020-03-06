@@ -43,10 +43,22 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers, formation_pose):
 
 def get_noise():
   noise = np.random.uniform(low=-1., high=1., size=[5, 2])
-  for i in range(len(noise)):
-    noise[i] = noise[i] / np.linalg.norm(noise[i])
+  noise = normalise_velocities(noise)
 
   return noise
+
+def normalise_velocities(velocities):
+  # Accounts for small magnitudes
+  for i in range(len(velocities)):
+    n = np.linalg.norm(velocities[i])
+
+    if n < 1e-2: 
+      velocities[i] = np.zeros_like(velocities[i])
+    else:
+      velocities[i] = velocities[i] / n
+    
+  return velocities
+      
 
 def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
 
@@ -67,6 +79,7 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     #obstacle_avoidance_velocities = np.insert(arr=follower_obstacle_avoidance_velocities, obj=LEADER_ID, values=np.array([0., 0.]), axis=0)
 
     noise_velocities = get_noise()
+    rrt_velocities = normalise_velocities(rrt_velocities)
 
     combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_weights(robot_poses), noise_velocities)
 
@@ -140,11 +153,12 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     goal_w = 0.3
     formation_w = 1.2
     # formation_w = 0.
-    static_obs_avoid_w = .3
+    # static_obs_avoid_w = 0.3
+    static_obs_avoid_w = 0.0
     noise_w = 0.05
 
     # formation is the goal for followers
-    goal_velocities[LEADER_ID] = np.array([1., 0.])
+    goal_velocities[LEADER_ID] = np.array([1., 0.]) #/ np.linalg.norm(np.array([1., -1.]))
     # goal_velocities[LEADER_ID] = np.array([0., 1.])
     goal = weighting(goal_velocities, goal_w)
 
@@ -171,5 +185,6 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
       if np.linalg.norm(objective[i]) == 0.:
         weighted_sum[i] = np.zeros_like(weighted_sum[i])
 
-    goal[0] += static_obstacle_avoidance[0] + noise[0]
-    return goal
+    # goal[0] += static_obstacle_avoidance[0] # + noise[0]
+    # return goal
+    return weighted_sum

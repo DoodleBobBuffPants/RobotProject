@@ -59,5 +59,8 @@ def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
             velocities[i] = velocities[i] / distance
             velocities[i] = velocities[i] * CONTROLLED_ZONE
 
+    # scale to be between 0 and 1
+    velocities = velocities / CONTROLLED_ZONE
+
     # formation_pose is later used for obstacle avoidance
     return velocities, formation_pose

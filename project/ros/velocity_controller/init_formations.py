@@ -3,6 +3,7 @@ from precomputed_rrt_paths import *
 import numpy as np
 
 # Formation spacing parameter for the formation
+# SPACING_DIST = 0.8
 SPACING_DIST = 0.8
 
 # NOTE:
