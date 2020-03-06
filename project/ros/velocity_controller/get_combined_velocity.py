@@ -41,6 +41,13 @@ def get_obstacle_avoidance_velocities(robot_poses, lasers, formation_pose):
 
   return np.array(xyoa_velocities)
 
+def get_noise():
+  noise = np.random.uniform(low=-1., high=1., size=[5, 2])
+  for i in range(len(noise)):
+    noise[i] = noise[i] / np.linalg.norm(noise[i])
+
+  return noise
+
 def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
 
     # get leader and follower poses
@@ -59,7 +66,9 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     rrt_velocities = np.insert(arr=np.zeros_like(follower_formation_velocities), obj=LEADER_ID, values=leader_rrt_velocity, axis=0)
     #obstacle_avoidance_velocities = np.insert(arr=follower_obstacle_avoidance_velocities, obj=LEADER_ID, values=np.array([0., 0.]), axis=0)
 
-    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_weights(robot_poses))
+    noise_velocities = get_noise()
+
+    combined_velocities = weight_velocities(rrt_velocities, formation_velocities, obstacle_avoidance_velocities, robot_avoidance_weights(robot_poses), noise_velocities)
 
     # Feedback linearization - convert combined_velocities [[x,y], ...] into [[u, w], ...]
     us = []
@@ -125,13 +134,14 @@ def weighting(velocities, weight):
     wv[i] = velocities[i] * weight
   return wv
 
-def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
+def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights, noise_velocities):
 
     # weights
     goal_w = 0.3
     formation_w = 1.2
     # formation_w = 0.
     static_obs_avoid_w = .3
+    noise_w = 0.05
 
     # formation is the goal for followers
     goal_velocities[LEADER_ID] = np.array([1., 0.])
@@ -140,7 +150,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
 
     formation = weighting(formation_velocities, formation_w)
     static_obstacle_avoidance = weighting(obstacle_velocities, static_obs_avoid_w)
-
+    noise = weighting(noise_velocities, noise_w)
     # print("goal: ", goal)
     # print("formation: ", formation)
     # print("static obstacles: ", static_obstacle_avoidance)
@@ -149,7 +159,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     objective = goal + formation
 
     # sum of all velocity components
-    weighted_sum = objective + static_obstacle_avoidance
+    weighted_sum = objective + static_obstacle_avoidance + noise
 
     # RULE: For each robot, if it is nearer other robots, let the first robot (by id) pass
     for i in range(len(objective)):
@@ -161,5 +171,5 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
       if np.linalg.norm(objective[i]) == 0.:
         weighted_sum[i] = np.zeros_like(weighted_sum[i])
 
-    goal[0] += static_obstacle_avoidance[0]
+    goal[0] += static_obstacle_avoidance[0] + noise[0]
     return goal
