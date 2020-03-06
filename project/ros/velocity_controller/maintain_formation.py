@@ -17,8 +17,9 @@ CONTROLLED_ZONE = DEAD_ZONE + SPACING_DIST
 def get_desired_positions(formation, formation_pose):
 
     # Take formation and transform (rotate, translate) onto formation_pose
-    # theta = formation_pose[YAW]
-    theta = -INITIAL_YAW
+    theta = formation_pose[YAW]
+    # theta = -INITIAL_YAW
+    # theta = 0.
 
     desired_positions = np.zeros_like(formation)
     for i in range(len(formation)):
@@ -44,7 +45,7 @@ def detect_corridor(robot_poses, lasers):
     sens_inp = np.tanh(sens_inp)
 
     # corridor detected if front is big and front left and front right are small
-    if sens_inp[FRONT] and sens_inp[FRONT_LEFT] < 0.48 and sens_inp[FRONT_RIGHT] < 0.48:
+    if sens_inp[FRONT] and sens_inp[FRONT_LEFT] < 0.4 and sens_inp[FRONT_RIGHT] < 0.4:
       believe_in_corridor.append(1)
     else:
       believe_in_corridor.append(0)

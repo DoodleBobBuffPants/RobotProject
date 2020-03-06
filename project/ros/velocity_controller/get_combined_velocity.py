@@ -152,7 +152,7 @@ def weighting(velocities, weight):
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
 
     # weights
-    goal_w = .05
+    goal_w = .6
     # goal_w = .8
     # goal_w = 1.2
     # formation_w = 1.2

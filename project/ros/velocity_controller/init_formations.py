@@ -3,7 +3,7 @@ from precomputed_rrt_paths import *
 import numpy as np
 
 # Formation spacing parameter for the formation
-SPACING_DIST = 0.4
+SPACING_DIST = 0.3
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -91,9 +91,9 @@ DIAMOND_MAP = {
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = CORRIDOR_MAP
+MAP_PARAMS = SIMPLE_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False
 
-FORMATION = CORRIDOR_DIAMOND
+FORMATION = DIAMOND
