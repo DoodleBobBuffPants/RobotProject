@@ -30,7 +30,7 @@ print_robot_id = 0.
 
 pi = np.pi
 sensor_angles = [-pi/2., -pi/4., 0., pi/4, pi/2.]
-relative_sensor_positions = np.array([[0, -1], [1, -1], [1, 0], [1, 1], [0, 1]])
+relative_sensor_positions = np.array([[1., 0.], [1., 1.], [0., 1.], [-1., 1.], [-1., 0.]])
 
 def sigmoid(x):
   x = XSCALE * (x + XTRANSLATE)
@@ -51,12 +51,14 @@ def get_obstacle_velocity(robot_poses, robot_id, front, front_left, front_right,
   sens_inp = detect_robot_presence(robot_poses, sens_inp, robot_id)
   # print('after seeing other robots: \n', sens_inp)
 
+  robot_pose = robot_poses[robot_id]
+
   # smooth sensor inputs with tanh
   sens_inp = np.tanh(sens_inp)
   if robot_id ==print_robot_id:
     print('sensors after smoothing other robots: \n', sens_inp)
+    print("robot pose: ", robot_pose)
 
-  robot_pose = robot_poses[robot_id]
 
   # generate sensor positions in global frame
   sensor_positions = np.zeros_like(relative_sensor_positions)
@@ -64,12 +66,17 @@ def get_obstacle_velocity(robot_poses, robot_id, front, front_left, front_right,
   for i in range(len(relative_sensor_positions)):
     # Rotate
     sensor_positions[i] = np.matmul([[np.cos(theta), -np.sin(theta)],
-                                  [np.sin(theta),  np.cos(theta)]], sensor_positions[i])
+                                  [np.sin(theta),  np.cos(theta)]], relative_sensor_positions[i])
     # Translate
     sensor_positions[i] = robot_pose[:2] + sensor_positions[i]
+
+  if robot_id ==print_robot_id:
+    print("transformed positions: ", sensor_positions)
   
   # get vectors from each sensor
   sensor_to_robot_vecs = robot_pose[0:2] - sensor_positions
+
+  print()
 
   # normalise the sensor vectors
   for i in range(len(sensor_to_robot_vecs)):
@@ -79,7 +86,7 @@ def get_obstacle_velocity(robot_poses, robot_id, front, front_left, front_right,
   weight = 1. - sens_inp
 
   # sensor weights
-  s_weights = [0., 2., 1., 2., 0.]
+  s_weights = [0.5, 2., 1., 2., 0.5]
 
   for i in range(len(sensor_to_robot_vecs)):
     sensor_to_robot_vecs[i] = sensor_to_robot_vecs[i] * weight[i] * s_weights[i]
@@ -98,21 +105,22 @@ def get_obstacle_velocity(robot_poses, robot_id, front, front_left, front_right,
   if robot_id == print_robot_id:
     print('mag: ', np.linalg.norm(weighted_sum))
   # smooth weighted sums magnitude using sigmoid function
-  # magnitude = np.linalg.norm(weighted_sum)
-  # if robot_id ==0:
-  #   print('magnitued before: ', magnitude)
-  # if magnitude == 0.:
-  #   weighted_sum = np.zeros_like(weighted_sum)
-  # else:
-  #   if robot_id ==0:
-  #     print('s(m): ', sigmoid(magnitude))
-  #   weighted_sum = weighted_sum * (sigmoid(magnitude) / magnitude)
+  magnitude = np.linalg.norm(weighted_sum)
+  if robot_id ==0:
+    print('magnitued before: ', magnitude)
+  if magnitude == 0.:
+    weighted_sum = np.zeros_like(weighted_sum)
+  else:
+    if robot_id ==0:
+      print('s(m): ', sigmoid(magnitude))
+    weighted_sum = weighted_sum * (sigmoid(magnitude) / magnitude)
 
   # if robot_id ==0:
   #   print('final:', weighted_sum)
   #   print('mag: ', np.linalg.norm(weighted_sum))  
   #   print()
   return weighted_sum
+  # return np.array([-1, 0]) * (1-sens_inp[FRONT])
   
 def rule_based(front, front_left, front_right, left, right):
   u = 0.  # [m/s]

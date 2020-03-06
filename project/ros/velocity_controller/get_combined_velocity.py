@@ -128,13 +128,13 @@ def weighting(velocities, weight):
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
 
     # weights
-    goal_w = 0.02
+    goal_w = 0.3
     formation_w = 1.2
     # formation_w = 0.
-    static_obs_avoid_w = 0.
+    static_obs_avoid_w = .3
 
     # formation is the goal for followers
-    goal_velocities[LEADER_ID] = np.array([-1., 0.])
+    goal_velocities[LEADER_ID] = np.array([1., 0.])
     # goal_velocities[LEADER_ID] = np.array([0., 1.])
     goal = weighting(goal_velocities, goal_w)
 
