@@ -111,7 +111,7 @@ def get_velocity(position, path_points):
     path_point = path_points[0]
 
   v = path_point - position
-  k = 1.
+  k = 2.
 
   return v * k
   

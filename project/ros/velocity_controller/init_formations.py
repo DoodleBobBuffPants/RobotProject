@@ -3,8 +3,7 @@ from precomputed_rrt_paths import *
 import numpy as np
 
 # Formation spacing parameter for the formation
-# SPACING_DIST = 0.8
-SPACING_DIST = 0.8
+SPACING_DIST = 0.3
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -24,6 +23,11 @@ COLUMN = np.array([[0, 2*SPACING_DIST],
             	   [0,-SPACING_DIST], 
             	   [0, -2*SPACING_DIST]])
 
+CORRIDOR_COLUMN = np.array([[0, -SPACING_DIST], 
+            	   [0, -3*SPACING_DIST],
+				   [0, -2*SPACING_DIST],
+				   [0,-4*SPACING_DIST]])
+
 # DIAMOND
 #       LEADER (0) not defined
 #       1       2       4
@@ -31,7 +35,7 @@ COLUMN = np.array([[0, 2*SPACING_DIST],
 
 LEADER_ID = 0
 INITIAL_YAW = 1.571
-# INITIAL_YAW = 0.
+
 DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST], 
 					 [0, -SPACING_DIST], 
 					 [0, -2.*SPACING_DIST], 

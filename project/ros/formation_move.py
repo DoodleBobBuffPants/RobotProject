@@ -176,7 +176,7 @@ def run():
         # occupancy_grid.draw()
         # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
         # rrt.draw_solution(start_node, final_node)
-        # plt.scatter(groundtruths[LEADER_ID].pose[0], groundtruths[LEADER_ID].pose[1], s=10, marker='o', color='green', zorder=1000)
+        # plt.scatter(groundtruths[i].pose[0], groundtruths[i].pose[1], s=10, marker='o', color='green', zorder=1000)
         # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
         
         # plt.axis('equal')
