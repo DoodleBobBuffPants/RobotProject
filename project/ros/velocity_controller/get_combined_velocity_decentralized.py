@@ -12,7 +12,7 @@ import rrt_navigation
 # Feedback linearisation epsilon
 EPSILON = 0.1
 
-ROBOT_DISTANCE = 0.125
+ROBOT_DISTANCE = 0.15
 
 X = 0
 Y = 1
@@ -32,12 +32,12 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
     # Velocities
     rrt_velocity = leader_rrt_velocity
     formation_velocity = np.array([0., 0.])
+    obstacle_avoidance_velocity = np.array([0., 0.])
 
     if robot_id != LEADER_ID:
       rrt_velocity = np.array([0., 0.])
       formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id)
-
-    obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
+      obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
 
     combined_velocity = weight_velocities(rrt_velocity, formation_velocity, obstacle_avoidance_velocity)
 
@@ -49,16 +49,27 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
 def weighting(velocity, weight):
   return np.array(velocity * weight)
 
+def normalize(vec):
+  mag = np.linalg.norm(vec)
+  if mag < .01:
+    return np.zeros_like(vec)
+  else:
+    return vec / mag
+
 def weight_velocities(goal_velocity, formation_velocity, obstacle_velocity):
 
-    goal_w = .8
-    formation_w = 1.2
-    static_obs_avoid_w = 3.
+    goal_w = .1
+    formation_w = .2
+    static_obs_avoid_w = .7
     # currently no robot avoidance in decentralized algorithm as we do not keep all robot poses
 
-    goal = weighting(goal_velocity, goal_w)
-    formation = weighting(formation_velocity, formation_w)
-    static_obstacle_avoidance = weighting(obstacle_velocity, static_obs_avoid_w)
+    ngoal = normalize(goal_velocity)
+    nform = normalize(formation_velocity)
+    nobst = normalize(obstacle_velocity)
+
+    goal = weighting(ngoal, goal_w)
+    formation = weighting(nform, formation_w)
+    static_obstacle_avoidance = weighting(nobst, static_obs_avoid_w)
 
     objective = goal + formation
     weighted_sum = objective + static_obstacle_avoidance

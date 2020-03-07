@@ -1,4 +1,4 @@
-from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW
+from init_formations import LEADER_ID, FORMATION, SWITCHED_CORRIDOR_FORMATION, SPACING_DIST, INITIAL_YAW
 
 import numpy as np
 
@@ -27,15 +27,37 @@ def get_desired_positions(formation, formation_pose):
         desired_positions[i] = formation_pose[:2] + desired_positions[i]
     return desired_positions
 
+def detect_corridor(robot_poses, lasers):
+  # it's a corridor if the majority think it is a corridor, or if the leader thinks it's a corridor
+  # this approximates waiting until the half the robots leave the corridor to switch back to the normal formation
 
-def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity):
+  believe_in_corridor = []
+  for i in range(len(robot_poses)):
+    sens_inp = np.tanh(lasers[i].measurements)
+
+    # corridor detected if front is big and left and right are small
+    if sens_inp[0] > np.tanh(1.) and sens_inp[1] < np.tanh(.8) and sens_inp[2] < np.tanh(.8):
+      believe_in_corridor.append(1.)
+    else:
+      believe_in_corridor.append(0.)
+
+  total_in_corridor = np.sum(np.array(believe_in_corridor))
+
+  if believe_in_corridor[LEADER_ID] == 1. or total_in_corridor > len(robot_poses)/2.:
+    return SWITCHED_CORRIDOR_FORMATION
+  else:
+    return FORMATION
+
+def maintain_formation(leader_pose, follower_poses, leader_rrt_velocity, lasers):
 
     # Formation orientation is the angle of the formation given the leader's direction.
     formation_orientation = leader_pose[YAW] - INITIAL_YAW
     formation_pose = np.concatenate((leader_pose[:2], [formation_orientation]))
 
-    # Desired positions of each of the follower robots in the formation (see comment above about replacing formation pose with leader...)
-    desired_positions = get_desired_positions(formation=FORMATION, formation_pose=formation_pose)
+    # Desired positions of each of the follower robots in the formation
+    robot_poses = np.insert(arr=follower_poses, obj=LEADER_ID, values=leader_pose, axis=0)
+    formation = detect_corridor(robot_poses, lasers)
+    desired_positions = get_desired_positions(formation=formation, formation_pose=formation_pose)
 
     # velocity directs the follower robots from their current position to their (desired position in the formation)
     follower_positions = np.array([pose[:2] for pose in follower_poses])

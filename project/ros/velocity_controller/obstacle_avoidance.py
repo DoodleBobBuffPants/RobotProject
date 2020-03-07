@@ -14,12 +14,12 @@ def rule_based(front, front_left, front_right, left, right):
   sens_inp = np.tanh(sens_inp)
 
   # if close to front, move away
-  if sens_inp[0] < np.tanh(.25):
+  if sens_inp[0] < np.tanh(.3):
     u = -1.
     if sens_inp[1] < sens_inp[2]:
-      w = -3.*np.pi
-    else:
       w =  3.*np.pi
+    else:
+      w = -3.*np.pi
     return u, w
 
   return u, w
@@ -35,32 +35,32 @@ def rule_based(front, front_left, front_right, left, right):
   if sens_inp[0] > np.tanh(.6) and sens_inp[0] > 2.*sens_inp[1] and sens_inp[0] > 2.*sens_inp[2]:
     # override w updates and steer using left and right sensors, which should be close enough to detect collisions
     # in tight areas
-    if sens_inp[3] < np.tanh(.25):
+    if sens_inp[3] < np.tanh(.3):
       w = w + 1.5*(1.-sens_inp[3])
-    if sens_inp[4] < np.tanh(.25):
+    if sens_inp[4] < np.tanh(.3):
       w = w - 1.5*(1.-sens_inp[25])
-    if sens_inp[1] < np.tanh(.25):
+    if sens_inp[1] < np.tanh(.3):
       w = w + 1.5*(1.-sens_inp[1])
-    if sens_inp[2] < np.tanh(.25):
+    if sens_inp[2] < np.tanh(.3):
       w = w - 1.5*(1.-sens_inp[2])
 
     return u, w
 
 
   # if the right hand side detects an approaching object , alter w to move left
-  if sens_inp[2] < np.tanh(.25):
+  if sens_inp[2] < np.tanh(.3):
     w = w + 4.*(1.-sens_inp[2])
 
   # if the left hand side detects and approaching object, alter w to move to the right
-  if sens_inp[1] < np.tanh(.25):
+  if sens_inp[1] < np.tanh(.3):
     w = w - 4.*(1.-sens_inp[1])
 
   # if robot is very close to the right hand slide, adjust left a little
-  if sens_inp[4] < np.tanh(.25):
+  if sens_inp[4] < np.tanh(.3):
     w = w + 2.*(1.-sens_inp[4])
 
   # if robot is very close to the left hand slide, adjust right a little
-  if sens_inp[3] < np.tanh(.25):
+  if sens_inp[3] < np.tanh(.3):
     w = w - 2.*(1.-sens_inp[3])
   
   return u, w

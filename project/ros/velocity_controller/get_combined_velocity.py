@@ -12,7 +12,7 @@ import rrt_navigation
 # Feedback linearisation epsilon
 EPSILON = .1
 
-ROBOT_DISTANCE = .125
+ROBOT_DISTANCE = .15
 
 X = 0
 Y = 1
@@ -39,7 +39,7 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     follower_lasers = [lasers[i] for i in range(len(lasers)) if i != LEADER_ID]
 
     # Velocities
-    follower_formation_velocities, desired_positions = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
+    follower_formation_velocities, desired_positions = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity, lasers=lasers)
     follower_obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(follower_poses, follower_lasers)
 
     # NOTE: for numpy insert, obj is the index of insertion.
@@ -77,17 +77,28 @@ def weighting(velocities, weight):
     wv[i] = velocities[i] * weight
   return wv
 
+def normalize(vec):
+  mag = np.linalg.norm(vec)
+  if mag < .01:
+    return np.zeros_like(vec)
+  else:
+    return vec / mag
+
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
 
     # weights
-    goal_w = .8
-    formation_w = 1.2
-    static_obs_avoid_w = 3.
+    goal_w = .1
+    formation_w = .2
+    static_obs_avoid_w = .7
 
     # formation is the goal for followers
-    goal = weighting(goal_velocities, goal_w)
-    formation = weighting(formation_velocities, formation_w)
-    static_obstacle_avoidance = weighting(obstacle_velocities, static_obs_avoid_w)
+    ngoal = np.array([normalize(velocity) for velocity in goal_velocities])
+    nform = np.array([normalize(velocity) for velocity in formation_velocities])
+    nobst = np.array([normalize(velocity) for velocity in obstacle_velocities])
+
+    goal = weighting(ngoal, goal_w)
+    formation = weighting(nform, formation_w)
+    static_obstacle_avoidance = weighting(nobst, static_obs_avoid_w)
 
     # print("goal: ", goal)
     # print("formation: ", formation)

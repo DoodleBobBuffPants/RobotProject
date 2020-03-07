@@ -42,6 +42,12 @@ WEDGE = np.array([[2*SPACING_DIST, -SPACING_DIST],
 				  [-SPACING_DIST, 0], 
 				  [-2*SPACING_DIST, -SPACING_DIST]])
 
+# for switching, leader is in front
+SWITCHED_CORRIDOR_FORMATION = np.array([[0, -3.*SPACING_DIST], 
+										[0, -1.*SPACING_DIST],
+										[0, -2.*SPACING_DIST], 
+										[0, -4.*SPACING_DIST]])
+
 # RRT bounds are [[x_min, x_max], [y_min, y_max]]
 # Now try setting this pose param to include initial yaw and see if the initial yaw problem goes away...
 SIMPLE_MAP = {
