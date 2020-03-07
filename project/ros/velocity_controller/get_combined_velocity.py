@@ -85,7 +85,6 @@ def normalize(vec):
     return vec / mag
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
-
     # weights
     goal_w = .1
     formation_w = .2
