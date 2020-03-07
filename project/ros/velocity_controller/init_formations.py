@@ -3,22 +3,20 @@ from precomputed_rrt_paths import *
 import numpy as np
 
 # Formation spacing parameter for the formation
-# SPACING_DIST = 0.3
-SPACING_DIST = 0.8
+ROBOT_RADIUS = 0.105/2.
+SPACING_DIST = 0.32 + ROBOT_RADIUS
+# SPACING_DIST = 0.8
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
 # Initial yaw is the yaw set in the launch file
 
-# LEADER_ID = 2
-# INITIAL_YAW = 1.571
 LINE = np.array([[2*SPACING_DIST,0], 
 				 [SPACING_DIST, 0],
 				 [-SPACING_DIST, 0], 
 				 [-2*SPACING_DIST, 0]])
 
-# LEADER_ID = 2
-# INITIAL YAW = 
+
 COLUMN = np.array([[0, 2*SPACING_DIST], 
             	   [0, SPACING_DIST],
             	   [0,-SPACING_DIST], 
@@ -31,18 +29,22 @@ COLUMN = np.array([[0, 2*SPACING_DIST],
 
 LEADER_ID = 0
 INITIAL_YAW = 1.571
-# INITIAL_YAW = 0.
 DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST], 
 					 [0, -SPACING_DIST], 
 					 [0, -2.*SPACING_DIST], 
 					 [SPACING_DIST, -SPACING_DIST]])
 
-# LEADER_ID = 2
-# INITIAL YAW = 
+
 WEDGE = np.array([[2*SPACING_DIST, -SPACING_DIST], 
 				  [SPACING_DIST, 0],
 				  [-SPACING_DIST, 0], 
 				  [-2*SPACING_DIST, -SPACING_DIST]])
+
+# for switching, leader is in front
+SWITCHED_CORRIDOR_FORMATION = np.array([[0, -2.*SPACING_DIST], 
+										[0, -1.*SPACING_DIST],
+										[0, -4.*SPACING_DIST], 
+										[0, -3.*SPACING_DIST]])
 
 # RRT bounds are [[x_min, x_max], [y_min, y_max]]
 # Now try setting this pose param to include initial yaw and see if the initial yaw problem goes away...
@@ -60,7 +62,15 @@ CORRIDOR_MAP = {
  	"MAP_NAME": "corridor",
  	"RRT_ITERATIONS": 1500,
  	"RRT_PATH": CORRIDOR_PATH,
-	 "FORMATION_YAW": 0.}
+	"FORMATION_YAW": 0.}
+
+CORRIDOR_STRAIGHT_MAP = {
+	"GOAL_POSITION": np.array([-2.6, -0.1], dtype=np.float32),
+ 	"RRT_BOUNDS": [[-12, -2], [-1, 3]],
+ 	"MAP_NAME": "corridor",
+ 	"RRT_ITERATIONS": 1500,
+ 	"RRT_PATH": CORRDIOR_STRAIGHT_PATH,
+	"FORMATION_YAW": 0.}
 
 MAZE_MAP = {
 	"GOAL_POSITION": np.array([-1.0, -3.2], dtype=np.float32),
@@ -68,7 +78,7 @@ MAZE_MAP = {
  	"MAP_NAME": "maze",
  	"RRT_ITERATIONS": 1000,
  	"RRT_PATH": MAZE_PATH,
-	 "MAZE_MAP": 0.}
+	"FORMATION_YAW": 0.}
 
 DIAMOND_MAP = {
 	"GOAL_POSITION": np.array([3.3, -4.0], dtype=np.float32),
@@ -76,22 +86,24 @@ DIAMOND_MAP = {
  	"MAP_NAME": "diamond",
  	"RRT_ITERATIONS": 1500,
  	"RRT_PATH": DIAMOND_PATH,
-	 "FORMATION_YAW": 0.}
+	"FORMATION_YAW": 0.}
 
 SQUARE_MAP = {
-	"GOAL_POSITION": None,
- 	"RRT_BOUNDS": [[0,0],[0,0]],
+	"GOAL_POSITION": np.array([1.5, 1.5], dtype=np.float32), 
+ 	"RRT_BOUNDS": [[-2, 2], [-2, 2]],
  	"MAP_NAME": "map",
- 	"RRT_ITERATIONS": 500,
- 	"RRT_PATH": [(0,0)],
-	 "FORMATION_YAW": -0.8}
+ 	"RRT_ITERATIONS": 1000,
+ 	"RRT_PATH": [(0,0), (0,0), (0,0)],
+	"FORMATION_YAW": -0.8}
 
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = SQUARE_MAP
+MAP_PARAMS = CORRIDOR_STRAIGHT_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False
+
+ALLOW_FORMATION_ROTATION = False
 
 FORMATION = DIAMOND

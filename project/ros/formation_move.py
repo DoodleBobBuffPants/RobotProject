@@ -35,13 +35,15 @@ from sensor_msgs.msg import LaserScan
 from gazebo_msgs.msg import ModelStates
 from tf.transformations import euler_from_quaternion
 
-robot_names = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
+ROBOT_NAMES = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 
 GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
 EPSILON = .1
 
 MAP = MAP_PARAMS["MAP_NAME"]
+
+ERRORS = [[] for _ in range(len(ROBOT_NAMES)-1)]
 
 X = 0
 Y = 1
@@ -121,6 +123,24 @@ class GroundtruthPose(object):
   def pose(self):
     return self._pose
   
+def save_errors(robot_poses, desired_positions):
+	follower_positions = np.array([robot_poses[i][:2] for i in range(len(robot_poses)) if i != LEADER_ID])
+	pose_err = [np.linalg.norm(f_pos - d_pos) for f_pos, d_pos in zip(follower_positions, desired_positions)]
+
+	for i in range(len(pose_err)):
+		ERRORS[i].append(pose_err[i])
+
+def plot_errors():
+	sampled_errs = [ERRORS[i][::20] for i in range(len(ERRORS))]
+
+	x = np.arange(len(sampled_errs[0]))
+	for i in range(len(sampled_errs)):
+		plt.plot(x, sampled_errs[i])
+
+	plt.xlabel('Time')
+	plt.ylabel('Error')
+	plt.legend([ROBOT_NAMES[i] for i in range(len(ROBOT_NAMES)) if i != LEADER_ID])
+	plt.show()
 
 def run():
   rospy.init_node('obstacle_avoidance')
@@ -128,9 +148,9 @@ def run():
   # Update control every 50 ms.
   rate_limiter = rospy.Rate(50)
   
-  publishers = [None] * len(robot_names)
-  lasers = [None] * len(robot_names)
-  groundtruths = [None] * len(robot_names)
+  publishers = [None] * len(ROBOT_NAMES)
+  lasers = [None] * len(ROBOT_NAMES)
+  groundtruths = [None] * len(ROBOT_NAMES)
 
   # RRT path
   # If RUN_RRT is False, load the predefined path
@@ -139,8 +159,8 @@ def run():
   else:
     current_path = None
   
-  vel_msgs = [None] * len(robot_names)
-  for i,name in enumerate(robot_names):
+  vel_msgs = [None] * len(ROBOT_NAMES)
+  for i,name in enumerate(ROBOT_NAMES):
   	publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
   	lasers[i] = SimpleLaser(name)
   	groundtruths[i] = GroundtruthPose(name)
@@ -169,23 +189,6 @@ def run():
     while not current_path:
         start_node, final_node = rrt.rrt(groundtruths[LEADER_ID].pose, GOAL_POSITION, occupancy_grid)
 
-        # plot rrt path
-        # useful debug code
-
-        # fig, ax = plt.subplots()
-        # occupancy_grid.draw()
-        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        # rrt.draw_solution(start_node, final_node)
-        # plt.scatter(groundtruths[LEADER_ID].pose[0], groundtruths[LEADER_ID].pose[1], s=10, marker='o', color='green', zorder=1000)
-        # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
-        
-        # plt.axis('equal')
-        # plt.xlabel('x')
-        # plt.ylabel('y')
-        # plt.xlim([-.5 - 2., 2. + .5])
-        # plt.ylim([-.5 - 2., 2. + .5])
-        # plt.show()
-
         current_path = rrt_navigation.get_path(final_node)
         # print("CURRENT PATH: ", current_path)
 
@@ -198,14 +201,16 @@ def run():
     robot_poses = np.array([groundtruths[i].pose for i in range(len(groundtruths))])
 
     # get the velocities for all the robots
-    us, ws = gcv.get_combined_velocities(robot_poses=robot_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers)
+    us, ws, desired_positions = gcv.get_combined_velocities(robot_poses=robot_poses, leader_rrt_velocity=rrt_velocity, lasers=lasers)
+
+    save_errors(robot_poses, desired_positions)
 
     for i in range(len(us)):
       vel_msgs[i] = Twist()
       vel_msgs[i].linear.x = us[i]
       vel_msgs[i].angular.z = ws[i]
 
-    for i,_ in enumerate(robot_names):
+    for i,_ in enumerate(ROBOT_NAMES):
       publishers[i].publish(vel_msgs[i])
 
     rate_limiter.sleep()
@@ -216,3 +221,4 @@ if __name__ == '__main__':
     run()
   except rospy.ROSInterruptException:
     pass
+  plot_errors()
