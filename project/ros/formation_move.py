@@ -4,8 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import matplotlib.pylab as plt
-import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
@@ -134,13 +133,12 @@ def save_errors(robot_poses, desired_positions):
 def plot_errors():
 	sampled_errs = [ERRORS[i][::20] for i in range(len(ERRORS))]
 
-	x = np.arange(start=0, stop=len(sampled_errs[0]))
+	x = np.arange(len(sampled_errs[0]))
 	for i in range(len(sampled_errs)):
 		plt.plot(x, sampled_errs[i])
 
 	plt.xlabel('Time')
 	plt.ylabel('Error')
-	plt.ylim(-.25,1)
 	plt.legend([ROBOT_NAMES[i] for i in range(len(ROBOT_NAMES)) if i != LEADER_ID])
 	plt.show()
 
