@@ -42,7 +42,7 @@ EPSILON = .1
 
 MAP = MAP_PARAMS["MAP_NAME"]
 
-ERRORS = [[]] * (len(ROBOT_NAMES)-1)
+ERRORS = [[] for _ in range(len(ROBOT_NAMES)-1)]
 
 X = 0
 Y = 1
@@ -188,23 +188,6 @@ def run():
     # Compute RRT for the leader only
     while not current_path:
         start_node, final_node = rrt.rrt(groundtruths[LEADER_ID].pose, GOAL_POSITION, occupancy_grid)
-
-        # plot rrt path
-        # useful debug code
-
-        # fig, ax = plt.subplots()
-        # occupancy_grid.draw()
-        # plt.scatter(.3, .2, s=10, marker='o', color='green', zorder=1000)
-        # rrt.draw_solution(start_node, final_node)
-        # plt.scatter(groundtruths[LEADER_ID].pose[0], groundtruths[LEADER_ID].pose[1], s=10, marker='o', color='green', zorder=1000)
-        # plt.scatter(GOAL_POSITION[0], GOAL_POSITION[1], s=10, marker='o', color='red', zorder=1000)
-        
-        # plt.axis('equal')
-        # plt.xlabel('x')
-        # plt.ylabel('y')
-        # plt.xlim([-.5 - 2., 2. + .5])
-        # plt.ylim([-.5 - 2., 2. + .5])
-        # plt.show()
 
         current_path = rrt_navigation.get_path(final_node)
         # print("CURRENT PATH: ", current_path)

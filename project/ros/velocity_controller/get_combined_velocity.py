@@ -62,13 +62,12 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     return us, ws, desired_positions
 
 def robot_avoidance_weights(robot_poses):
-  # Earlier robot stops to let other pass
-  v = []
+  # Higher ID robot stops to let other pass
+  v = [1.] * len(robot_poses)
   for i in range(len(robot_poses)):
-    v.append(1.)
     for j in range(i+1, len(robot_poses)):
       if np.linalg.norm(robot_poses[i][:2] - robot_poses[j][:2]) < ROBOT_DISTANCE:
-        v[i] = 0.
+        v[j] = 0.
   v = np.array(v)
   return v
 
@@ -83,7 +82,7 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
     # weights
     goal_w = .8
     formation_w = 1.2
-    static_obs_avoid_w = 2.
+    static_obs_avoid_w = 3.
 
     # formation is the goal for followers
     goal = weighting(goal_velocities, goal_w)
