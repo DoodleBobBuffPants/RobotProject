@@ -4,7 +4,7 @@ import numpy as np
 
 # Formation spacing parameter for the formation
 ROBOT_RADIUS = 0.105/2.
-SPACING_DIST = 0.8 + ROBOT_RADIUS
+SPACING_DIST = 0.3 + ROBOT_RADIUS
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -81,7 +81,7 @@ SQUARE_MAP = {
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = SQUARE_MAP
+MAP_PARAMS = CORRIDOR_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False
