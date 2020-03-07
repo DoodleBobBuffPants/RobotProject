@@ -72,9 +72,16 @@ MAZE_MAP = {
  	"RRT_ITERATIONS": 1500,
  	"RRT_PATH": MAZE_PATH}
 
+SQUARE_MAP = {
+	"GOAL_POSITION": np.array([0., 0.], dtype=np.float32),
+ 	"RRT_BOUNDS": [[0., 0.], [0., 0.]],
+ 	"MAP_NAME": "square",
+ 	"RRT_ITERATIONS": 100,
+ 	"RRT_PATH": SQUARE_PATH}
+
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = MAZE_MAP
+MAP_PARAMS = SQUARE_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False

@@ -86,6 +86,9 @@ def normalize(vec):
 
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights):
 
+    tempvel = np.array([1., -1.])
+    goal_velocities[LEADER_ID] = tempvel
+
     # weights
     goal_w = .1
     formation_w = .2

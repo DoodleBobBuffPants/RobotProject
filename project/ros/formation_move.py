@@ -190,7 +190,7 @@ def run():
         start_node, final_node = rrt.rrt(groundtruths[LEADER_ID].pose, GOAL_POSITION, occupancy_grid)
 
         current_path = rrt_navigation.get_path(final_node)
-        # print("CURRENT PATH: ", current_path)
+        print("CURRENT PATH: ", current_path)
 
     # get the RRT velocity for the leader robot
     position = np.array([groundtruths[LEADER_ID].pose[X] + EPSILON*np.cos(groundtruths[LEADER_ID].pose[YAW]),
