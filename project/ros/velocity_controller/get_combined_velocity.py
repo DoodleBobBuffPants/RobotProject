@@ -39,7 +39,7 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
     follower_lasers = [lasers[i] for i in range(len(lasers)) if i != LEADER_ID]
 
     # Velocities
-    follower_formation_velocities = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
+    follower_formation_velocities, desired_positions = maintain_formation(leader_pose=leader_pose, follower_poses=follower_poses, leader_rrt_velocity=leader_rrt_velocity)
     follower_obstacle_avoidance_velocities = get_obstacle_avoidance_velocities(follower_poses, follower_lasers)
 
     # NOTE: for numpy insert, obj is the index of insertion.
@@ -59,7 +59,7 @@ def get_combined_velocities(robot_poses, leader_rrt_velocity, lasers):
       us.append(u)
       ws.append(w)
 
-    return us, ws 
+    return us, ws, desired_positions
 
 def robot_avoidance_weights(robot_poses):
   # Earlier robot stops to let other pass
