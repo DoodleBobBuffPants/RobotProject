@@ -3,8 +3,8 @@ from precomputed_rrt_paths import *
 import numpy as np
 
 # Formation spacing parameter for the formation
-SPACING_DIST = 0.3
-# SPACING_DIST = 0.8
+# SPACING_DIST = 0.3
+SPACING_DIST = 0.8
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -51,32 +51,45 @@ SIMPLE_MAP = {
 	"RRT_BOUNDS": [[-2, 2], [-2, 2]],
 	"MAP_NAME": "map",
 	"RRT_ITERATIONS": 500,
-	"RRT_PATH": SIMPLE_PATH}
+	"RRT_PATH": SIMPLE_PATH,
+	"FORMATION_YAW": np.pi/2.}
 
 CORRIDOR_MAP = {
 	"GOAL_POSITION": np.array([-2.6, -0.1], dtype=np.float32),
  	"RRT_BOUNDS": [[-12, -2], [-1, 3]],
  	"MAP_NAME": "corridor",
  	"RRT_ITERATIONS": 1500,
- 	"RRT_PATH": CORRIDOR_PATH}
+ 	"RRT_PATH": CORRIDOR_PATH,
+	 "FORMATION_YAW": 0.}
 
 MAZE_MAP = {
 	"GOAL_POSITION": np.array([-1.0, -3.2], dtype=np.float32),
  	"RRT_BOUNDS": [[-4.3, -0.3], [-5.8, -2.5]],
  	"MAP_NAME": "maze",
  	"RRT_ITERATIONS": 1000,
- 	"RRT_PATH": MAZE_PATH}
+ 	"RRT_PATH": MAZE_PATH,
+	 "MAZE_MAP": 0.}
 
 DIAMOND_MAP = {
 	"GOAL_POSITION": np.array([3.3, -4.0], dtype=np.float32),
  	"RRT_BOUNDS": [[-12, -2], [-1, 3]],
  	"MAP_NAME": "diamond",
  	"RRT_ITERATIONS": 1500,
- 	"RRT_PATH": DIAMOND_PATH}
+ 	"RRT_PATH": DIAMOND_PATH,
+	 "FORMATION_YAW": 0.}
+
+SQUARE_MAP = {
+	"GOAL_POSITION": None,
+ 	"RRT_BOUNDS": [[0,0],[0,0]],
+ 	"MAP_NAME": "map",
+ 	"RRT_ITERATIONS": 500,
+ 	"RRT_PATH": [(0,0)],
+	 "FORMATION_YAW": -0.8}
+
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = CORRIDOR_MAP
+MAP_PARAMS = SQUARE_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False

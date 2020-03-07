@@ -165,16 +165,15 @@ def weighting(velocities, weight):
 def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities, robot_avoidance_weights, noise_velocities, in_dead_zone, distances_to_obstacle):
 
     # weights
-    goal_w = 0.2
+    goal_w = 0.8
     formation_w = 0.9
-    # formation_w = 0.
     static_obs_avoid_w = 1.
-    # static_obs_avoid_w = 0.0
-    # noise_w = 0.1
-    noise_w = 0.0
+    noise_w = 0.2
+
+    overall_weight = 0.8
 
     # formation is the goal for followers
-    # goal_velocities[LEADER_ID] = np.array([1., -1.]) / np.linalg.norm(np.array([1., -1.]))
+    goal_velocities[LEADER_ID] = np.array([1., -1.]) / np.linalg.norm(np.array([1., -1.]))
     # goal_velocities[LEADER_ID] = np.array([0., 1.])
     goal = weighting(goal_velocities, goal_w)
 
@@ -222,4 +221,4 @@ def weight_velocities(goal_velocities, formation_velocities, obstacle_velocities
 
     # goal[0] += static_obstacle_avoidance[0] + noise[0]
     # return goal
-    return weighted_sum
+    return weighted_sum * overall_weight

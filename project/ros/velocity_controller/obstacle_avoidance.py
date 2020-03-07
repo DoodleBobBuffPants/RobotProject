@@ -55,13 +55,19 @@ def braitenburg(robot_poses, robot_id, front, front_left, front_right, left, rig
   # rearrange for braitenburg
   sens_inp = np.array([sens_inp[FRONT],sens_inp[FRONT_LEFT],sens_inp[FRONT_RIGHT],sens_inp[LEFT],sens_inp[RIGHT]])
 
+  # Direction to turn from front sensor
+  if robot_id < len(robot_poses) // 2:
+    direction = 1.
+  else:
+    direction = -1.
+
   # this should be a better form of weights, when it is surrounded, acceleration is negative default
   # a bias on the front sensor to steer slighty left is given so that it does not get stuck still in reverse (it can manage to turn around, test this with extra objects)
   # actually the plus on left and right makes sense, i want it to get smaller when it gets bigger
   weights = np.array([
     # front front left front right left right
   	[-0.3, -0.2, -0.2, 0., 0.],
-	  [0.0, -5.0, 5.0, 0., 0.]
+	  [0.5 * direction, -5.0, 5.0, 0.3, 0.3]
   ])
 
   # multiply sense inputs by the weights.
@@ -69,8 +75,10 @@ def braitenburg(robot_poses, robot_id, front, front_left, front_right, left, rig
 
   # add a function to turn around the robot when it gets very very close
   # prevents the non turning issue when it goes head on into something
-  direction = 1. if sens_inp[FRONT_RIGHT] > sens_inp[FRONT_LEFT] else -1.
-  w = w + 40 * (1 / (1 + 100 * (front**2))) * direction
+  if robot_id == 4 and front < 0.4:
+    print("front: {}  | front_left: {}  |  front_right: {}  ".format(front, front_left, front_right))
+  if front < 0.5 and front_left > 0.2 and front_right > 0.2:
+    w = w + (40 * (1 / (1 + 100 * (front**2))) * direction)
   
   # extract params noet this doesn't consider previous step since we setp them to 0 / 0.5 at the start.. it does do what you think nice.
   u, w = u + params[0], w + params[1]

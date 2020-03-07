@@ -1,4 +1,4 @@
-from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW
+from init_formations import FORMATION, SPACING_DIST, INITIAL_YAW, MAP_PARAMS
 
 import numpy as np
 
@@ -7,6 +7,7 @@ Y= 1
 YAW = 2
 
 ROBOT_RADIUS = 0.105 / 2.
+FORMATION_YAW = MAP_PARAMS["FORMATION_YAW"]
 
 # DEAD ZONE (If a robot is within the dead zone of its desired formation postion, it doesnt move)
 DEAD_ZONE = 1.5 * ROBOT_RADIUS
@@ -17,8 +18,7 @@ def get_desired_positions(formation, formation_pose):
 
     # Take formation and transform (rotate, translate) onto formation_pose
     theta = formation_pose[YAW]
-    # theta = -0.8 - INITIAL_YAW
-    theta = 0.
+    theta = FORMATION_YAW - INITIAL_YAW
 
     desired_positions = np.zeros_like(formation)
     for i in range(len(formation)):
