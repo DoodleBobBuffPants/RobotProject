@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from init_formations import LEADER_ID, FORMATION
-from maintain_formation_decentralized import maintain_formation, detect_corridor, CONTROLLED_ZONE
+from init_formations import LEADER_ID
+from maintain_formation_decentralized import maintain_formation, CONTROLLED_ZONE
 
 import numpy as np
 import obstacle_avoidance
@@ -34,13 +34,9 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
     formation_velocity = np.array([0., 0.])
     obstacle_avoidance_velocity = np.array([0., 0.])
 
-    formation = FORMATION
-    if robot_id == LEADER_ID:
-      formation = detect_corridor(leader_pose, laser)
-
     if robot_id != LEADER_ID:
       rrt_velocity = np.array([0., 0.])
-      formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id, formation)
+      formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id)
       obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
 
     combined_velocity = weight_velocities(rrt_velocity, formation_velocity, obstacle_avoidance_velocity)
