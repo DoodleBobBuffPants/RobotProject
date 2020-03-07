@@ -4,7 +4,7 @@ import numpy as np
 
 # Formation spacing parameter for the formation
 ROBOT_RADIUS = 0.105/2.
-SPACING_DIST = 0.3 + ROBOT_RADIUS
+SPACING_DIST = 0.8 + ROBOT_RADIUS
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -73,10 +73,10 @@ MAZE_MAP = {
  	"RRT_PATH": MAZE_PATH}
 
 SQUARE_MAP = {
-	"GOAL_POSITION": np.array([0., 0.], dtype=np.float32),
- 	"RRT_BOUNDS": [[0., 0.], [0., 0.]],
- 	"MAP_NAME": "square",
- 	"RRT_ITERATIONS": 100,
+	"GOAL_POSITION": np.array([1.5, 1.5], dtype=np.float32), 
+	"RRT_BOUNDS": [[-2, 2], [-2, 2]],
+ 	"MAP_NAME": "map",
+ 	"RRT_ITERATIONS": 1000,
  	"RRT_PATH": SQUARE_PATH}
 
 # Set these params before running code
