@@ -3,7 +3,8 @@ from precomputed_rrt_paths import *
 import numpy as np
 
 # Formation spacing parameter for the formation
-SPACING_DIST = 0.3
+ROBOT_RADIUS = 0.105/2.
+SPACING_DIST = 0.3 + ROBOT_RADIUS
 
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
@@ -43,10 +44,10 @@ WEDGE = np.array([[2*SPACING_DIST, -SPACING_DIST],
 				  [-2*SPACING_DIST, -SPACING_DIST]])
 
 # for switching, leader is in front
-SWITCHED_CORRIDOR_FORMATION = np.array([[0, -3.*SPACING_DIST], 
+SWITCHED_CORRIDOR_FORMATION = np.array([[0, -2.*SPACING_DIST], 
 										[0, -1.*SPACING_DIST],
-										[0, -2.*SPACING_DIST], 
-										[0, -4.*SPACING_DIST]])
+										[0, -4.*SPACING_DIST], 
+										[0, -3.*SPACING_DIST]])
 
 # RRT bounds are [[x_min, x_max], [y_min, y_max]]
 # Now try setting this pose param to include initial yaw and see if the initial yaw problem goes away...
@@ -73,7 +74,7 @@ MAZE_MAP = {
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = CORRIDOR_MAP
+MAP_PARAMS = MAZE_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False

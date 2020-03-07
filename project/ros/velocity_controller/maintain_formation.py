@@ -36,7 +36,7 @@ def detect_corridor(robot_poses, lasers):
     sens_inp = np.tanh(lasers[i].measurements)
 
     # corridor detected if front is big and left and right are small
-    if sens_inp[0] > np.tanh(1.) and sens_inp[1] < np.tanh(.8) and sens_inp[2] < np.tanh(.8):
+    if sens_inp[0] > np.tanh(1.) and sens_inp[3] < np.tanh(.8) and sens_inp[4] < np.tanh(.8):
       believe_in_corridor.append(1.)
     else:
       believe_in_corridor.append(0.)
