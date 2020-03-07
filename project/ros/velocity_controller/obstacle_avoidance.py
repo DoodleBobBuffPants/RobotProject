@@ -17,9 +17,9 @@ def rule_based(front, front_left, front_right, left, right):
   if sens_inp[0] < np.tanh(.3):
     u = -1.
     if sens_inp[1] < sens_inp[2]:
-      w = -4.*np.pi
+      w =  3.*np.pi
     else:
-      w =  4.*np.pi
+      w = -3.*np.pi
     return u, w
 
   return u, w
