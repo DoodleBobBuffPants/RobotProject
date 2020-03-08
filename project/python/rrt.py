@@ -32,7 +32,7 @@ def sample_random_position(occupancy_grid):
   position = np.zeros(2, dtype=np.float32)
 
   # This is implementing the first primitive of the RRT algorithm: sample configurations in free C-space.
-  # C free = C \ C obs, the occupancy_grid function is giving us a nice 
+  # C free = C \ C obs
 
   # sample function not including yaw, capped at dimensions of the arena
 
@@ -45,7 +45,7 @@ def sample_random_position(occupancy_grid):
 
   return position
 
- # function to check that this position is valid for the robot to be in (check points at the robot's circumpherence)
+# function to check that this position is valid for the robot to be in (check points at the robot's circumpherence)
 def is_valid(position, occupancy_grid):
   # function for checking if a position is valid
   pos_is_valid = lambda pos: occupancy_grid.is_free(pos) and not occupancy_grid.is_occupied(pos)

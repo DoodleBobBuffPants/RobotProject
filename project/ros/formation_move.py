@@ -122,25 +122,24 @@ class GroundtruthPose(object):
   def pose(self):
     return self._pose
   
-
 def save_errors(robot_poses, desired_positions):
-	follower_positions = np.array([robot_poses[i][:2] for i in range(len(robot_poses)) if i != LEADER_ID])
-	pose_err = [np.linalg.norm(f_pos - d_pos) for f_pos, d_pos in zip(follower_positions, desired_positions)]
+  follower_positions = np.array([robot_poses[i][:2] for i in range(len(robot_poses)) if i != LEADER_ID])
+  pose_err = [np.linalg.norm(f_pos - d_pos) for f_pos, d_pos in zip(follower_positions, desired_positions)]
 
-	for i in range(len(pose_err)):
-		ERRORS[i].append(pose_err[i])
+  for i in range(len(pose_err)):
+    ERRORS[i].append(pose_err[i])
 
 def plot_errors():
-	sampled_errs = [ERRORS[i][::20] for i in range(len(ERRORS))]
+  sampled_errs = [ERRORS[i][::20] for i in range(len(ERRORS))]
 
-	x = np.arange(len(sampled_errs[0]))
-	for i in range(len(sampled_errs)):
-		plt.plot(x, sampled_errs[i])
+  x = np.arange(len(sampled_errs[0]))
+  for i in range(len(sampled_errs)):
+    plt.plot(x, sampled_errs[i])
 
-	plt.xlabel('Time')
-	plt.ylabel('Error')
-	plt.legend([ROBOT_NAMES[i] for i in range(len(ROBOT_NAMES)) if i != LEADER_ID])
-	plt.show()
+  plt.xlabel('Time')
+  plt.ylabel('Error')
+  plt.legend([ROBOT_NAMES[i] for i in range(len(ROBOT_NAMES)) if i != LEADER_ID])
+  plt.show()
 
 def run():
   rospy.init_node('obstacle_avoidance')
@@ -161,9 +160,9 @@ def run():
   
   vel_msgs = [None] * len(ROBOT_NAMES)
   for i,name in enumerate(ROBOT_NAMES):
-  	publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
-  	lasers[i] = SimpleLaser(name)
-  	groundtruths[i] = GroundtruthPose(name)
+    publishers[i] = rospy.Publisher('/' + name + '/cmd_vel', Twist, queue_size=5)
+    lasers[i] = SimpleLaser(name)
+    groundtruths[i] = GroundtruthPose(name)
 
   # Load map. (in here so it is only computed once)
   with open(os.path.expanduser('~/catkin_ws/src/exercises/project/python/{}.yaml'.format(MAP))) as fp:
