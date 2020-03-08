@@ -9,8 +9,8 @@ SPACING_DIST = 0.3 + ROBOT_RADIUS
 # NOTE:
 # In leader follower, only the followers need be defined in the formation.
 
-# LEADER_ID = 2
-# INITIAL_YAW = 1.571
+LEADER_ID = 2
+INITIAL_YAW = 1.571
 LINE = np.array([[2*SPACING_DIST,0],
                  [SPACING_DIST, 0],
                  [-SPACING_DIST, 0],
@@ -28,8 +28,8 @@ COLUMN = np.array([[0, 2*SPACING_DIST],
 #       1       2       4
 #               3
 
-LEADER_ID = 0
-INITIAL_YAW = 1.571
+# LEADER_ID = 0
+# INITIAL_YAW = 1.571
 DIAMOND =  np.array([[-SPACING_DIST, -SPACING_DIST],
                      [0, -SPACING_DIST],
                      [0, -2.*SPACING_DIST],
@@ -92,11 +92,11 @@ SQUARE_MAP = {
 
 # Set these params before running code
 # NOTE: PATHS DEPEND ON STARTING POSE. IF YOU CHANGE STARTING POSE OF THE ROBOTS, YOU NEED TO RERUN RRT AND GET A NEW PATH
-MAP_PARAMS = CORRIDOR_STRAIGHT_MAP
+MAP_PARAMS = CORRIDOR_MAP
 
 # Set to false to use the predefined path
 RUN_RRT = False
 
-ALLOW_FORMATION_ROTATION = False
+ALLOW_FORMATION_ROTATION = True
 
-FORMATION = DIAMOND
+FORMATION = LINE
