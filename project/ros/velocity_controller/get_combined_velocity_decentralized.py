@@ -29,7 +29,7 @@ def get_obstacle_avoidance_velocity(robot_pose, laser):
   return np.array([x, y])
 
 def get_noise():
-  noise = np.random.uniform(low=-1., high=1., size=[1, 2])[0]
+  noise = np.random.uniform(low=-1., high=1., size=2)
   noise = normalize(noise)
   return noise
 
