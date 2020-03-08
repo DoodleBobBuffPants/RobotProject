@@ -13,7 +13,6 @@ YAW = 2
 
 
 def feedback_linearized(pose, velocity, epsilon):
-
   u = 0.  # [m/s]
   w = 0.  # [rad/s] going counter-clockwise.
 
@@ -37,10 +36,6 @@ def get_velocity(position, path_points):
   # Stop moving if the goal is reached.
   if np.linalg.norm(position - path_points[-1]) < .2:
     return v
-
-  # MISSING: Return the velocity needed to follow the
-  # path defined by path_points. Assume holonomicity of the
-  # point located at position.
 
   minp = path_points[0]
   mind = np.linalg.norm(path_points[0]-position)
@@ -96,4 +91,3 @@ def get_path(final_node):
     points_x.extend(center[X] + np.cos(angles) * radius)
     points_y.extend(center[Y] + np.sin(angles) * radius)
   return zip(points_x, points_y)
-  
