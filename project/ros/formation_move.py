@@ -38,7 +38,7 @@ ROBOT_NAMES = ["tb3_0", "tb3_1", "tb3_2", "tb3_3", "tb3_4"]
 
 GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
-EPSILON = .1
+EPSILON = .2
 
 MAP = MAP_PARAMS["MAP_NAME"]
 
