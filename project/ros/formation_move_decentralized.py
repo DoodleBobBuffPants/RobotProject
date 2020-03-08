@@ -5,8 +5,6 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import matplotlib.pylab as plt
-import matplotlib.patches as patches
 import numpy as np
 import os
 import random
@@ -116,21 +114,21 @@ class GroundtruthPose(object):
     if not ind_name:
       raise ValueError('Specified name "{}" does not exist.'.format(self._name + " or " + LEADER_NAME))
     for ind, name in ind_name:
-        # Pose for current robot
-        pose = np.array(self._pose)
-        pose[0] = msg.pose[ind].position.x
-        pose[1] = msg.pose[ind].position.y
-        _, _, yaw = euler_from_quaternion([
-            msg.pose[ind].orientation.x,
-            msg.pose[ind].orientation.y,
-            msg.pose[ind].orientation.z,
-            msg.pose[ind].orientation.w])
-        pose[2] = yaw
+      # Pose for current robot
+      pose = np.array(self._pose)
+      pose[0] = msg.pose[ind].position.x
+      pose[1] = msg.pose[ind].position.y
+      _, _, yaw = euler_from_quaternion([
+          msg.pose[ind].orientation.x,
+          msg.pose[ind].orientation.y,
+          msg.pose[ind].orientation.z,
+          msg.pose[ind].orientation.w])
+      pose[2] = yaw
 
-        if name == self._name:
-            self._pose = np.array(pose)
-        if name == LEADER_NAME:
-            self._leader_pose = np.array(pose)
+      if name == self._name:
+        self._pose = np.array(pose)
+      if name == LEADER_NAME:
+        self._leader_pose = np.array(pose)
             
   @property
   def ready(self):
@@ -187,20 +185,20 @@ def run():
 
     # Compute RRT on the leader only
     if ROBOT_ID == LEADER_ID:
-        while not current_path:
-          start_node, final_node = rrt.rrt(LEADER_POSE, GOAL_POSITION, occupancy_grid)
+      while not current_path:
+        start_node, final_node = rrt.rrt(LEADER_POSE, GOAL_POSITION, occupancy_grid)
 
-          current_path = rrt_navigation.get_path(final_node)
-          # print("CURRENT PATH: ", current_path)
+        current_path = rrt_navigation.get_path(final_node)
+        # print("CURRENT PATH: ", current_path)
 
-        # get the RRT velocity for the leader robot
-        position = np.array([LEADER_POSE[X] + EPSILON*np.cos(LEADER_POSE[YAW]),
-                             LEADER_POSE[Y] + EPSILON*np.sin(LEADER_POSE[YAW])], dtype=np.float32)
-        LEADER_VELOCITY = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
+      # get the RRT velocity for the leader robot
+      position = np.array([LEADER_POSE[X] + EPSILON*np.cos(LEADER_POSE[YAW]),
+                           LEADER_POSE[Y] + EPSILON*np.sin(LEADER_POSE[YAW])], dtype=np.float32)
+      LEADER_VELOCITY = rrt_navigation.get_velocity(position, np.array(current_path, dtype=np.float32))
     else:
-        # Let the leader velocity be 0, since the leader pose will update and the
-        # formation velocity will correctly move the robot
-        LEADER_VELOCITY = np.array([0., 0.])
+      # Let the leader velocity be 0, since the leader pose will update and the
+      # formation velocity will correctly move the robot
+      LEADER_VELOCITY = np.array([0., 0.])
 
     # get the velocity for this robot
     u, w = gcv.get_combined_velocity(groundtruth.pose, LEADER_POSE, LEADER_VELOCITY, laser, ROBOT_ID)
