@@ -43,7 +43,7 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
 
   if robot_id != LEADER_ID:
     rrt_velocity = np.array([0., 0.])
-    formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id)
+    formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id, laser)
     obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
 
   combined_velocity = weight_velocities(rrt_velocity, formation_velocity, obstacle_avoidance_velocity, noise)

@@ -42,8 +42,9 @@ ROBOT_NAME = ROBOT_NAMES[ROBOT_ID]
 
 # Belief of leader
 LEADER_NAME = ROBOT_NAMES[LEADER_ID]
-LEADER_POSE = [None, None, None]
-LEADER_VELOCITY = [None, None]
+LEADER_POSE = [None] * 3
+LEADER_VELOCITY = [None] * 2
+LEADER_SENSORS = [None] * 5
 
 GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
@@ -61,13 +62,21 @@ OCCUPIED = 2
 
 class SimpleLaser(object):
   def __init__(self, name):
-    rospy.Subscriber('/' + name + '/scan', LaserScan, self.callback)
+    rospy.Subscriber('/' + name + '/scan', LaserScan, self.current_callback)
+    rospy.Subscriber('/' + LEADER_NAME + '/scan', LaserScan, self.leader_callback)
     self._angles = [0., np.pi / 4., -np.pi / 4., np.pi / 2., -np.pi / 2.]
     self._width = np.pi / 180. * 10.  # 10 degrees cone of view.
-    self._measurements = [float('inf')] * len(self._angles)
+    self._current_measurements = [float('inf')] * len(self._angles)
+    self._leader_measurements = [float('inf')] * len(self._angles)
     self._indices = None
 
-  def callback(self, msg):
+  def current_callback(self, msg):
+    self.callback(msg, self._current_measurements)
+
+  def leader_callback(self, msg):
+    self.callback(msg, self._leader_measurements)
+
+  def callback(self, msg, measurement_arr):
     # Helper for angles.
     def _within(x, a, b):
       pi2 = np.pi * 2.
@@ -90,15 +99,19 @@ class SimpleLaser(object):
     ranges = np.array(msg.ranges)
     for i, idx in enumerate(self._indices):
       # We do not take the minimum range of the cone but the 10-th percentile for robustness.
-      self._measurements[i] = np.percentile(ranges[idx], 10)
+      measurement_arr[i] = np.percentile(ranges[idx], 10)
 
   @property
   def ready(self):
-    return not np.isnan(self._measurements[0])
+    return not np.isnan(self._current_measurements[0]) and not np.isnan(self._leader_measurements[0])
 
   @property
   def measurements(self):
-    return self._measurements
+    return self._current_measurements
+
+  @property
+  def leader_measurements(self):
+    return self._leader_measurements
 
 
 class GroundtruthPose(object):

@@ -30,7 +30,18 @@ def get_desired_positions(formation, formation_pose):
     desired_positions[i] = formation_pose[:2] + desired_positions[i]
   return desired_positions
 
-def maintain_formation(leader_pose, follower_pose, leader_rrt_velocity, robot_id):
+def detect_corridor(laser):
+
+  sens_inp = np.tanh(laser.leader_measurements)
+
+  # corridor detected if front is big and left and right are small
+  if sens_inp[0] > np.tanh(1.) and sens_inp[3] < np.tanh(.8) and sens_inp[4] < np.tanh(.8):
+    return SWITCHED_CORRIDOR_FORMATION
+  else:
+    return FORMATION
+    
+
+def maintain_formation(leader_pose, follower_pose, leader_rrt_velocity, robot_id, laser):
 
   # Account for leader in using id as index
   if robot_id > LEADER_ID:
@@ -41,7 +52,8 @@ def maintain_formation(leader_pose, follower_pose, leader_rrt_velocity, robot_id
   formation_pose = np.concatenate((leader_pose[:2], [formation_orientation]))
 
   # Desired positions of each of the follower robots in the formation (see comment above about replacing formation pose with leader...)
-  desired_positions = get_desired_positions(formation=FORMATION, formation_pose=formation_pose)
+  formation = detect_corridor(laser)
+  desired_positions = get_desired_positions(formation=formation, formation_pose=formation_pose)
 
   # velocity directs the follower robots from their current position to their (desired position in the formation)
   follower_position = follower_pose[:2]
