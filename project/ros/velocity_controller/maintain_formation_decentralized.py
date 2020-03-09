@@ -76,4 +76,4 @@ def maintain_formation(leader_pose, follower_pose, leader_rrt_velocity, robot_id
     velocity = velocity / distance
     velocity = velocity * CONTROLLED_ZONE
 
-  return velocity / CONTROLLED_ZONE
+  return velocity / CONTROLLED_ZONE, desired_positions[robot_id]

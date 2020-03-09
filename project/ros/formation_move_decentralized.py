@@ -44,7 +44,8 @@ ROBOT_NAME = ROBOT_NAMES[ROBOT_ID]
 LEADER_NAME = ROBOT_NAMES[LEADER_ID]
 LEADER_POSE = [None] * 3
 LEADER_VELOCITY = [None] * 2
-LEADER_SENSORS = [None] * 5
+
+ERRORS = []
 
 GOAL_POSITION = MAP_PARAMS["GOAL_POSITION"]
 
@@ -155,6 +156,15 @@ class GroundtruthPose(object):
   def leader_pose(self):
     return self._leader_pose
 
+def save_error(robot_position, desired_position):
+  if ROBOT_ID != LEADER_ID:
+  	ERRORS.append(np.linalg.norm(robot_position - desired_position))
+
+def write_error():
+  if ROBOT_ID != LEADER_ID:
+    labeled_err = {ROBOT_NAME : ERRORS}
+    with open('errors.txt', 'a+') as f:
+  	  f.write(str(labeled_err))
 
 def run():
   rospy.init_node('obstacle_avoidance')
@@ -214,7 +224,9 @@ def run():
       LEADER_VELOCITY = np.array([0., 0.])
 
     # get the velocity for this robot
-    u, w = gcv.get_combined_velocity(groundtruth.pose, LEADER_POSE, LEADER_VELOCITY, laser, ROBOT_ID)
+    u, w, desired_position = gcv.get_combined_velocity(groundtruth.pose, LEADER_POSE, LEADER_VELOCITY, laser, ROBOT_ID)
+
+    save_error(groundtruth.pose[:2], desired_position)
 
     vel_msg = Twist()
     vel_msg.linear.x = u
@@ -237,3 +249,5 @@ if __name__ == '__main__':
     run()
   except rospy.ROSInterruptException:
     pass
+
+  write_error()

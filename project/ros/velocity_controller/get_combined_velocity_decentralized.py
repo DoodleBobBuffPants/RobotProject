@@ -41,9 +41,11 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
   obstacle_avoidance_velocity = np.array([0., 0.])
   noise = get_noise()
 
+  desired_position = robot_pose[:2]
+
   if robot_id != LEADER_ID:
     rrt_velocity = np.array([0., 0.])
-    formation_velocity = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id, laser)
+    formation_velocity, desired_position = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id, laser)
     obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
 
   combined_velocity = weight_velocities(rrt_velocity, formation_velocity, obstacle_avoidance_velocity, noise)
@@ -51,7 +53,7 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
   # Feedback linearization - convert combined_velocities [x,y] [u,w]
   u, w = rrt_navigation.feedback_linearized(pose=robot_pose, velocity=combined_velocity, epsilon=EPSILON)
 
-  return u, w 
+  return u, w, desired_position
 
 def weighting(velocity, weight):
   return np.array(velocity * weight)
