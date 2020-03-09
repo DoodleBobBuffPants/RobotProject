@@ -20,241 +20,268 @@
 \usepackage{times}        % assumes new font selection scheme installed
 \usepackage{amsmath}  % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
-\usepackage{listings}
+\usepackage{listings}      % for pseudocode
+\usepackage{multirow}    % for aligning table column headers that span columns
 
-\title{\LARGE \bf Multi-Robot Formation Control}
+\title{\LARGE \bf Multi-robot Formation Control}
 
 \author{Ajay Ahir, Ben Philps and Sumaiyah Kola}
 
 \begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
 	
-	\maketitle
-	\thispagestyle{empty}
-	\pagestyle{empty}
+Multi-robot formations have proved useful in applications for exploration, surveillance and `search and rescue'. In such domains reliable global communication is not a guarantee. In this paper we implement a centralized and decentralized approach to multi robot formation control that includes a reactive formation switching strategy. The robot formations successfully navigate through obstacle fields, corners and tight corridors.
+
+\end{abstract}
 	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	\begin{abstract}
-		
-		Multi-robot formations have proved useful in applications for exploration, surveillance and `search and rescue'. In such domains reliable global communication is not a guarantee. In this paper we implement a centralized and decentralized approach to multi robot formation control that include a reactive formation switching strategy. The robot formations successfully navigate through obstacle fields, corners and tight corridors.
-		
-	\end{abstract}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{INTRODUCTION}
 	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	\section{INTRODUCTION}
+In application domains such as exploration, surveillance and `search and rescue', coordination and control mechanisms for multiple robots have been shown to provide cost effective and fault tolerant solutions \cite{c1}.
+
+Inspired by the natural coordinated behavior of bird flocking and ant swarming, formation control of multiple robots can improve surveillance coverage by combining sensor readings from individual agents. The main objective is for multiple robots to traverse the environment while maintaining an explicitly specified spacing relationship between agents.
+
+In this paper we provide a centralized behavior-based approach to formation control. This solution relies on each agent transmitting and receiving information from a global controller. We also provide a robust and fault-tolerant decentralized approach suitable when communication is restricted.
+
+\subsection{BACKGROUND}
+\label{background}
+
+Balch and Arkin provide a behavior-based approach to formation control, splitting the task into behavioral components, referred to as `motor schemas' \cite{c2}. 
+
+\subsubsection*{Motor Schemas}
+
+Given the current sensor inputs and robot positions, each motor schema generates a behavioral response as a vector $\vec{V}_s$ with a direction and magnitude of desired movement. Motor schemas goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}, \vec{V}_{static\_obs}, \vec{V}_{dynamic\_obs}, \vec{V}_{form}$ respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.  
+
+The overall behavioral response $\vec{V}$ is calculated by weighting each vector by its gain value then summing and normalizing the result. To overcome minima an additional schema generating noise $\vec{V}_{noise}$ is included.
+
+\subsubsection*{Formation Maintenance}
+
+To compute $\vec{V}_{form}$ for robot $R_i$ in position $P_{R_i}$,
+\[\vec{V}_{form} = P_{desired} - P_{R_i}\]
+where $P_{desired}$ is the desired position of $R_i$ in the formation. 
+Unit-, leader- and neighbor-referenced techniques exist to determine the formation position $P_{desired}$.
+
+The magnitude of $\vec{V}_{form}$ depends on the distance between $P_{R_i}$ and $P_{desired}$. `Zones' are defined around $P_{desired}$ as seen in Fig. \ref{formation_zones}. 
+
+Within the \textit{dead zone}, the robot is considered in formation and so $\vec{V}_{form} = \vec{0}$. Within the \textit{control zone}, the magnitude linearly increases from the inner edge. The magnitude at the outer edge of the \textit{control zone} is propagated throughout the \textit{ballistic zone}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\linewidth]{images/formation_zones.png}
+\caption{Zones for computing $\vec{V}_{form}$ with $P_{desired}$ marked as `x'}
+\label{formation_zones}
+\end{figure}
+
+We implement a leader-referenced behavior-based approach to formation control, extending the work of Balch and Arkin to incorporate a formation switching strategy.
+
+\section{APPROACH}
+
+We implement a centralized and decentralized leader-referenced approach to formation control. 
+
+A leader-referenced approach is chosen as each robot need only know the position of the leader $R_0$ to determine its own position in the formation. In contrast, for a unit-referenced approach each robot needs the positions of all other robots in the formation. This would require the transmission of more state.
+
+TODO: Mention robot avoidance tactic here
+% if a robot is in front of a robot within a radius, the robot behinds slows down
+% if 2 robots are approximately adjacent, the robot with the highest id goes first to avoid deadlock
+
+Motor schemas for goal navigation, static obstacle avoidance and formation maintenance are defined. Vectors from each motor schema are combined into an overall behavioral response $\vec{V}$ for each robot.
+
+We use feedback linearization to convert the behavioral response $\vec{V}$ into control inputs $\mu$ and $\omega$, corresponding to linear and angular velocity respectively. Feedback linearization assumes the robot is held by a holonomic point at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
+
+\subsection{EXPERIMENTAL SET-UP}
+
+We conduct experiments on TurtleBot3 \cite{turtlebot} robots controlled using ROS \cite{ros} with Gazebo \cite{gazebo} as the simulation environment. We assume all robots are identical and labeled, with $R_0$ designated as leader and $R_1,...,R_n$ as followers. Here $n$ is 4.
+
+Our evaluation considers the performance of robot formations in multiple arenas that include obstacles, narrow corridors and tight corners. Fig. \ref{corridorworld} illustrates one of the testing arenas.
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[width=\linewidth]{images/corridorworld.png}
+\caption{The \textit{diamond} formation in an arena with tight corridors}
+\label{corridorworld}
+\end{figure}
+
+\subsection{FORMATIONS}
+
+In our implementation \cite{repository}, four formations for five robots are considered: \textit{diamond}, \textit{column}, \textit{line} and \textit{wedge} (Fig. \ref{formation_shapes}). Each formation is defined as a vector of coordinates relative to the leader. The spacing of the robots in the formation can be altered. 
+
+\begin{figure}[thpb]
+\centering
+\includegraphics[width=0.7\linewidth]{images/formation_shapes.jpg}
+\caption{Formations L-R: \textit{line}, \textit{diamond}, \textit{wedge}, \textit{column} with leader colored}
+\label{formation_shapes}
+\end{figure}
+
+\subsection{MOTOR SCHEMAS}
+
+In our approach, the objective of the leader is to reach the goal while avoiding obstacles and other robots. The leader does not attempt to maintain formation. Only follower robots $R_1,...,R_n$ are responsible for formation maintenance. 
+
+Consequently, the behavioral response $\vec{V}$ for each robot is,
+\begin{equation*}
+\begin{aligned}
+\vec{V} = & g_{goal} \vec{V}_{goal} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}    && \text{if leader} \\
+              & g_{form} \vec{V}_{form} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}   && \text{if follower} \\
+\end{aligned}
+\end{equation*}
+where $\vec{V}_{noise}$ has a magnitude of 0.05. Table \ref{motor_schema_gs} contains the gain values for each motor schema. The values were tuned empirically to allow the formation to split around an obstacle and merge when possible.
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c c|}
+\hline
+Motor Schema & Gain Value \\
+\hline
+Goal Navigation                  & 0.35 \\
+Static Obstacle Avoidance    & 0.22 \\
+Formation Maintenance       & 0.20 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Motor Schema Gain Values $g_s$}
+\label{motor_schema_gs}
+\end{table}
+
+\subsubsection*{Goal Navigation}
+
+$\vec{V}_{goal}$ points from the leader $R_0$ to the next point along a path from $P_{R_0}$ to the goal. A path is generated using an optimized version of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT efficiently explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. The magnitude of $\vec{V}_{goal}$ is 1.
+
+\subsubsection*{Static Obstacle Avoidance}
+
+TODO: ...vector is scaled to be in [0,1]
+
+\subsubsection*{Formation Maintenance}
+
+We use the implementation of this motor schema defined in Balch and Arkin and described in \ref{background}. Only the follower robots need to compute $V_{form}$ as the leader is considered to always be in formation.
+
+To calculate $P_{desired}$ we transform the vector of relative formation positions, by rotating it to match the leader's orientation then translating it to the leader's position. Fig. \ref{desired_position} shows how this is calculated in pseudocode.
+
+\begin{figure}[thpb]
+\centering
+\lstset{language=python}
+\begin{lstlisting}
+rot_form = rotate(form_pos, R0.yaw)
+p_d = rot_form + R0.pos
+\end{lstlisting}
+\caption{Pseudocode showing how $P_{desired}$ is calculated}
+\label{desired_position}
+\end{figure}
+
+We normalize $V_{form}$ by computing $V_{form}/|control\_zone|$. Table \ref{table_formation} contains the parameters we used to implement this motor schema.
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+& Parameter & Value (m) \\
+\hline
+(1) & Robot Radius             & 0.05 \\
+(2) & Spacing Distance        & 0.8 \\
+(3) & Dead Zone Radius      & $1.5 \times (1) = 0.075$ \\
+(4) & Control Zone Radius    & (2) $+$ (3) $=0.875$ \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Formation Maintenance Parameters}
+\label{table_formation}
+\end{table}
+
+\subsection{FORMATION SWITCHING STRATEGY}
+
+We implement a reactive formation switching strategy to determine the safest formation, given the current environment. A robot is said to `detect' a corridor if the \textit{left} and \textit{right} sensors report measurements less than a threshold, here 0.4m, and the environment ahead of the \textit{front} sensor is clear.
+
+If the leader or at least half of the followers detect a corridor, the formation is switched to a \textit{column} until robots exit the corridor and it is safe to return to the default formation. We chose \textit{column} as it is the narrowest formation.
+
+\subsection{DECENTRALIZED}
+
+The centralized algorithm relies on knowledge of all robot positions as well as their combined view of the world. Our decentralized solution achieves this with limited message passing between robots to communicate the required state. Communication links are defined between certain robots in each formation. For \textit{line}, \textit{column} and \textit{wedge}, links are defined between adjacent robots. For \textit{diamond}, all robots are arranged so they can communicate with the center robot.
+
+TODO: Mention consensus explicitly - only leader communicates, they know if they are the leader as their ID corresponds to the $(0,0)$ formation offset.
+
+\section{RESULTS}
+
+We evaluate the performance of the centralized and decentralized approach in the
+
+TODO:NAME arena.
+
+TODO: write this up properly
+
+1: Centralized algorithm
+
+2: Decentralized algorithm
 	
-	In application domains such as exploration, surveillance and `search and rescue', coordination and control mechanisms for multiple robots have been shown to provide cost effective and fault tolerant solutions \cite{c1}.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c c|c|}
+\hline
+\multicolumn{2}{|c|}{Formation} & Error \\
+Default & Safety & \\
+\hline
+\textit{diamond}    & \textit{column} & 0 \\
+\textit{wedge}       & \textit{column} & 0 \\
+\textit{line}           & \textit{column} & 0 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Pose Error in Centralized algorithm}
+\label{table_results_centralized}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c c|c|}
+\hline
+\multicolumn{2}{|c|}{Formation} & Error \\
+Default & Safety & \\
+\hline
+\textit{diamond}    & \textit{column} & 0 \\
+\textit{wedge}       & \textit{column} & 0 \\
+\textit{line}           & \textit{column} & 0 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Pose Error in Decentralized algorithm}
+\label{table_results_decentralized}
+\end{table}
+
+\section{CONCLUSION}
+
+\addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
+                                               % on the last page of the document manually. It shortens
+                                               % the textheight of the last page by a suitable amount.
+                                               % This command does not take effect until the next page
+                                               % so it should come on the page before the last. Make
+                                               % sure that you do not shorten the textheight too much.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{ACKNOWLEDGMENT}
+
+\begin{itemize}
+\item Ajay Ahir - Worked on setting up the multi-robot environment and obstacle avoidance. Added the RRT* component and worked on combining velocities. Decentralized the solution and produced the error plots.
+
+\item Ben Philps - 
+
+\item Sumaiyah Kola - 
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
 	
-	Inspired by the natural coordinated behavior of bird flocking and ant swarming, formation control of multiple robots can improve surveillance coverage by combining sensor readings from individual agents. The main objective is for multiple robots to traverse the environment while maintaining an explicitly specified spacing relationship between agents.
-	
-	In this paper we provide a centralized behavior-based approach to formation control. This solution relies on each agent transmitting and receiving information from a global controller. We also provide a robust and fault-tolerant decentralized approach suitable when communication is restricted.
-	
-	\subsection{BACKGROUND}
-	
-	Balch and Arkin provide a behavior-based approach to formation control, splitting the task into behavioral components, referred to as `motor schemas' \cite{c2}. 
-	
-	\subsubsection*{Motor Schemas}
-	% Changed this to not mention any implementation details in background section
-	% the original paper refer to the output of each motor schema as a vector so i've only referred to 'velocity' in reference to robot control input
-	Given the current sensor inputs and robot positions, each motor schema generates a behavioral response as a vector $\vec{V}_s$ with a direction and magnitude of desired movement. Motor schemas goal-navigation, static/dynamic-obstacle-avoidance and formation-maintenance generate vectors, $\vec{V}_{goal}, \vec{V}_{static\_obs}, \vec{V}_{dynamic\_obs}, \vec{V}_{form}$ respectively. A gain value, $g_s$, dictates the contribution of each schema to the overall behaviour.  
-	
-	The overall behavioral response $\vec{V}$ is calculated by weighting each vector by its gain value and summing and normalizing the results. To overcome local minima and maxima, an additional schema generating noise $\vec{V}_{noise}$ is included.
-	
-	\subsubsection*{Formation Maintenance}
-	
-	To compute $\vec{V}_{form}$ for robot $R_i$ in position $P_{R_i}$,
-	\[\vec{V}_{form} = P_{desired} - P_{R_i}\]
-	where $P_{desired}$ is the desired position of $R_i$ in the formation. 
-	Unit-center, leader and neighbor referencing techniques exist to determine the formation position $P_{desired}$.
-	
-	The magnitude of $\vec{V}_{form}$ depends on the distance between $P_{R_i}$ and $P_{desired}$. `Zones' are defined around $P_{desired}$ as seen in Fig. \ref{formation_zones}. 
-	
-	Within the \textit{dead zone}, the robot is considered in formation and so $\vec{V}_{form} = \vec{0}$. Within the \textit{control zone}, the magnitude linearly increases from the inner edge. The magnitude at the outer edge of the \textit{control zone} is propagated throughout the \textit{ballistic zone}.
-	
-	\begin{figure}[ht]
-		\centering
-		\includegraphics[width=0.45\linewidth]{images/formation_zones.png}
-		\caption{Zones for computing $\vec{V}_{form}$ with $P_{desired}$ marked as 'x'}
-		\label{formation_zones}
-	\end{figure}
-	
-	We implement a leader-reference behavior-based approach to formation control, extending the work of \cite{c2} to incorporate a formation switching strategy.
-	
-	\section{APPROACH}
-	We implement a centralized and decentralized leader reference based approach to formation control. 
-	
-	A `leader-follower' approach is chosen as each robot need only know the position of the leader, $R_0$, to determine its own position in the formation. In contrast, for a unit reference approach, each robot needs the positions of all other robots in the formation. This would require the transmission of more state.
-	
-	TODO: Mention robot avoidance tactic here
-	% - if a robot is in front of a robot within a radius, the robot behinds slows down
-	% - if 2 robots are approximately adjacent, the robot with the highest id goes first to avoid deadlock
-	
-	Motor schemas for goal navigation, static obstacle avoidance and formation maintenance are defined. Vectors from each motor schema are combined into an overall behavioural response $\vec{V}$ for each robot.
-	
-	We use feedback linearization to convert the behavioural response $\vec{V}$ into control inputs $u$ and $\omega$, corresponding to linear and angular velocity respectively. Feedback linearization assumes the robot is held by a holonomic point at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
-	
-	\subsection{EXPERIMENTAL SET-UP}
-	% i think experimental setup makes more sense in approach than introduction because its part of the implementation
-	We conduct experiments on TurtleBot3 \cite{turtlebot} robots controlled using ROS \cite{ros} with Gazebo \cite{gazebo} as the simulation environment. We assume all robots are identical and labeled, with $R_0$ designated as leader and $R_1,...,R_n$ followers. Here $n$ is 4.
-	
-	Our evaluation considers the performance of robot formations in multiple arenas that include obstacles, narrow corridors and tight corners. Fig. \ref{corridorworld} illustrates one of the testing arenas.
-	
-	\begin{figure}[thpb]
-		\centering
-		\includegraphics[width=\linewidth]{images/corridorworld.png}
-		\caption{The \textit{diamond} formation in an arena with tight corridors}
-		\label{corridorworld}
-	\end{figure}
-	
-	\subsection{Formations}
-	
-	In our implementation \cite{repository}, several formations for five robots are considered: \textit{diamond}, \textit{column}, \textit{line} and \textit{wedge} (Fig. \ref{formation_shapes}). The spacing of the robots in the formation can be altered. 
-	
-	\begin{figure}[thpb]
-		\centering
-		\includegraphics[width=0.7\linewidth]{images/formation_shapes.jpg}
-		\caption{Formations L-R: \textit{line}, \textit{diamond}, \textit{wedge}, \textit{column} with leader colored}
-		\label{formation_shapes}
-	\end{figure}
-	
-	\subsection{Motor Schemas}
-	In our approach, the objective of the leader is to reach the goal while avoiding obstacles and other robots. The leader does not attempt to maintain formation. Only follower robots $R_1, ..., R_n$ are responsible for formation maintenance. 
-	
-	Consequently, the behavioral response $\vec{V}$ for each robot is,
-	\begin{equation*}
-	\begin{aligned}
-	\vec{V} = & g_{goal} \vec{V}_{goal} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}        && \text{if leader}\\
-	& g_{form} \vec{V}_{form} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}       && \text{if follower}\\
-	\end{aligned}
-	\end{equation*}
-	where vector $\vec{V}_{noise}$ has a magnitude of 0.2. Table \ref{motor_schema_gs} contains the gain values for each motor schema. The values were tuned empirically to allow the formation to split around an obstacle and merge when possible.
-	
-	\begin{table}[h]
-		\begin{center}
-			\begin{tabular}{|c|c|c c|}
-				\hline
-				Motor Schema & Gain Value \\
-				\hline
-				Goal Navigation                & 0.8 \\
-				Static Obstacle Avoidance   & 1.0 \\
-				Formation Maintenance      & 0.9 \\
-				\hline
-			\end{tabular}
-		\end{center}
-		\caption{Motor Schema Gain Values, $g_s$}
-		\label{motor_schema_gs}
-	\end{table}
-	
-	\subsubsection*{Goal Navigation}
-	
-	$\vec{V}_{goal}$ points from the leader $R_0$ to the next point along a path from $P_{R_0}$ to the goal. A path is generated using an optimized version of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT efficiently explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. The magnitude of $\vec{V}_{goal}$ is 1.
-	
-	\subsubsection*{Static Obstacle Avoidance}
-	TODO: ...vector is scaled to be in [0,1]
-	
-	\subsubsection*{Formation Maintenance}
-	TODO: finish.
-	Only applicable to follower robots.
-	$V_{form}$ is scaled to be in range $[0,1]$. Table \ref{table_formation} contains the parameters...
-	
-	\begin{table}[h]
-		\begin{center}
-			\begin{tabular}{|c|c|c|}
-				\hline
-				& Parameter & Value (m) \\
-				\hline
-				(1) & Robot Radius               & 0.05 \\
-				(2) & Spacing Distance            & 0.8 \\
-				(3) & Dead Zone Radius          & $1.5 \times (1) = 0.075$ \\
-				(4) & Control Zone Radius        & (2) $+$ (3) $=0.875$\\
-				\hline
-			\end{tabular}
-		\end{center}
-		\caption{Formation Maintenance Parameters}
-		\label{table_formation}
-	\end{table}
-	
-	\subsection{Formation Switching Strategy}
-	We implement a reactive formation switching strategy to determine the safest formation, given the current environment. A robot is said to `detect' a corridor if the \textit{left} and \textit{right} sensors report measurements less than a threshold, here 0.4m, and the environment ahead of the \textit{front} sensor is clear. 
-	If the leader, or at least half the followers, detect a corridor, the formation is switched to a \textit{column} until robots exit the corridor and it is safe to return to the default formation.
-	
-	\subsection{Decentralized}
-	
-	The centralized algorithm relies on knowledge of all robot positions as well as their combined view of the world. Our decentralized solution achieves this with limited message passing between robots to communicate the required state. Communication links are defined between certain robots in each formation. For \textit{line}, \textit{column} and \textit{wedge}, links are defined between adjacent robots. For \textit{diamond}, all robots are arranged so they can communicate with the center robot.  
-	\\TODO: Mention consensus explicitly \\
-	
-	\section{RESULTS}
-	We evaluate the performance of the centralized and decentralized approach in the TODO:NAME arena. 
-	TODO: write this up properly \\
-	1: Centralized algorithm  \\
-	2: Decentralized algorithm  \\
-	
-	\begin{table}[h]
-		\begin{center}
-			\begin{tabular}{|c c|c|}
-				\hline
-				Formation &         & Error \\
-				Default   & Safety  &  \\
-				\hline
-				\textit{diamond} & \textit{column} & 0 \\
-				\textit{wedge}   & \textit{column} & 0 \\
-				\textit{line}    & \textit{column} & 0 \\
-				\hline
-			\end{tabular}
-		\end{center}
-		\caption{Centralized approach with ground truth poses}
-		\label{table_results_centralized}
-	\end{table}
-	
-	\begin{table}[h]
-		\begin{center}
-			\begin{tabular}{|c c|c|}
-				\hline
-				Formation &         & Error \\
-				Default   & Safety  &  \\
-				\hline
-				\textit{diamond} & \textit{column} & 0 \\
-				\textit{wedge}   & \textit{column} & 0 \\
-				\textit{line}    & \textit{column} & 0 \\
-				\hline
-			\end{tabular}
-		\end{center}
-		\caption{Decentralized approach with ground truth poses}
-		\label{table_results_decentralized}
-	\end{table}
-	
-	
-	\section{CONCLUSION}
-	
-	\addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
-	% on the last page of the document manually. It shortens
-	% the textheight of the last page by a suitable amount.
-	% This command does not take effect until the next page
-	% so it should come on the page before the last. Make
-	% sure that you do not shorten the textheight too much.
-	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	\section{ACKNOWLEDGMENT}
-	
-	\begin{itemize}
-		\item Ajay Ahir - Worked on setting up the multi-robot environment and obstacle avoidance. Added the RRT* component and worked on combining velocities. Decentralized the solution and produced the error plots.
-		\item Ben Philps - 
-		\item Sumaiyah Kola - 
-	\end{itemize}
-	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	% References don't count in the 4 page count
-	\begin{thebibliography}{99}
-		
-		\bibitem{c1} J. S. Jennings, G. Whelan and W. F. Evans, ``Cooperative Search and Rescue with a Team of Mobile Robots'', 8th International Conference on Advanced Robotics, Proceedings ICAR'97, Monterey, CA, USA, pp. 193-200, Jul. 1997.
-		
-		\bibitem{c2} T. Balch and R. C. Arkin, ``Behavior-based Formation Control for Multi-robot Teams'', IEEE Transactions on Robotics and Automation, vol. 14, no. 6, pp. 926-939, Dec. 1998.
-		
-		\bibitem{turtlebot} TurtleBot3, http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/
-		\bibitem{ros} ROS - Robot Operating System, https://www.ros.org/
-		\bibitem{gazebo} Gazebo, http://gazebosim.org/
-		\bibitem{repository} Code Repository, https://github.com/DoodleBobBuffPants/RobotProject
-		
-	\end{thebibliography}
-	
+\bibitem{c1} J. S. Jennings, G. Whelan and W. F. Evans, ``Cooperative Search and Rescue with a Team of Mobile Robots'', 8th International Conference on Advanced Robotics, Proceedings ICAR'97, Monterey, CA, USA, pp. 193-200, Jul. 1997.
+
+\bibitem{c2} T. Balch and R. C. Arkin, ``Behavior-based Formation Control for Multi-robot Teams'', IEEE Transactions on Robotics and Automation, vol. 14, no. 6, pp. 926-939, Dec. 1998.
+
+\bibitem{turtlebot} TurtleBot3, http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/
+\bibitem{ros} ROS - Robot Operating System, https://www.ros.org/
+\bibitem{gazebo} Gazebo, http://gazebosim.org/
+\bibitem{repository} Code Repository, https://github.com/DoodleBobBuffPants/RobotProject
+
+\end{thebibliography}
+
 \end{document}
 
