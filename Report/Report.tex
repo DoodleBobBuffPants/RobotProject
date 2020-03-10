@@ -36,7 +36,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 	
-Multi-robot formations have proved useful in applications for exploration, surveillance and `search and rescue'. In such domains reliable global communication is not a guarantee. In this paper we implement a centralized and decentralized approach to multi robot formation control that includes a reactive formation switching strategy. The robot formations successfully navigate through obstacle fields, corners and tight corridors.
+Multi-robot formations have proved useful in applications for exploration, surveillance and `search and rescue'. In such domains reliable global communication is not a guarantee. In this paper we implement a centralized and decentralized approach to multi-robot formation control that includes a reactive formation switching strategy. The robot formations successfully navigate through obstacle fields, tight corners and narrow corridors.
 
 \end{abstract}
 	
@@ -201,7 +201,9 @@ If the leader or at least half of the followers detect a corridor, the formation
 
 The centralized algorithm relies on knowledge of all robot positions as well as their combined view of the world. Our decentralized solution achieves this with limited message passing between robots to communicate the required state. Communication links are defined between certain robots in each formation. For \textit{line}, \textit{column} and \textit{wedge}, links are defined between adjacent robots. For \textit{diamond}, all robots are arranged so they can communicate with the center robot.
 
-TODO: Mention consensus explicitly - only leader communicates, they know if they are the leader as their ID corresponds to the $(0,0)$ formation offset.
+Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if,
+\[\text{form\_pos}[ID(R_i)] = (0,0)\]
+Where `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned in such a way that each corresponds to a unique position. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
 \section{RESULTS}
 
