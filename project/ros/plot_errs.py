@@ -14,14 +14,16 @@ with open(os.path.expanduser("~/.ros/errors.txt"), "r") as f:
       errors.append(v)
 
 sampled_errs = [errors[i][::20] for i in range(len(errors))]
+min_len = min([len(err) for err in sampled_errs])
 
-x = np.arange(len(sampled_errs[0]))
+x = np.arange(min_len)
 for i in range(len(sampled_errs)):
-  plt.plot(x, sampled_errs[i])
+  plt.plot(x, sampled_errs[i][:min_len])
 
 plt.xlabel('Time')
 plt.ylabel('Error')
 plt.legend(robot_names)
 
 os.remove(os.path.expanduser("~/.ros/errors.txt"))
+
 plt.show()
