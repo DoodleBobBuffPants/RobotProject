@@ -22,4 +22,6 @@ for i in range(len(sampled_errs)):
 plt.xlabel('Time')
 plt.ylabel('Error')
 plt.legend(robot_names)
+
+os.remove(os.path.expanduser("~/.ros/errors.txt"))
 plt.show()
