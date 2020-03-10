@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 robot_names = []
 errors = []
 
-with open("errors.txt", "r") as f:
+with open(os.path.expanduser("~/.ros/errors.txt"), "r") as f:
   list_of_errors = f.readlines()[0].split("}")[:-1]
   list_of_errors = [error+"}" for error in list_of_errors]
   for error in list_of_errors:
