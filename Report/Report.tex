@@ -20,7 +20,6 @@
 \usepackage{times}        % assumes new font selection scheme installed
 \usepackage{amsmath}  % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
-\usepackage{listings}      % for pseudocode
 \usepackage{multirow}    % for aligning table column headers that span columns
 
 \title{\LARGE \bf Multi-robot Formation Control}
@@ -86,11 +85,9 @@ We implement a centralized and decentralized leader-referenced approach to forma
 
 A leader-referenced approach is chosen as each robot need only know the position of the leader $R_0$ to determine its own position in the formation. In contrast, for a unit-referenced approach each robot needs the positions of all other robots in the formation. This would require the transmission of more state.
 
-TODO: Mention robot avoidance tactic here
-% if a robot is in front of a robot within a radius, the robot behinds slows down
-% if 2 robots are approximately adjacent, the robot with the highest id goes first to avoid deadlock
-
 Motor schemas for goal navigation, static obstacle avoidance and formation maintenance are defined. Vectors from each motor schema are combined into an overall behavioral response $\vec{V}$ for each robot.
+
+Dynamic obstacle avoidance applies to the other robots. We produce a weight vector $W$ which takes value $0$ to tell robot $R_i$ to stop moving if it is behind robot $R_j$, and is $1$ otherwise. If the two robots are approximately adjacent then the robot with the lowest ID stops and the other moves to avoid deadlock. The weight is computed based on the distance between robots and how much they face each other.
 
 We use feedback linearization to convert the behavioral response $\vec{V}$ into control inputs $\mu$ and $\omega$, corresponding to linear and angular velocity respectively. Feedback linearization assumes the robot is held by a holonomic point at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
 
@@ -153,24 +150,13 @@ $\vec{V}_{goal}$ points from the leader $R_0$ to the next point along a path fro
 
 \subsubsection*{Static Obstacle Avoidance}
 
-TODO: ...vector is scaled to be in [0,1]
+We implemented a hybrid braitenberg/rule-based controller to avoid obstacles such as walls. The addition of rules dictates the direction a robot should turn based on which side of the formation it lies on, and the resulting vector is scaled to have maximum magnitude $1$.
 
 \subsubsection*{Formation Maintenance}
 
 We use the implementation of this motor schema defined in Balch and Arkin and described in \ref{background}. Only the follower robots need to compute $V_{form}$ as the leader is considered to always be in formation.
 
-To calculate $P_{desired}$ we transform the vector of relative formation positions, by rotating it to match the leader's orientation then translating it to the leader's position. Fig. \ref{desired_position} shows how this is calculated in pseudocode.
-
-\begin{figure}[thpb]
-\centering
-\lstset{language=python}
-\begin{lstlisting}
-rot_form = rotate(form_pos, R0.yaw)
-p_d = rot_form + R0.pos
-\end{lstlisting}
-\caption{Pseudocode showing how $P_{desired}$ is calculated}
-\label{desired_position}
-\end{figure}
+To calculate $P_{desired}$ we transform the vector of relative formation positions, by rotating it to match the leader's orientation then translating it to the leader's position.
 
 We normalize $V_{form}$ by computing $V_{form}/|control\_zone|$. Table \ref{table_formation} contains the parameters we used to implement this motor schema.
 
@@ -204,6 +190,8 @@ The centralized algorithm relies on knowledge of all robot positions as well as 
 Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if,
 \[\text{form\_pos}[ID(R_i)] = (0,0)\]
 Where `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned in such a way that each corresponds to a unique position. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
+
+Decentralized obstacle avoidance is slightly different to centralized obstacle avoidance. The braitenberg hybrid controller uses the additional knowledge of every other robot to compute which side of the formation a robot is on. As we do not have this state in the decentralized approach, we only use a rule-based controller.
 
 \section{RESULTS}
 
