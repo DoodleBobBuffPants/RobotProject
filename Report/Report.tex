@@ -155,7 +155,7 @@ Formation Maintenance & $g_{form}$ & 0.20 \\
 
 $\vec{V}_{goal}$ points from $R_0$ to the next point along a path from $P_{R_0}$ to the goal. $\vert\vec{V}_{goal}\rvert = 1$.
 
-We generate a path using an optimized version of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* efficiently explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal.
+We generate a path using a variant of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. Finding the optimal path requires many iterations and RRT* becomes inefficient. We thus store precomputed paths to avoid this overhead.
 
 \subsubsection*{Obstacle Avoidance}
 
