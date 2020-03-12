@@ -159,14 +159,13 @@ We generate a path using an optimized version of the rapidly-exploring random tr
 
 \subsubsection*{Obstacle Avoidance}
 
-% TODO: sort this entire paragraph out
-For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no other obstacle in the direction of $R_A$'s sensor, that sensor's value is set to its maximum measurement.
+% TODO: check this subsubsection
+For the centralized approach a Braitenberg controller was adopted. Since robots can detect others on their sensors, robots are filtered out from each sensor's view. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no other obstacle in the direction of $R_A$'s sensor, that sensor's value is set to its maximum measurement.
 
-The highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split-and-merge efficiently, avoiding robots crossing paths. This also encourages wider exploration of the environment.
+Highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors for motion. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. Sensor measurements are smoothed using the tanh function to eliminate infinities. This allows the robots to split-and-merge efficiently, avoiding robots crossing paths. It also encourages wider exploration of the environment.
 
-Filtering robot positions from sensor methods is not possible in the decentralized system. A rule-based system designed to function more smoothly when robots are detected by the sensors was implemented.
-Both controllers return a vector $V_{obs}$.
-% TODO: what are the magnitudes for these controllers
+Filtering robots from sensors is not possible in the decentralized approach without knowledge of every robot's position. A rule-based controller designed to function more smoothly when robots are detected by the sensors was implemented. Both Braitenberg and rule-based controllers return a normalized vector $V_{obs}$.
+% TODO: check the magnitudes for these controllers
 
 \subsubsection*{Formation Maintenance}
 
