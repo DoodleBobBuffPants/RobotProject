@@ -197,48 +197,42 @@ When follower robots are not in their dead zone, $g_{goal}$ is decreased to a th
 
 \subsubsection*{Dynamic Obstacle Avoidance}
 
-Dynamic obstacle avoidance applies to other robots. We produce a weight vector $W$ which takes value $0$ to tell robot $R_i$ to stop moving if it is behind robot $R_j$, and is $1$ otherwise. If the two robots are approximately adjacent then the robot with the lowest ID stops and the other moves to avoid deadlock. The weight is computed based on the distance between robots and how much they face each other.
-
+Dynamic obstacle avoidance applies to other robots in our centralized solution. We produce a weight vector $W$ which takes value $0$ to tell robot $R_i$ to stop moving if it is behind robot $R_j$, and is $1$ otherwise. If the two robots are approximately adjacent then the robot with the lowest ID stops and the other moves to avoid deadlock. The weight is computed based on the distance between robots and how much they face each other.
 
 \subsection{FORMATION SWITCHING STRATEGY}
 
-We implement a reactive formation switching strategy. This determine the safest formation for the robots, given the current environment
+We implement a reactive formation switching strategy. This determine the safest formation for the robots, given the current environment.
 
-If the leader, or at least half of the followers, detect a corridor, the formation is switched to a \textit{column}.
-This formation is maintained until the robots exit the corridor, at which point it is safe to return to the default formation. We chose \textit{column} as it is the narrowest formation.
+If the leader, or at least half of the followers, detect a corridor, the formation is switched to a \textit{column}. This formation is maintained until the robots exit the corridor, at which point it is safe to return to the default formation. We chose \textit{column} as it is the narrowest formation.
 
-A robot is said to `detect' a corridor if the environment ahead of the \textit{front} sensor is clear and the \textit{left} and \textit{right} sensors report measurements below a threshold, here 0.4m.
+A robot is said to `detect' a corridor if the environment ahead of the \textit{front} sensor is clear, having over $1.0$m of space, and the \textit{left} and \textit{right} sensors report measurements below a threshold, here $0.4$m.
 
 \subsection{DECENTRALIZED}
 
 The centralized algorithm relies on knowledge of all robot positions as well as their combined view of the world. Our decentralized solution achieves this with limited message passing between robots to communicate the required state. Communication links are defined between certain robots in each formation. For \textit{line}, \textit{column} and \textit{wedge}, links are defined between adjacent robots. For \textit{diamond}, all robots are arranged so they can communicate with the center robot.
 
-Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if,
+Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if:
 \[\text{form\_pos}[ID(R_i)] = (0,0)\]
-Where `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
-
-Decentralized obstacle avoidance is slightly different to centralized obstacle avoidance. The Braitenberg hybrid controller uses the additional knowledge of every other robot to compute which side of the formation a robot is on. As we do not have this state in the decentralized approach, we only use a rule-based controller limited to each robot.
+Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots, modulo $n$ so they may be used as indexes. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
 \section{RESULTS}
-% todo mention error is euclidian distnace
+% TODO: mention error is euclidean distance
 Visually our solution in both the centralized and decentralized case achieves formation control as seen by the sequence of images in Fig. X and Fig. Y. In order to quantify our results, we evaluate the performance by the error to the desired position for each robot,
 \[err = |P_{desired} - P_{R_i}|\]
 This acts as a measure for how out of formation robot $R_i$ is.
 
-% TODOS
-1) keep formation, successfully change formation, split-and-merge,
-tight corners?
-2) decentralized works too, but works better when spacing distances are sufficiently large so that robots don't effect sensors.
-3) edit error plots
-4) fill out tables (change them),
-exploration (better with split-and-merge)
-5) add units to the graph
+% TODOS:
+% 1) keep formation, successfully change formation, split-and-merge, tight corners?
+% 2) decentralized works too, but works better when spacing distances are sufficiently large so that robots don't effect sensors.
+% 3) edit error plots
+% 4) fill out tables (change them), exploration (better with split-and-merge)
+% 5) add units to the graph
 
 % TODO:NAME arena.
 % TODO: write this up properly.
 % TODO: make sure earlier work in the paper reflects what we say here
 % TODO: plots
-% TODO: rigourous evaluation i.e. mention specific points on the curves
+% TODO: rigorous evaluation i.e. mention specific points on the curves
 	
 
 \begin{table}[t]
