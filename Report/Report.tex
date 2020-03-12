@@ -63,12 +63,11 @@ The overall behavioral response $\vec{V}$ is calculated by weighting each vector
 \subsubsection*{Formation Maintenance}
 Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ from which $\vec{V}_{form}$ is defined:
 
-\[\vec{V}_{form} = F_i - P_{R_i}\].
+\[\vec{V}_{form} = F_i - P_{R_i}\]
 
-Different referencing schemes exist to find $F_i$. Unit-Center computes the average $P_R$ as the center of the formation, Leader-Referencing defines the formation relative to a leader robot's pose, and Neighbor-Referencing defines each robot's position relative to a predefined neighbor.
+Different referencing schemes exist to find $F_i$. Unit-referencing computes the average $P_R$ as the center of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbor-referencing defines each robot's position relative to a predefined neighbor.
 
-% can this be replaced with |v_form|?
-The magnitude of $\vec{V}_{form}$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}. 
+The magnitude of $|\vec{V}_{form}|$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}. 
 
 Within the \textit{dead zone}, the robot is considered to be in formation and so $\vec{V}_{form} = \vec{0}$. Within the \textit{control zone}, the magnitude linearly increases from the inner edge. The magnitude at the outer edge of the \textit{control zone} is propagated throughout the \textit{ballistic zone}.
 
