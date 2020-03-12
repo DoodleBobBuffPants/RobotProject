@@ -49,6 +49,7 @@ Inspired by the natural coordinated behavior of bird flocking and ant swarming, 
 
 In this paper we provide a centralized behavior-based approach to formation control with a formation switching strategy. This solution relies on each agent transmitting and receiving information from a global controller. We also provide a robust and fault-tolerant decentralized approach, adopting a message passing technique, suitable when communication is restricted.
 %todo this last sentence is a bit off
+
 \subsection{BACKGROUND}
 \label{background}
 
@@ -65,7 +66,7 @@ Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ 
 
 \[\vec{V}_{form} = F_i - P_{R_i}\].
 
-Different referencing schemes exist to find $F_i$. Unit-Center computes the average $P_R$ as the centre of the formation, Leader-Referencing defines the formation relative to a leader robot's pose, and Neighbour-Referencing defines each robot's position relative to a predefined neighbour.
+Different referencing schemes exist to find $F_i$. Unit-Center computes the average $P_R$ as the center of the formation, Leader-Referencing defines the formation relative to a leader robot's pose, and Neighbor-Referencing defines each robot's position relative to a predefined neighbor.
 
 % can this be replaced with |v_form|?
 The magnitude of $\vec{V}_{form}$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}. 
@@ -79,15 +80,14 @@ Within the \textit{dead zone}, the robot is considered to be in formation and so
 \label{formation_zones}
 \end{figure}
 
-% summary of our work moved to start of approach, avoiding duplication.
-
 \section{APPROACH}
+
 We implement a leader-referenced behavior-based approach to formation control. Additionally, we extend the work of Balch and Arkin to incorporate a formation switching strategy and a decentralized approach \cite{repository}.
 
 A Leader-Referenced approach allows the formation position of each robot to be determined with only knowledge of the leader $R_0$. 
 In contrast, a Unit-Centered approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots.
 
-We define motor schemas for goal nagivation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$, $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioural response $\vec{V}$ for each robot.
+We define motor schemas for goal navigation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$, $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioral response $\vec{V}$ for each robot.
 
 The addition of logical rules handles the avoidance of other robots (in the centralized system where all robot poses are known).
 
@@ -97,7 +97,6 @@ We conduct experiments on 5 TurtleBot3 \cite{turtlebot} robots controlled using 
 
 Each simulated robot is a non-holonomic differential-drive robot with control inputs $u$ and $\omega$, corresponding to linear and angular velocities, respectively. There are 5 sensors per robot, \texttt{right, front\_right, front, front\_left, left} evenly distributed around the front half of the robot.
 
-% linear velocity is u not mu
 We use feedback linearization to convert $\vec{V}$ into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
 
 % TODO: figure out what our evaluation is doing and then do this scentence.
@@ -112,7 +111,8 @@ Our evaluation considers the performance of robot formations in multiple arenas 
 \end{figure}
 
 \subsection{FORMATIONS}
-We consider the following formations for 5 robots: \textit{diamond}, \textit{column}, \textit{line} and \textit{wedge} (Fig. \ref{formation_shapes}). Each formation is defined relative to the leader. The number of robots per formation and the intraformation distance between robots can easily be adjusted to suit the environment.
+
+We consider the following formations for 5 robots: \textit{diamond}, \textit{column}, \textit{line} and \textit{wedge} (Fig. \ref{formation_shapes}). Each formation is defined relative to the leader. The number of robots per formation and the intra-formation distance between robots can easily be adjusted to suit the environment.
 
 \begin{figure}[thpb]
 \centering
@@ -125,7 +125,7 @@ We consider the following formations for 5 robots: \textit{diamond}, \textit{col
 
 The objective of the leader, $R_0$, is to reach the goal, avoiding obstacles and other robots. The objective of the followers, $R_1,...,R_n$, is to maintain formation while avoiding obstacles. 
 
-Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split and merge behaviour (see \textit{Obstacle Avoidance}).
+Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split and merge behavior (see \textit{Obstacle Avoidance}).
 
 Consequently, the behavioral response $\vec{V}$ for robot $R_i$ is:
 \begin{equation*}
@@ -161,14 +161,16 @@ We generate a path using an optimized version of the rapidly-exploring random tr
 
 \subsubsection*{Obstacle Avoidance}
 \label{subsubsection: obs avoid}
+
 % todo sort this entire paragraph out
-For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is infront of a sensor on robot $R_A$, and there is no obstacle detected between the robots, $R_A$'s sensor value is set to its maximum measurement.
+For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no obstacle detected between the robots, $R_A$'s sensor value is set to its maximum measurement.
 The highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split and merge efficiently, avoiding robots crossing paths. This also encourages wider exploration of the environment.
 Filtering robot positions from sensor methods is not possible in the decentralized system. A rule-based system designed to function more smoothly when robots are detected by the sensors was implemented.
 Both controllers return a vector $V\_obs$.
 %todo: what are the magnitudes for these controllers
 
 \subsubsection*{Formation Maintenance}
+
 We use the implementation of this motor schema defined in Balch and Arkin and described in \ref{background}. 
 
 To calculate $F_i$ we transform the vector of relative formation positions, by rotating it to match the leader's orientation then translating it to the leader's position.
@@ -196,6 +198,7 @@ When follower robots are not in their dead zone, $g_goal$ is decreased, so that 
 %TODO add switch formation for goal heuristic
 
 \subsection{Dynamic Obstacle Avoidance}
+
 Dynamic obstacle avoidance applies to other robots. We produce a weight vector $W$ which takes value $0$ to tell robot $R_i$ to stop moving if it is behind robot $R_j$, and is $1$ otherwise. If the two robots are approximately adjacent then the robot with the lowest ID stops and the other moves to avoid deadlock. The weight is computed based on the distance between robots and how much they face each other.
 
 
@@ -209,13 +212,14 @@ This formation is maintained until the robots exit the corridor, at which point 
 A robot is said to `detect' a corridor if the environment ahead of the \textit{front} sensor is clear and the \textit{left} and \textit{right} sensors report measurements below a threshold, here 0.4m.
 
 \subsection{DECENTRALIZED}
+
 The centralized algorithm relies on knowledge of all robot positions as well as their combined view of the world. Our decentralized solution achieves this with limited message passing between robots to communicate the required state. Communication links are defined between certain robots in each formation. For \textit{line}, \textit{column} and \textit{wedge}, links are defined between adjacent robots. For \textit{diamond}, all robots are arranged so they can communicate with the center robot.
 
 Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if,
 \[\text{form\_pos}[ID(R_i)] = (0,0)\]
 Where `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
-Decentralized obstacle avoidance is slightly different to centralized obstacle avoidance. The braitenberg hybrid controller uses the additional knowledge of every other robot to compute which side of the formation a robot is on. As we do not have this state in the decentralized approach, we only use a rule-based controller limited to each robot.
+Decentralized obstacle avoidance is slightly different to centralized obstacle avoidance. The Braitenberg hybrid controller uses the additional knowledge of every other robot to compute which side of the formation a robot is on. As we do not have this state in the decentralized approach, we only use a rule-based controller limited to each robot.
 
 \section{RESULTS}
 % todo mention error is euclidian distnace
@@ -224,9 +228,9 @@ Visually our solution in both the centralized and decentralized case achieves fo
 This acts as a measure for how out of formation robot $R_i$ is.
 
 % TODOS
-1) keep formation, succesfully change formation, split and merge,
+1) keep formation, successfully change formation, split and merge,
 tight corners?
-2) decentralised works too, but works better when spacing distances are sufficiently large so that robots dont effect sensors.
+2) decentralized works too, but works better when spacing distances are sufficiently large so that robots don't effect sensors.
 3) edit error plots
 4) fill out tables (change them),
 exploration (better with split and merge)
