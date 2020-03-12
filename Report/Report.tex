@@ -93,12 +93,12 @@ The addition of logical rules handles the avoidance of other robots in the centr
 
 We conduct experiments on 5 TurtleBot3 \cite{turtlebot} robots controlled using ROS \cite{ros} with Gazebo \cite{gazebo} as the simulation environment. We assume all robots are identical and labeled, with $R_0$ designated as leader and $R_1,...,R_n$ as followers. 
 
-Each simulated robot is a non-holonomic differential-drive robot with control inputs $u$ and $\omega$, corresponding to linear and angular velocities, respectively. There are 5 sensors per robot, \texttt{right, front\_right, front, front\_left, left} evenly distributed around the front half of the robot.
+Each simulated robot is a non-holonomic differential-drive robot with control inputs $u$ and $\omega$, corresponding to linear and angular velocities, respectively. There are 5 sensors per robot, \texttt{right, front\_right, front, front\_left, left}, evenly distributed around the front half of the robot.
 
-We use feedback linearization to convert $\vec{V}$ into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
+We use feedback linearization to convert $\vec{V}$ from $x$ and $y$ coordinates into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
 
-% TODO: figure out what our evaluation is doing and then do this scentence.
-% to do need to amend this if our final impl doesnt do this! i.e. are we talking about all these? probs not
+% TODO: figure out what our evaluation is doing and then do this sentence
+% TODO: need to amend this if our final implementation doesn't do this! i.e. are we talking about all these? probs not
 Our evaluation considers the performance of robot formations in multiple arenas that include obstacles, narrow corridors and tight corners. Fig. \ref{corridorworld} illustrates one of the testing arenas.
 
 \begin{figure}[thpb]
