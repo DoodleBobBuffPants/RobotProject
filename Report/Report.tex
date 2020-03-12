@@ -67,7 +67,7 @@ Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ 
 
 Different referencing schemes exist to find $F_i$. Unit-referencing computes the average $P_R$ as the center of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbor-referencing defines each robot's position relative to a predefined neighbor.
 
-The magnitude of $|\vec{V}_{form}|$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}. 
+The magnitude of $\vec{V}_{form}$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}.
 
 Within the \textit{dead zone}, the robot is considered to be in formation and so $\vec{V}_{form} = \vec{0}$. Within the \textit{control zone}, the magnitude linearly increases from the inner edge. The magnitude at the outer edge of the \textit{control zone} is propagated throughout the \textit{ballistic zone}.
 
@@ -121,9 +121,9 @@ We consider the following formations for 5 robots: \textit{diamond}, \textit{col
 
 \subsection{MOTOR SCHEMAS}
 
-The objective of the leader, $R_0$, is to reach the goal, avoiding obstacles and other robots. The objective of the followers, $R_1,...,R_n$, is to maintain formation while avoiding obstacles. 
+The objective of the leader $R_0$ is to reach the goal, avoiding obstacles and other robots. The objective of the followers $R_1,...,R_n$ is to maintain formation while avoiding obstacles.
 
-Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split and merge behavior (see \textit{Obstacle Avoidance}).
+Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split-and-merge behavior (see \textit{Obstacle Avoidance}).
 
 Consequently, the behavioral response $\vec{V}$ for robot $R_i$ is:
 \begin{equation*}
@@ -162,7 +162,7 @@ We generate a path using an optimized version of the rapidly-exploring random tr
 
 % todo sort this entire paragraph out
 For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no obstacle detected between the robots, $R_A$'s sensor value is set to its maximum measurement.
-The highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split and merge efficiently, avoiding robots crossing paths. This also encourages wider exploration of the environment.
+The highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split-and-merge efficiently, avoiding robots crossing paths. This also encourages wider exploration of the environment.
 Filtering robot positions from sensor methods is not possible in the decentralized system. A rule-based system designed to function more smoothly when robots are detected by the sensors was implemented.
 Both controllers return a vector $V\_obs$.
 %todo: what are the magnitudes for these controllers
@@ -226,12 +226,12 @@ Visually our solution in both the centralized and decentralized case achieves fo
 This acts as a measure for how out of formation robot $R_i$ is.
 
 % TODOS
-1) keep formation, successfully change formation, split and merge,
+1) keep formation, successfully change formation, split-and-merge,
 tight corners?
 2) decentralized works too, but works better when spacing distances are sufficiently large so that robots don't effect sensors.
 3) edit error plots
 4) fill out tables (change them),
-exploration (better with split and merge)
+exploration (better with split-and-merge)
 5) add units to the graph
 
 % TODO:NAME arena.
