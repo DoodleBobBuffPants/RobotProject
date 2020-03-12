@@ -153,14 +153,13 @@ Formation Maintenance & $g_{form}$ & 0.20 \\
 
 \subsubsection*{Goal Navigation}
 
-$\vec{V}_{goal}$ points from $R_0$ to the next point along a path from $P_{R_0}$ to the goal. $\vert \vec{V}_{goal} \rvert = 1$.
+$\vec{V}_{goal}$ points from $R_0$ to the next point along a path from $P_{R_0}$ to the goal. $\vert\vec{V}_{goal}\rvert = 1$.
 
-We generate a path using an optimized version of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* efficiently explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. 
+We generate a path using an optimized version of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* efficiently explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal.
 
 \subsubsection*{Obstacle Avoidance}
-\label{subsubsection: obs avoid}
 
-% todo sort this entire paragraph out
+% TODO: sort this entire paragraph out
 For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no obstacle detected between the robots, $R_A$'s sensor value is set to its maximum measurement.
 The highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split-and-merge efficiently, avoiding robots crossing paths. This also encourages wider exploration of the environment.
 Filtering robot positions from sensor methods is not possible in the decentralized system. A rule-based system designed to function more smoothly when robots are detected by the sensors was implemented.
