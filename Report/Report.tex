@@ -160,11 +160,13 @@ We generate a path using an optimized version of the rapidly-exploring random tr
 \subsubsection*{Obstacle Avoidance}
 
 % TODO: sort this entire paragraph out
-For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no obstacle detected between the robots, $R_A$'s sensor value is set to its maximum measurement.
+For the centralized system a Braitenberg controller was adopted. Since robots can detect each other on their sensors, the sensors are filtered. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no other obstacle in the direction of $R_A$'s sensor, that sensor's value is set to its maximum measurement.
+
 The highest priority is given to the \texttt{front\_left} and \texttt{front\_right} sensors. When turning away from obstacles, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split-and-merge efficiently, avoiding robots crossing paths. This also encourages wider exploration of the environment.
+
 Filtering robot positions from sensor methods is not possible in the decentralized system. A rule-based system designed to function more smoothly when robots are detected by the sensors was implemented.
-Both controllers return a vector $V\_obs$.
-%todo: what are the magnitudes for these controllers
+Both controllers return a vector $V_{obs}$.
+% TODO: what are the magnitudes for these controllers
 
 \subsubsection*{Formation Maintenance}
 
