@@ -56,9 +56,9 @@ Balch and Arkin provide a behavior-based approach to formation control, dividing
 
 \subsubsection*{Motor Schemas}
 
-Given the current sensor inputs and robot positions, each motor schema generates a vector, $\vec{V}_s$, as a behavioral response. $\vec{V}_s$ indicates the direction and magnitude of desired movement. Motor schemas for goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}$, $\vec{V}_{static\_obs}$, $\vec{V}_{dynamic\_obs}$, $\vec{V}_{form}$, respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.  
+Given the current sensor inputs and robot positions, each motor schema generates a vector $\vec{V}_s$ as a behavioral response. $\vec{V}_s$ indicates the direction and magnitude of desired movement. Motor schemas for goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}$, $\vec{V}_{static\_obs}$, $\vec{V}_{dynamic\_obs}$ and $\vec{V}_{form}$ respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.
 
-The overall behavioral response, $\vec{V}$, is calculated by weighting each vector with its gain value then summing and normalizing the result. To overcome local minima, an additional schema generating noise,  $\vec{V}_{noise}$, is included.
+The overall behavioral response $\vec{V}$ is calculated by weighting each vector with its gain value then summing and normalizing the result. To overcome local minima, an additional schema generating noise  $\vec{V}_{noise}$ is included.
 
 \subsubsection*{Formation Maintenance}
 Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ from which $\vec{V}_{form}$ is defined:
