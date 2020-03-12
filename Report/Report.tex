@@ -195,7 +195,7 @@ We normalize $V_{form}$ by calculating $V_{form}/\lvert control\_zone\rvert$. Ta
 
 When follower robots are not in their dead zone, $g_{goal}$ is decreased to a third of its original value, so that the leader waits for the followers to catch it.
 
-\subsection{Robot Avoidance}
+\subsection{ROBOT AVOIDANCE}
 
 This rule applies to other robots in our centralized solution as we filter them out during obstacle avoidance. We produce a weight vector $W$ which takes value $0$ to tell robot $R_i$ to stop moving if it is behind robot $R_j$, and is $1$ otherwise. If the two robots are approximately adjacent then the robot with the lowest ID stops and the other moves to avoid deadlock. The weight is computed based on the distance between robots and how much they face each other.
 
