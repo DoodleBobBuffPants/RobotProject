@@ -205,7 +205,7 @@ We implement a reactive formation switching strategy. This determine the safest 
 
 If the leader, or at least half of the followers, detect a corridor, the formation is switched to a \textit{column}. This formation is maintained until the robots exit the corridor, at which point it is safe to return to the default formation. We chose \textit{column} as it is the narrowest formation.
 
-A robot is said to `detect' a corridor if the environment ahead of the \textit{front} sensor is clear, having over $1.0$m of space, and the \textit{left} and \textit{right} sensors report measurements below a threshold, here $0.4$m.
+A robot is said to `detect' a corridor if the environment ahead of the \texttt{front} sensor is clear, having over $1.0$m of space, and the \texttt{left} and \texttt{right} sensors report measurements below a threshold, here $0.4$m.
 
 \subsection{DECENTRALIZED}
 
