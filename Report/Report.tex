@@ -174,7 +174,7 @@ We use the implementation of this motor schema defined in Balch and Arkin and de
 
 To calculate $F_i$ we transform the vector of relative formation positions, by rotating it to match the leader's orientation then translating it to the leader's position.
 
-We normalize $V_{form}$ by calculating $V_{form}/|control\_zone|$. Table \ref{table_formation} contains the parameters used to implement this motor schema.
+We normalize $V_{form}$ by calculating $V_{form}/\lvert control\_zone\rvert$. Table \ref{table_formation} contains the parameters used to implement this motor schema.
 
 \begin{table}[h]
 \begin{center}
@@ -193,9 +193,9 @@ We normalize $V_{form}$ by calculating $V_{form}/|control\_zone|$. Table \ref{ta
 \label{table_formation}
 \end{table}
 
-When follower robots are not in their dead zone, $g_goal$ is decreased, so that the leader waits for the followers to catch it.
+When follower robots are not in their dead zone, $g_{goal}$ is decreased to a third of its original value, so that the leader waits for the followers to catch it.
 
-\subsection{Dynamic Obstacle Avoidance}
+\subsubsection*{Dynamic Obstacle Avoidance}
 
 Dynamic obstacle avoidance applies to other robots. We produce a weight vector $W$ which takes value $0$ to tell robot $R_i$ to stop moving if it is behind robot $R_j$, and is $1$ otherwise. If the two robots are approximately adjacent then the robot with the lowest ID stops and the other moves to avoid deadlock. The weight is computed based on the distance between robots and how much they face each other.
 
