@@ -216,9 +216,9 @@ Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ i
 Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots, modulo $n$ so they may be used as indexes. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
 \section{RESULTS}
-% TODO: mention error is euclidean distance
-Visually our solution in both the centralized and decentralized case achieves formation control as seen by the sequence of images in Fig. X and Fig. Y. In order to quantify our results, we evaluate the performance by the error to the desired position for each robot,
-\[err = |P_{desired} - P_{R_i}|\]
+
+Visually our solution in both the centralized and decentralized case achieves formation control as seen by the sequence of images in Fig. X and Fig. Y. In order to quantify our results, we evaluate the performance using the error to the desired position for each robot, calculated as:
+\[err = \lvert F_i - P_{R_i}\rvert\]
 This acts as a measure for how out of formation robot $R_i$ is.
 
 % TODOS:
@@ -233,13 +233,13 @@ This acts as a measure for how out of formation robot $R_i$ is.
 % TODO: make sure earlier work in the paper reflects what we say here
 % TODO: plots
 % TODO: rigorous evaluation i.e. mention specific points on the curves
-	
 
 \begin{table}[t]
 \begin{tabular}{@{}cp{1.75cm}cp{1.5cm}p{1.75cm}cp{1.5cm}@{}}
 \toprule
-\multicolumn{1}{l}{} & \multicolumn{1}{l}{}   & Centralized        & \multicolumn{1}{l}{}      & \multicolumn{1}{l}{}   & Decentralized      & \multicolumn{1}{l}{}      \\ \midrule
-Formation            & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) \\
+ & & Centralized & & & Decentralized & \\
+\midrule
+Formation & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) \\
 \textit{line}        &                        &                    &                           &                        &                    &                           \\
 \textit{column}      &                        &                    &                           &                        &                    &                           \\
 \textit{diamond}     &                        &                    &                           &                        &                    &                           \\
@@ -252,15 +252,16 @@ Formation            & Time to Reach Goal (s) & Position Error (m) & Time out of
 \begin{table}[t]
 \begin{tabular}{@{}cp{1.75cm}cp{1.5cm}p{1.75cm}cp{1.5cm}@{}}
 \toprule
-\multicolumn{1}{l}{} & \multicolumn{1}{l}{}   & Centralized        & \multicolumn{1}{l}{}      & \multicolumn{1}{l}{}   & Decentralized      & \multicolumn{1}{l}{}      \\ \midrule
-Formation            & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) \\
+ & & Centralized & & & Decentralized & \\
+\midrule
+Formation & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) \\
 \textit{line}        &                        &                    &                           &                        &                    &                           \\
 \textit{column}      &                        &                    &                           &                        &                    &                           \\
 \textit{diamond}     &                        &                    &                           &                        &                    &                           \\
 \textit{wedge}       &                        &                    &                           &                        &                    &                           \\ \bottomrule
 \end{tabular}
 \caption{Performance of Robots in the Corridor Arena}
-\label{tab:results_square}
+\label{tab:results_corridor}
 \end{table}
 
 \section{CONCLUSION}
