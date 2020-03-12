@@ -265,6 +265,16 @@ Formation & Time to Reach Goal (s) & Position Error (m) & Time out of Formation 
 
 \section{CONCLUSION}
 
+In this paper we have shown an implementation of both centralized and decentralized multi-robot formation control with varying levels of success. Within simulation each approach visibly maintains formation whilst the robots traverse an arena and avoid obstacles. The centralized approach performs better as shown in the evaluation results, whereas the decentralized approach is not as robust. Each approach can generalize to any new arena too.
+
+\subsection{FUTURE WORK}
+
+Directions the results of this paper may take in the future could include a decentralized implementation which maintains the state of every other robot instead of just the leader's. This would allow for more robust controllers to be used as in the centralized approach.
+
+RRT* as the path finding algorithm is very inefficient, so better solutions may be used here instead of saving a precomputed path which isn't effective in dynamic environments. An example could be to always use the straight line path, disregarding obstacles, and relying on the obstacle avoidance schemas more heavily.
+
+Since the weighting of each motor schema in the overall velocity can have profound effects in different worlds, an approach based on reinforcement learning could be used to find the optimal weights dynamically.
+
 \addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
                                                % on the last page of the document manually. It shortens
                                                % the textheight of the last page by a suitable amount.
