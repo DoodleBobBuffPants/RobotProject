@@ -14,11 +14,10 @@ with open(os.path.expanduser("~/.ros/errors.txt"), "r") as f:
       errors.append(v)
 
 sampled_errs = [errors[i][::20] for i in range(len(errors))]
-min_len = min([len(err) for err in sampled_errs])
 
 x = np.arange(min_len)
 for i in range(len(sampled_errs)):
-  plt.plot(x, sampled_errs[i][:min_len])
+  plt.plot(x, sampled_errs[i])
 
 plt.xlabel('Time')
 plt.ylabel('Error')
