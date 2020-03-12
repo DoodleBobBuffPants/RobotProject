@@ -56,7 +56,7 @@ Balch and Arkin provide a behavior-based approach to formation control, dividing
 
 \subsubsection*{Motor Schemas}
 
-Given the current sensor inputs and robot positions, each motor schema generates a vector $\vec{V}_s$ as a behavioral response. $\vec{V}_s$ indicates the direction and magnitude of desired movement. Motor schemas for goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}$, $\vec{V}_{static\_obs}$, $\vec{V}_{dynamic\_obs}$ and $\vec{V}_{form}$ respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.
+Given the current sensor inputs and robot positions, each motor schema generates a vector $\vec{V}_s$ as a behavioral response. $\vec{V}_s$ indicates the direction and magnitude of desired movement. Motor schemas for goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}$, $\vec{V}_{static\_obs}$, $\vec{V}_{dynamic\_obs}$ and $\vec{V}_{form}$, respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.
 
 The overall behavioral response $\vec{V}$ is calculated by weighting each vector with its gain value then summing and normalizing the result. To overcome local minima, an additional schema generating noise  $\vec{V}_{noise}$ is included.
 
@@ -80,14 +80,14 @@ Within the \textit{dead zone}, the robot is considered to be in formation and so
 
 \section{APPROACH}
 
-We implement a leader-referenced behavior-based approach to formation control. Additionally, we extend the work of Balch and Arkin to incorporate a formation switching strategy and a decentralized approach \cite{repository}.
+We implement a Leader-referenced behavior-based approach to formation control. Additionally, we extend the work of Balch and Arkin to incorporate a formation switching strategy and a decentralized approach \cite{repository}.
 
-A Leader-Referenced approach allows the formation position of each robot to be determined with only knowledge of the leader $R_0$. 
-In contrast, a Unit-Centered approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots.
+A Leader-referenced approach allows the formation position of each robot to be determined with only knowledge of the leader $R_0$. 
+In contrast, a Unit-referenced approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots.
 
-We define motor schemas for goal navigation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$, $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioral response $\vec{V}$ for each robot.
+We define motor schemas for goal navigation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$ and $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioral response $\vec{V}$ for each robot.
 
-The addition of logical rules handles the avoidance of other robots (in the centralized system where all robot poses are known).
+The addition of logical rules handles the avoidance of other robots in the centralized system where all robot poses are known.
 
 \subsection{EXPERIMENTAL SET-UP}
 
