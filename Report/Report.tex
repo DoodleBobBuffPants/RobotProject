@@ -61,7 +61,6 @@ The overall behavioral response $\vec{V}$ is calculated by weighting each vector
 
 \subsubsection*{Formation Maintenance}
 Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ from which $\vec{V}_{form}$ is defined:
-
 \[\vec{V}_{form} = F_i - P_{R_i}\]
 
 Different referencing schemes exist to find $F_i$. Unit-center-referencing computes the average $P_R$ as the center of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbor-referencing defines each robot's position relative to a predefined neighbor.
@@ -93,9 +92,9 @@ We conduct experiments on 5 TurtleBot3 \cite{turtlebot} robots controlled using 
 
 Each simulated robot is a non-holonomic differential-drive robot with control inputs $u$ and $\omega$, corresponding to linear and angular velocities, respectively. There are 5 sensors per robot: \texttt{right}, \texttt{front\_right}, \texttt{front}, \texttt{front\_left} and \texttt{left}. These are evenly distributed around the front half of the robot.
 
-We use feedback linearization to convert $\vec{V}$ into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
+We use feedback linearization to convert $\vec{V}$ from $x$ and $y$ coordinates into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
 
-We empirically tune system parameters to provide a general solution capable of handling obstacles, narrow corridors and tight corners across a range of arenas. In our evaluation we consider two arenas that highlight split-and-merge as well as corridor behavior (Fig. \ref{fig:corridorworld} and Fig. \ref{fig:square}). 
+In our evaluation we consider two arenas that highlight split-and-merge as well as corridor behavior -  corridor (Fig. \ref{fig:corridorworld}) and square (Fig. \ref{fig:square}). 
 
 \begin{figure}[thpb]
 \centering
@@ -128,7 +127,6 @@ Consequently, the behavioral response $\vec{V}$ for robot $R_i$ is:
               & g_{form} \vec{V}_{form} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}   && \text{if $R_1,...,R_n$}
 \end{aligned}
 \end{equation*}
-
 where $\lvert\vec{V}_{noise}\rvert = 0.05$. A useful heuristic when robots are very close to obstacles is to temporarily replace $\vec{V}_{form}$ with $\vec{V}_{goal}$ and switch back when clear of the obstacle, to correctly navigate the followers.
 
 \begin{table}[h]
@@ -151,15 +149,15 @@ Formation Maintenance & $g_{form}$ & 0.20 \\
 
 $\vec{V}_{goal}$ points from $R_0$ to the next point along a path from $P_{R_0}$ to the goal. $\vert\vec{V}_{goal}\rvert = 1$.
 
-We generate a path using a variant of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. Finding the optimal path requires many iterations and RRT* becomes inefficient. To avoid this overhead, we precompute an optimal path and store it.
+We generate a path using a variant of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. Finding the optimal path requires many iterations and RRT* becomes inefficient. To avoid this overhead we precompute and store a path.
 
 \subsubsection*{Obstacle Avoidance}
 
 For the centralized approach, a Braitenberg controller was adopted. $\vec{V}_{obs}$ is a weighted sum of smoothed sensor measurements. Sensor measurements are smoothed using the $\tanh$ function to eliminate infinities. The sensors \texttt{front\_left} and \texttt{front\_right} are weighted to contribute the highest to $\vec{V}_{obs}$. 
 
-Since robots can detect others with their sensors, robots are filtered out from each sensor's view. Where robot $R_B$ is in front of a sensor on robot $R_A$, and there is no other obstacle in the direction of $R_A$'s sensor, $R_A$ sensor's value is set to its maximum measurement. This allows robots to avoid obstacles while remaining in formation and close to other robots.
+Since robots can detect others with their sensors, robots are filtered out from each sensor's view. When robot $R_B$ is in front of a sensor on robot $R_A$, and there is no other obstacle in the direction of $R_A$'s sensor, $R_A$ sensor's value is set to its maximum measurement. This allows robots to remain close to other robots in formation.
 
-When detecting an obstacle close on the \texttt{front} sensor, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. For example a robot on the left hand side of the formation will turn to the left to avoid a head on collision. This allows the robots to split-and-merge efficiently, which also reduces the chance of robots crossing paths. It further encourages wider exploration of the environment.
+When detecting an obstacle close on the \texttt{front} sensor, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. For example, a robot on the left side of the formation will turn to the left to avoid a head on collision. This allows the robots to split-and-merge efficiently, which also reduces the chance of robots crossing paths. It further encourages wider exploration of the environment.
 
 Filtering robots from sensors is not possible in the decentralized approach without knowledge of every robot's position. A less aggressive rule-based controller that allows robots to get closer to obstacles before avoiding was implemented. This allows robots to stay in formation even when their sensors detect other robots. Both Braitenberg and rule-based controllers return a vector $V_{obs}$ scaled in the range $[0,1]$.
 
@@ -208,7 +206,7 @@ The centralized algorithm relies on knowledge of all robot positions as well as 
 
 Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if:
 \[\text{form\_pos}[ID(R_i)] = (0,0)\]
-Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots, modulo $n$ so they may be used as indexes. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
+Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are unique, ensuring one robot per position. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
 \section{RESULTS}
 
