@@ -157,9 +157,9 @@ For the centralized approach, a Braitenberg controller was adopted. $\vec{V}_{ob
 
 Since robots can detect others with their sensors, robots are filtered out from each sensor's view. When robot $R_B$ is in front of a sensor on robot $R_A$, and there is no other obstacle in the direction of $R_A$'s sensor, $R_A$ sensor's value is set to its maximum measurement. This allows robots to remain close to other robots in formation.
 
-When detecting an obstacle close on the \texttt{front} sensor, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. For example, a robot on the left side of the formation will turn to the left to avoid a head on collision. This allows the robots to split-and-merge efficiently, which also reduces the chance of robots crossing paths. It further encourages wider exploration of the environment.
+When detecting an obstacle close on the \texttt{front} sensor, robots determine a preferred direction proportional to each smoothed sensor measurement and its position in the formation. This allows the robots to split-and-merge efficiently, which also reduces the chance of robots crossing paths. It further encourages wider exploration of the environment.
 
-Filtering robots from sensors is not possible in the decentralized approach without knowledge of every robot's position. A less aggressive rule-based controller that allows robots to get closer to obstacles before avoiding was implemented. This allows robots to stay in formation even when their sensors detect other robots. Both Braitenberg and rule-based controllers return a vector $V_{obs}$ scaled in the range $[0,1]$.
+Filtering robots from sensors is not possible in the decentralized approach without knowledge of every robot's position. A less aggressive rule-based controller that allows robots to get closer to obstacles was implemented. This allows robots to stay in formation even when their sensors detect other robots. Both Braitenberg and rule-based controllers return a vector $V_{obs}$ scaled in the range $[0,1]$.
 
 \subsubsection*{Formation Maintenance}
 
@@ -206,7 +206,7 @@ The centralized algorithm relies on knowledge of all robot positions as well as 
 
 Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ is the leader if:
 \[\text{form\_pos}[ID(R_i)] = (0,0)\]
-Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are unique, ensuring one robot per position. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
+Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are unique, ensuring one robot per position. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links.
 
 \section{RESULTS}
 
