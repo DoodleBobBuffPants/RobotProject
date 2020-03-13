@@ -134,6 +134,8 @@ Consequently, the behavioral response $\vec{V}$ for robot $R_i$ is:
 where $\lvert\vec{V}_{noise}\rvert = 0.05$.
 
 \begin{table}[h]
+\caption{Motor Schema Gain Values $g_s$}
+\label{motor_schema_gs}
 \begin{center}
 \begin{tabular}{|c|c|c|}
 \hline
@@ -145,8 +147,6 @@ Formation Maintenance & $g_{form}$ & 0.20 \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Motor Schema Gain Values $g_s$}
-\label{motor_schema_gs}
 \end{table}
 
 \subsubsection*{Goal Navigation}
@@ -174,6 +174,8 @@ To calculate $F_i$ we transform the vector of relative formation positions, by r
 We normalize $V_{form}$ by calculating $V_{form}/\lvert control\_zone\rvert$. Table \ref{table_formation} contains the parameters used to implement this motor schema.
 
 \begin{table}[h]
+\caption{Formation Maintenance Parameters}
+\label{table_formation}
 \begin{center}
 \begin{tabular}{|c|c|c|}
 \hline
@@ -186,8 +188,6 @@ We normalize $V_{form}$ by calculating $V_{form}/\lvert control\_zone\rvert$. Ta
 \hline
 \end{tabular}
 \end{center}
-\caption{Formation Maintenance Parameters}
-\label{table_formation}
 \end{table}
 
 When follower robots are not in their dead zone, $g_{goal}$ is decreased to a third of its original value, so that the leader waits for the followers to catch it.
@@ -259,6 +259,8 @@ As expected, the column formation takes the shortest time to reach the goal, and
 \end{figure}
 
 \begin{table}[tb]
+\caption{Performance in the corridor arena}
+\label{tab:results_corridor}
 \begin{tabular}{|c|p{1cm}p{1.2cm}|p{1cm}p{1.2cm}|}
 \hline
  & \multicolumn{2}{|c|}{Centralized} & \multicolumn{2}{|c|}{Decentralized} \\
@@ -271,11 +273,11 @@ Formation & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position 
 \textit{diamond} & 76                     & 0.40               & 101                   & 1.05 \\
 \hline
 \end{tabular}
-\caption{Performance in the corridor arena}
-\label{tab:results_corridor}
 \end{table}
 
 \begin{table}[tb]
+\caption{Performance in the square arena}
+\label{tab:results_square}
 \begin{tabular}{|c|p{1cm}p{1.2cm}|p{1cm}p{1.2cm}|}
 \hline
  & \multicolumn{2}{|c|}{Centralized} & \multicolumn{2}{|c|}{Decentralized} \\
@@ -288,8 +290,6 @@ Formation & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position 
 \textit{diamond} & 63                     & 0.27               & 75                     & 0.62 \\
 \hline
 \end{tabular}
-\caption{Performance in the square arena}
-\label{tab:results_square}
 \end{table}
 
 \section{CONCLUSION}
