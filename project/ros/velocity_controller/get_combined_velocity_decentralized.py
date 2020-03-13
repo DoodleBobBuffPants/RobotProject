@@ -54,7 +54,6 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
 
   combined_velocity = weight_velocities(rrt_velocity, formation_velocity, obstacle_avoidance_velocity, noise)
 
-
   # Feedback linearization - convert combined_velocities [x,y] [u,w]
   u, w = rrt_navigation.feedback_linearized(pose=robot_pose, velocity=combined_velocity, epsilon=EPSILON)
 
@@ -79,8 +78,6 @@ def weight_velocities(goal_velocity, formation_velocity, obstacle_velocity, nois
   overall_weight = 1.5
   # currently no robot avoidance in decentralized algorithm as we do not keep all robot poses
 
-  # goal_velocity = np.array([1, -1])
-  # goal_velocity = goal_velocity / np.linalg.norm(goal_velocity)
   goal = weighting(goal_velocity, goal_w)
   formation = weighting(formation_velocity, formation_w)
   static_obstacle_avoidance = weighting(obstacle_velocity, static_obs_avoid_w)
