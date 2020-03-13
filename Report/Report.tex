@@ -20,8 +20,7 @@
 \usepackage{times}        % assumes new font selection scheme installed
 \usepackage{amsmath}  % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
-\usepackage{multirow}    % for aligning table column headers that span columns
-\usepackage{booktabs}   % for better tables 
+\usepackage{multirow}    % for centering table headers that span multiple columns
 
 \title{\LARGE \bf Formation Control: A Centralized and Decentralized Approach}
 
@@ -215,64 +214,63 @@ Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ i
 Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots, modulo $n$ so they may be used as indexes. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
 \section{RESULTS}
-We conducted experiments in multiple arenas, presenting results below for the square (Fig \ref{fig:square}) and corridor (Fig \ref{fig:corridorworld}) arenas, to evaluate the performance of our approach. The square arena features multiple obstacles, while the corridor challenges the robot through narrow passages. 
+We conducted experiments in multiple arenas, presenting results below for the square (Fig. \ref{fig:square}) and corridor (Fig. \ref{corridorworld}) arenas, to evaluate the performance of our approach. The square arena features multiple obstacles, while the corridor challenges the robot through narrow passages.
 
-Both systems successfully split and merge around obstacles, navigate tight corners and switch formation to handle corridors. In the video we further demonstrate robots splitting/merging around an obstacle added at runtime. Fig  \ref{fig:split_merge} shows diamond splitting around narrow obstacles in the square arena, and Fig \ref{fig:switch_formation} shows the wedge switching to a column in the corridor arena.
+Both systems successfully split-and-merge around obstacles, navigate tight corners and switch formation to handle corridors. In the video we further demonstrate robots splitting/merging around an obstacle added at run-time. Fig. \ref{fig:split_merge} shows a diamond formation splitting around narrow obstacles in the square arena, and Fig. \ref{fig:switch_formation} shows the wedge formation switching to a column in the corridor arena.
 
 \begin{figure}[tb]
-    \centering
-    \includegraphics[width=0.7\linewidth]{images/square.png}
-    \caption{\textit{Diamond} navigating an obstacle field in the square world}
-    \label{fig:square}
+\centering
+\includegraphics[width=0.7\linewidth]{images/square.png}
+\caption{\textit{Diamond} navigating an obstacle field in the square world}
+\label{fig:square}
 \end{figure}
 
 \begin{figure}[tb]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/split_merge.png}
-    \caption{\textit{Diamond} splitting (LHS), then merging (RHS) around obstacles}
-    \label{fig:split_merge}
+\centering
+\includegraphics[width=0.8\linewidth]{images/split_merge.png}
+\caption{\textit{Diamond} splitting (LHS), then merging (RHS) around obstacles}
+\label{fig:split_merge}
 \end{figure}
 
 \begin{figure}[tb]
-    \centering
-    \includegraphics[width=0.9\linewidth]{images/switch_formation.png}
-    \caption{\textit{Wedge} (LHS) transitioning to \textit{column} (RHS) upon corridor entrance}
-    \label{fig:switch_formation}
+\centering
+\includegraphics[width=0.9\linewidth]{images/switch_formation.png}
+\caption{\textit{Wedge} (LHS) transitioning to \textit{column} (RHS) upon corridor entrance}
+\label{fig:switch_formation}
 \end{figure}
 
-We define the position error for robot $R_i$ as $|F_{i} - P_{R_i}|$. This is then averaged over time across all the follower robots. Tables \ref{tab:results_corridor} and \ref{tab:results_square} show the performance of all formations in two arenas.
+We define the position error for robot $R_i$ as $\lvert F_i - P_{R_i}\rvert$. This is then averaged over time across all the follower robots. Tables \ref{tab:results_corridor} and \ref{tab:results_square} show the performance of all formations in two arenas.
 
-From Fig \ref{fig:centralized} \& \ref{fig:decentralized} we can see the centralised approach achieves a lower average error. This is due to robots regaining formation faster and deviating less when splitting around obstacles. We can further see in tables \ref{tab:results_corridor} and \ref{tab:results_square} the centralized solution achieves lower position errors and on most runs faster time to the goal. The larger peaks in the curves show split and merge behaviour. While all robots in the centralised approach merge after a split within 15s, larger times, as much as 25s were seen in the decentralised system. The centralized system is faster, with lower position errors, e.g for diamond centralised achieves 63 seconds over 75 and an error of 0.27 over 0.62, in the corridor arena. 
+From Fig. \ref{fig:centralized} and Fig. \ref{fig:decentralized} we can see the centralized approach achieves a lower average error. This is due to robots regaining formation faster and deviating less when splitting around obstacles. We can further see in Tables \ref{tab:results_corridor} and \ref{tab:results_square} the centralized solution achieves lower position errors and on most runs a faster time to the goal. The larger peaks in the curves show split and merge behavior. While all robots in the centralized approach merge after a split within $15$s, larger times, as much as $25$s were seen in the decentralized system. The centralized system is faster, with lower position errors, e.g for diamond centralized achieves $63$ seconds over $75$ seconds and an error of $0.27$m over $0.62$m, in the corridor arena. 
 
-As expected, the column formation takes the shortest time to reach the goal, and has the lowest position error. However, it offers no extra exploration of the arena over having a single robot (since followers all follow the same path as the leader). The line formation offers the best exploration of the arena, but in general the diamond and wedge formations take less time and have less error. E.g the wedge in the square arena takes 64 seconds (over 68 for line) and has error 0.57 (over 0.64 for line).
-
+As expected, the column formation takes the shortest time to reach the goal, and has the lowest position error. However, it offers no extra exploration of the arena over having a single robot, since followers all follow the same path as the leader. The line formation offers the best exploration of the arena, but in general the diamond and wedge formations take less time and have less error. For example, the wedge in the square arena takes $64$s (over $68$s for line) and has error $0.57$m (over $0.64$m for line).
 
 \begin{figure}[tb]
-    \centering
-    \includegraphics[height=0.6\linewidth]{images/centralized_plot.png}
-    \caption{Centralized solution, \textit{column} formation, square arena}
-    \label{fig:centralized}
+\centering
+\includegraphics[height=0.6\linewidth]{images/centralized_plot.png}
+\caption{Centralized solution, \textit{column} formation, square arena}
+\label{fig:centralized}
 \end{figure}
-% todo add units to this. labels for robots isnt right
+% TODO: add units to this. labels for robots isn't right
 \begin{figure}[tb]
-    \centering
-    \includegraphics[height=0.6\linewidth]{images/decentalized_plot.png}
-    \caption{Decentralized solution, \textit{column} formation, square arena}
-    \label{fig:decentralized}
+\centering
+\includegraphics[height=0.6\linewidth]{images/decentalized_plot.png}
+\caption{Decentralized solution, \textit{column} formation, square arena}
+\label{fig:decentralized}
 \end{figure}
 
 \begin{table}[tb]
 \begin{tabular}{|c|p{1cm}p{1.2cm}|p{1cm}p{1.2cm}|}
-                \hline
-                 & Centralized            &                    & Decentralized          &                    \\
-                 \hline
-Formation        & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position Error (m) \\
-                 \hline
-\textit{line}    & 68                     & 0.64               & 116                     & 1.12               \\
-\textit{column}  & 63                     & 0.28               & 76                    & 0.62               \\
-\textit{wedge}   & 64                     & 0.57               & 109                    & 1.18               \\
-\textit{diamond} & 76                     & 0.40               & 101                    & 1.05 \\     
-                \hline
+\hline
+ & \multicolumn{2}{|c|}{Centralized} & \multicolumn{2}{|c|}{Decentralized} \\
+\hline
+Formation & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position Error (m) \\
+\hline
+\textit{line}        & 68                     & 0.64               & 116                   & 1.12 \\
+\textit{column}   & 63                     & 0.28               & 76                    & 0.62 \\
+\textit{wedge}    & 64                     & 0.57               & 109                  & 1.18 \\
+\textit{diamond} & 76                     & 0.40               & 101                   & 1.05 \\
+\hline
 \end{tabular}
 \caption{Performance in the corridor arena}
 \label{tab:results_corridor}
@@ -281,20 +279,19 @@ Formation        & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Po
 \begin{table}[tb]
 \begin{tabular}{|c|p{1cm}p{1.2cm}|p{1cm}p{1.2cm}|}
 \hline
-                 & Centralized            &                    & Decentralized          &                    \\
-                 \hline
-Formation        & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position Error (m) \\
+ & \multicolumn{2}{|c|}{Centralized} & \multicolumn{2}{|c|}{Decentralized} \\
 \hline
-\textit{line}    & 65                     & 0.26               & 87                     & 0.74               \\
-\textit{column}  & 43                     & 0.22               & 68                     & 0.42               \\
-\textit{wedge}   & 62                     & 0.26               & 82                     & 0.85               \\
-\textit{diamond} & 63                     & 0.27               & 75                     & 0.62    \\
+Formation & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position Error (m) \\
+\hline
+\textit{line}        & 65                     & 0.26               & 87                     & 0.74 \\
+\textit{column}   & 43                     & 0.22               & 68                     & 0.42 \\
+\textit{wedge}    & 62                     & 0.26               & 82                     & 0.85 \\
+\textit{diamond} & 63                     & 0.27               & 75                     & 0.62 \\
 \hline
 \end{tabular}
 \caption{Performance in the square arena}
 \label{tab:results_square}
 \end{table}
-
 
 \section{CONCLUSION}
 
@@ -321,7 +318,7 @@ Since the weighting of each motor schema in the overall velocity can have profou
 \begin{itemize}
 \item Ajay Ahir - Worked on setting up the multi-robot environment and obstacle avoidance. Added the RRT* component and worked on combining velocities. Decentralized the solution and produced the error plots.
 
-\item Ben Philps - Multi-robot obstacle avoidance for centralised, decentralised systems experimenting with different approaches. Multi-robot avoidance. End-to-end testing, ensuring general solution. Results collection, footage.
+\item Ben Philps - Multi-robot obstacle avoidance for centralized, decentralized systems experimenting with different approaches. Multi-robot avoidance. End-to-end testing, ensuring general solution. Results collection, footage.
 
 \item Sumaiyah Kola - Implemented formation maintenance schema. Designed experimental set-up. Worked on multi-robot obstacle avoidance and combining velocities. Built multiple simulation arenas. 
 \end{itemize}
