@@ -64,7 +64,7 @@ Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ 
 
 \[\vec{V}_{form} = F_i - P_{R_i}\].
 
-Different referencing schemes exist to find $F_i$. Unit-center computes the average $P_R$ as the centre of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbour-referencing defines each robot's position relative to a predefined neighbour.
+Different referencing schemes exist to find $F_i$. Unit-center-referencing computes the average $P_R$ as the centre of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbor-referencing defines each robot's position relative to a predefined neighbor.
 
 % can this be replaced with |v_form|?
 $|\vec{V}_{form}|$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}. 
@@ -84,7 +84,7 @@ Within the \textit{dead zone}, the robot is considered to be in formation and so
 We implement a Leader-referenced behavior-based approach to formation control. Additionally, we extend the work of Balch and Arkin to incorporate a formation switching strategy and a decentralized approach \cite{repository}.
 
 A Leader-referenced approach allows the formation position of each robot to be determined with only knowledge of the position of the leader, $R_0$. 
-In contrast, a Unit-centered approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots. %TODO: sentence about neighbour reference?
+In contrast, a Unit-center-referencing approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots. %TODO: sentence about neighbor reference?
 
 We define motor schemas for goal nagivation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$, $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioural response $\vec{V}$ for each robot.
 
