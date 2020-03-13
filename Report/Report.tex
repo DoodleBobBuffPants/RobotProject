@@ -46,8 +46,8 @@ In application domains such as exploration, surveillance and `search and rescue'
 
 Inspired by the natural coordinated behavior of bird flocking and ant swarming, formation control of multiple robots can improve surveillance coverage by combining sensor readings from individual agents. The main objective is for multiple robots to traverse the environment while maintaining an explicitly specified spacing relationship between agents.
 
-In this paper we provide a centralized behavior-based approach to formation control with a formation switching strategy. This solution relies on each agent transmitting and receiving information from a global controller. We also provide a fault-tolerant decentralized approach, adopting a message passing technique, suitable when communication is limited.
-
+In this paper we provide a centralized behavior-based approach to formation control with a formation switching strategy. This solution relies on each agent transmitting and receiving information from a global controller. We also provide a fault-tolerant decentralized approach, adopting a message passing technique, suitable when communication is restricted.
+%todo this last sentence is a bit off
 \subsection{BACKGROUND}
 \label{background}
 
@@ -55,49 +55,50 @@ Balch and Arkin provide a behavior-based approach to formation control, dividing
 
 \subsubsection*{Motor Schemas}
 
-Given the current sensor inputs and robot positions, each motor schema generates a vector $\vec{V}_s$ as a behavioral response. $\vec{V}_s$ indicates the direction and magnitude of desired movement. Motor schemas for goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}$, $\vec{V}_{static\_obs}$, $\vec{V}_{dynamic\_obs}$ and $\vec{V}_{form}$, respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.
+Given the current sensor inputs and robot positions, each motor schema generates a vector $\vec{V}_s$ as a behavioral response. $\vec{V}_s$ indicates the direction and magnitude of desired movement. Motor schemas for goal navigation, static/dynamic obstacle avoidance and formation maintenance generate vectors $\vec{V}_{goal}$, $\vec{V}_{static\_obs}$, $\vec{V}_{dynamic\_obs}$, $\vec{V}_{form}$, respectively. A gain value $g_s$ dictates the contribution of each schema to the overall behavior.  
 
-The overall behavioral response $\vec{V}$ is calculated by weighting each vector with its gain value then summing and normalizing the result. To overcome local minima, an additional schema generating noise  $\vec{V}_{noise}$ is included.
+The overall behavioral response $\vec{V}$ is calculated by weighting each vector with its gain value then summing and normalizing the result. To overcome local minima, an additional schema generating noise,  $\vec{V}_{noise}$, is included.
 
 \subsubsection*{Formation Maintenance}
 Each robot $R_i$, in position $P_{R_i}$, has a desired formation position $F_i$ from which $\vec{V}_{form}$ is defined:
 
-\[\vec{V}_{form} = F_i - P_{R_i}\]
+\[\vec{V}_{form} = F_i - P_{R_i}\].
 
-Different referencing schemes exist to find $F_i$. Unit-referencing computes the average $P_R$ as the center of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbor-referencing defines each robot's position relative to a predefined neighbor.
+Different referencing schemes exist to find $F_i$. Unit-center computes the average $P_R$ as the centre of the formation, Leader-referencing defines the formation relative to a leader robot's pose, and Neighbour-referencing defines each robot's position relative to a predefined neighbour.
 
-The magnitude of $\vec{V}_{form}$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}.
+% can this be replaced with |v_form|?
+$|\vec{V}_{form}|$ is determined by the distance between $P_{R_i}$ and $F_i$. Zones are defined around $F_{i}$ as seen in Fig. \ref{formation_zones}. 
 
-Within the \textit{dead zone}, the robot is considered to be in formation and so $\vec{V}_{form} = \vec{0}$. Within the \textit{control zone}, the magnitude linearly increases from the inner edge. The magnitude at the outer edge of the \textit{control zone} is propagated throughout the \textit{ballistic zone}.
+Within the \textit{dead zone}, the robot is considered to be in formation and so $|\vec{V}_{form}| = 0$. Within the \textit{control zone}, the magnitude linearly increases from the inner edge. The magnitude at the outer edge of the \textit{control zone} is propagated throughout the \textit{ballistic zone}.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.45\linewidth]{images/formation_zones.png}
-\caption{Zones for computing $\vec{V}_{form}$ with $F_i$ marked as `x'}
+\caption{Zones for computing $\vec{V}_{form}$ with $P_{desired}$ marked as `x'}
 \label{formation_zones}
 \end{figure}
 
-\section{APPROACH}
+% summary of our work moved to start of approach, avoiding duplication.
 
+\section{APPROACH}
 We implement a Leader-referenced behavior-based approach to formation control. Additionally, we extend the work of Balch and Arkin to incorporate a formation switching strategy and a decentralized approach \cite{repository}.
 
-A Leader-referenced approach allows the formation position of each robot to be determined with only knowledge of the leader $R_0$. 
-In contrast, a Unit-referenced approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots.
+A Leader-referenced approach allows the formation position of each robot to be determined with only knowledge of the position of the leader, $R_0$. 
+In contrast, a Unit-centered approach would require complete knowledge of all robot positions. Purely decentralizing this would require transmitting a substantial amount of state between robots. %TODO: sentence about neighbour reference?
 
-We define motor schemas for goal navigation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$ and $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioral response $\vec{V}$ for each robot.
+We define motor schemas for goal nagivation, obstacle avoidance and formation maintenance returning vectors $\vec{V}_{goal}$, $\vec{V}_{form}$, $\vec{V}_{obs}$, respectively. Vectors from each schema are weighted and summed into an overall behavioural response $\vec{V}$ for each robot.
 
-The addition of logical rules handles the avoidance of other robots in the centralized system where all robot poses are known.
+In a centralized system, where all robot poses are known, the addition of logical rules handles the avoidance of other robots.
 
 \subsection{EXPERIMENTAL SET-UP}
 
 We conduct experiments on 5 TurtleBot3 \cite{turtlebot} robots controlled using ROS \cite{ros} with Gazebo \cite{gazebo} as the simulation environment. We assume all robots are identical and labeled, with $R_0$ designated as leader and $R_1,...,R_n$ as followers. 
 
-Each simulated robot is a non-holonomic differential-drive robot with control inputs $u$ and $\omega$, corresponding to linear and angular velocities, respectively. There are 5 sensors per robot, \texttt{right, front\_right, front, front\_left, left}, evenly distributed around the front half of the robot.
+Each simulated robot is a non-holonomic differential-drive robot with control inputs $u$ and $\omega$, corresponding to linear and angular velocities, respectively. There are 5 sensors per robot (\texttt{right} \texttt{front\_right}, \texttt{front}, \texttt{front\_left}, \texttt{left}) evenly distributed around the front half of the robot.
 
-We use feedback linearization to convert $\vec{V}$ from $x$ and $y$ coordinates into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
+We use feedback linearization to convert $\vec{V}$ into control inputs $u$ and $\omega$. This allows us to assume control of each robot via a holonomic point held at a distance of $\epsilon$. Here $\epsilon$ is 0.2m.
 
-% TODO: need to amend this if our final implementation doesn't do this! i.e. are we talking about all these? probs not
-Our evaluation considers the performance of four robot formations in multiple arenas that include obstacles, narrow corridors and tight corners. Fig. \ref{corridorworld} illustrates one of these testing arenas.
+We empirically tune system parameters to provide a general solution capable of handling obstacles, narrow corridors and tight corners across a range of arenas. In our evaluation we consider two arenas that highlight split and merge as well as corridor behaviour (Fig. \ref{fig:corridorworld} and \ref{fig:square}). 
 
 \begin{figure}[thpb]
 \centering
@@ -119,17 +120,17 @@ We consider the following formations for 5 robots: \textit{diamond}, \textit{col
 
 \subsection{MOTOR SCHEMAS}
 
-The objective of the leader $R_0$ is to reach the goal, avoiding obstacles and other robots. The objective of the followers $R_1,...,R_n$ is to maintain formation while avoiding obstacles.
+The objective of the leader $R_0$ is to reach the goal, avoiding obstacles and other robots. The objective of the followers, $R_1,...,R_n$, is to maintain formation while avoiding obstacles.
 
-Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split-and-merge behavior (see \textit{Obstacle Avoidance}).
+Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split-and-merge behavior around obstacles (see \textit{Obstacle Avoidance}).
 
 Consequently, the behavioral response $\vec{V}$ for robot $R_i$ is:
-\begin{equation*}
+\begin{equation}
 \begin{aligned}
 \vec{V} = & g_{goal} \vec{V}_{goal} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}    && \text{if $R_0$} \\
               & g_{form} \vec{V}_{form} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}   && \text{if $R_1,...,R_n$}
 \end{aligned}
-\end{equation*}
+\end{equation}
 
 where $\lvert\vec{V}_{noise}\rvert = 0.05$.
 
@@ -153,7 +154,7 @@ Formation Maintenance & $g_{form}$ & 0.20 \\
 
 $\vec{V}_{goal}$ points from $R_0$ to the next point along a path from $P_{R_0}$ to the goal. $\vert\vec{V}_{goal}\rvert = 1$.
 
-We generate a path using a variant of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. Finding the optimal path requires many iterations and RRT* becomes inefficient. We thus store precomputed paths to avoid this overhead.
+We generate a path using a variant of the rapidly-exploring random trees (RRT) algorithm, RRT*. RRT* explores the search space by building a space-filling tree. Additional rewiring and cost minimization steps can generate an approximate shortest path to the goal. Finding the optimal path requires many iterations and RRT* becomes inefficient. To avoid this overhead, we precompute an optimal path and store it.
 
 \subsubsection*{Obstacle Avoidance}
 
@@ -171,7 +172,8 @@ We use the implementation of this motor schema defined in Balch and Arkin and de
 
 To calculate $F_i$ we transform the vector of relative formation positions, by rotating it to match the leader's orientation then translating it to the leader's position.
 
-We normalize $V_{form}$ by calculating $V_{form}/\lvert control\_zone\rvert$. Table \ref{table_formation} contains the parameters used to implement this motor schema.
+% normalizing means |vform|=1. Scaling implies that we divide by the control zone, it doesn't need to be said explicitly
+We scale $|V_{form}|$ to be in $[0, 1]$. Table \ref{table_formation} contains the parameters used to implement this motor schema.
 
 \begin{table}[h]
 \caption{Formation Maintenance Parameters}
