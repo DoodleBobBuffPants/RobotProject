@@ -69,7 +69,7 @@ def braitenberg(robot_poses, robot_id, front, front_left, front_right, left, rig
 
   return u, w
 
-def rule_based(front, front_left, front_right, left, right):
+def rule_based(front, front_left, front_right, left, right, robot_id):
   u = 0.  # [m/s]
   w = 0.  # [rad/s] going counter-clockwise.
 
@@ -77,14 +77,42 @@ def rule_based(front, front_left, front_right, left, right):
   sens_inp = np.array([front, front_left, front_right, left, right])
   sens_inp = np.tanh(sens_inp)
 
+ # if the right hand side detects an approaching object , alter w to move left
+  if sens_inp[2] < np.tanh(.4):
+    print("fire front left")
+    u -= 0.05
+    w = w + 1.5*(1.3-sens_inp[2])
+
+  # if the left hand side detects and approaching object, alter w to move to the right
+  if sens_inp[1] < np.tanh(.4):
+    u -= 0.05
+    print("fire front right")
+    w = w - 1.5*(1.3-sens_inp[1])
+
+   # if robot is very close to the right hand slide, adjust left a little
+  if sens_inp[4] < np.tanh(.2):
+    print("fire left")
+    w = w + 0.3*(1.-sens_inp[4])
+
+  # if robot is very close to the left hand slide, adjust right a little
+  if sens_inp[3] < np.tanh(.2):
+    print("fire right")
+    w = w - 0.3*(1.-sens_inp[3])
+
+  direction = 1. #if robot_id > 2 else -1.
+
+
   # if close to front, move away
-  if sens_inp[0] < np.tanh(.3):
-    u = -1.
-    if sens_inp[1] < sens_inp[2]:
-      w =  3.*np.pi
-    else:
-      w = -3.*np.pi
-    return u, w
+  if sens_inp[0] < np.tanh(.6):
+    print("FRONT firing")
+    u = -0.2
+    # if sens_inp[1] < sens_inp[2]:
+    #   w =  w -2.5*direction*(1-0.5*sens_inp[0])
+    # else:
+    #   w = w +2.5*direction*(1-0.5*sens_inp[0])
+    w = w +4.*direction*(1-0.5*sens_inp[0])
+
+  print("u, w: ", u, w)
 
   return u, w
 

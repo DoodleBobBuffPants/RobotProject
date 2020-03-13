@@ -19,9 +19,9 @@ X = 0
 Y = 1
 YAW = 2
 
-def get_obstacle_avoidance_velocity(robot_pose, laser):
+def get_obstacle_avoidance_velocity(robot_pose, laser, robot_id):
 
-  u, w = obstacle_avoidance.rule_based(*laser.measurements)
+  u, w = obstacle_avoidance.rule_based(*laser.measurements, robot_id=robot_id)
   
   x = u*np.cos(robot_pose[YAW]) - EPSILON*w*np.sin(robot_pose[YAW])
   y = u*np.sin(robot_pose[YAW]) + EPSILON*w*np.cos(robot_pose[YAW])
@@ -46,9 +46,14 @@ def get_combined_velocity(robot_pose, leader_pose, leader_rrt_velocity, laser, r
   if robot_id != LEADER_ID:
     rrt_velocity = np.array([0., 0.])
     formation_velocity, desired_position = maintain_formation(leader_pose, robot_pose, leader_rrt_velocity, robot_id, laser)
-    obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser)
+    obstacle_avoidance_velocity = get_obstacle_avoidance_velocity(robot_pose, laser, robot_id)
+
+    min_measurement = min(laser.measurements)
+    if min < 1.5:
+      formation_velocity = leader_rrt_velocity * 0.5
 
   combined_velocity = weight_velocities(rrt_velocity, formation_velocity, obstacle_avoidance_velocity, noise)
+
 
   # Feedback linearization - convert combined_velocities [x,y] [u,w]
   u, w = rrt_navigation.feedback_linearized(pose=robot_pose, velocity=combined_velocity, epsilon=EPSILON)
@@ -68,12 +73,14 @@ def normalize(vec):
 def weight_velocities(goal_velocity, formation_velocity, obstacle_velocity, noise_velocity):
 
   goal_w = .2
-  formation_w = .3
-  static_obs_avoid_w = .4
+  formation_w = .5
+  static_obs_avoid_w = 0.35
   noise_w = .05
   overall_weight = 1.5
   # currently no robot avoidance in decentralized algorithm as we do not keep all robot poses
 
+  # goal_velocity = np.array([1, -1])
+  # goal_velocity = goal_velocity / np.linalg.norm(goal_velocity)
   goal = weighting(goal_velocity, goal_w)
   formation = weighting(formation_velocity, formation_w)
   static_obstacle_avoidance = weighting(obstacle_velocity, static_obs_avoid_w)
