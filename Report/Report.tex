@@ -215,53 +215,65 @@ Our consensus algorithm uses each robot's ID to decide the leader. Robot $R_i$ i
 Here `form\_pos' is the vector of relative formation positions and `$ID$' returns a robot's ID. IDs are assigned so that each corresponds to a unique position, such as by generating a random number and taking the next $n$ for $n$ robots, modulo $n$ so they may be used as indexes. Only the leader initiates message passing when their state updates, and the other robots relay this message down their formation links, excluding the receiving link.
 
 \section{RESULTS}
+% todo mention error is euclidian distnace
+We define the position error for robot $R_i$ as $|F_{i} - P_{R_i}|$. Tables \ref{tab:results_corridor} and \ref{tab:results_square} show the performance of all formations in two arenas (TODO figures for two arenas)
 
-Visually our solution in both the centralized and decentralized case achieves formation control as seen by the sequence of images in Fig. X and Fig. Y. In order to quantify our results, we evaluate the performance using the error to the desired position for each robot over time, calculated as:
-\[err = \lvert F_i - P_{R_i}\rvert\]
-This acts as a measure for how out of formation robot $R_i$ is at each point in time.
+From Fig 4. \& 5. we can see the centralised approach achieves a lower average error. This is due to robots regaining formation faster and deviating less when splitting around obstacles. We can further see in tables \ref{tab:results_corridor} and \ref{tab:results_square} the centralized solution achieves lower position errors and on most runs faster time to the goal. The larger peaks in the curves show split and merge behaviour. While all robots in the centralised approach merge after a split within 15s, larger times, as much as 25s were seen in the decentralised system. 
 
-% TODOS:
-% 1) keep formation, successfully change formation, split-and-merge, tight corners?
-% 2) decentralized works too, but works better when spacing distances are sufficiently large so that robots don't effect sensors.
-% 3) edit error plots
-% 4) fill out tables (change them), exploration (better with split-and-merge)
-% 5) add units to the graph
+As expected, the column formation takes the shortest time to reach the goal, and has the lowest position error. However, it offers no extra exploration of the arena over having a single robot (since followers all follow the same path as the leader). The line formation offers the best exploration of the arena, but in general the diamond and wedge formations take less time and have less error. E.g the diamond takes 
 
-% TODO:NAME arena.
-% TODO: write this up properly.
-% TODO: make sure earlier work in the paper reflects what we say here
-% TODO: plots
-% TODO: rigorous evaluation i.e. mention specific points on the curves
+Both systems are able to successfully split and merge around obstacles, navigate tight corners and switch formation to handle corridors.
+
+This acts as a measure for how out of formation robot $R_i$ is.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[height=0.6\linewidth]{images/centralized_plot.png}
+    \caption{Centralized solution, \textit{column} formation, square arena}
+    \label{fig:centralized}
+\end{figure}
+% todo add units to this. labels for robots isnt right
+\begin{figure}[t]
+    \centering
+    \includegraphics[height=0.6\linewidth]{images/decentalized_plot.png}
+    \caption{Decentralized solution, \textit{column} formation, square arena}
+    \label{fig:decentralized}
+\end{figure}
 
 \begin{table}[t]
-\begin{tabular}{@{}cp{1.75cm}cp{1.5cm}p{1.75cm}cp{1.5cm}@{}}
-\toprule
- & & Centralized & & & Decentralized & \\
-\midrule
-Formation & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) \\
-\textit{line}        &                        &                    &                           &                        &                    &                           \\
-\textit{column}      &                        &                    &                           &                        &                    &                           \\
-\textit{diamond}     &                        &                    &                           &                        &                    &                           \\
-\textit{wedge}       &                        &                    &                           &                        &                    &                           \\ \bottomrule
+\begin{tabular}{|c|p{1cm}p{1.2cm}|p{1cm}p{1.2cm}|}
+                \hline
+                 & Centralized            &                    & Decentralized          &                    \\
+                 \hline
+Formation        & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position Error (m) \\
+                 \hline
+\textit{line}    & 68                     & 0.64               & 116                     & 1.12               \\
+\textit{column}  & 63                     & 0.28               & 76                    & 0.62               \\
+\textit{wedge}   & 64                     & 0.57               & 109                    & 1.18               \\
+\textit{diamond} & 76                     & 0.40               & 101                    & 1.05 \\     
+                \hline
 \end{tabular}
-\caption{Performance of Robots in the Square Arena}
+\caption{System results in the corridor arena}
+\label{tab:results_corridor}
+\end{table}
+
+\begin{table}[t]
+\begin{tabular}{|c|p{1cm}p{1.2cm}|p{1cm}p{1.2cm}|}
+\hline
+                 & Centralized            &                    & Decentralized          &                    \\
+                 \hline
+Formation        & Time to Goal (s) & Position Error (m) & Time to Goal (s) & Position Error (m) \\
+\hline
+\textit{line}    & 65                     & 0.26               & 87                     & 0.74               \\
+\textit{column}  & 43                     & 0.22               & 68                     & 0.42               \\
+\textit{wedge}   & 62                     & 0.26               & 82                     & 0.85               \\
+\textit{diamond} & 63                     & 0.27               & 75                     & 0.62    \\
+\hline
+\end{tabular}
+\caption{System results in the square arena}
 \label{tab:results_square}
 \end{table}
 
-\begin{table}[t]
-\begin{tabular}{@{}cp{1.75cm}cp{1.5cm}p{1.75cm}cp{1.5cm}@{}}
-\toprule
- & & Centralized & & & Decentralized & \\
-\midrule
-Formation & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) & Time to Reach Goal (s) & Position Error (m) & Time out of Formation (s) \\
-\textit{line}        &                        &                    &                           &                        &                    &                           \\
-\textit{column}      &                        &                    &                           &                        &                    &                           \\
-\textit{diamond}     &                        &                    &                           &                        &                    &                           \\
-\textit{wedge}       &                        &                    &                           &                        &                    &                           \\ \bottomrule
-\end{tabular}
-\caption{Performance of Robots in the Corridor Arena}
-\label{tab:results_corridor}
-\end{table}
 
 \section{CONCLUSION}
 
