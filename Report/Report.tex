@@ -125,14 +125,14 @@ The objective of the leader $R_0$ is to reach the goal, avoiding obstacles and o
 Each motor schema has an associated gain value (Table \ref{motor_schema_gs}). The values were tuned empirically. Prioritizing obstacle avoidance above formation maintenance permits the desired split-and-merge behavior around obstacles (see \textit{Obstacle Avoidance}).
 
 Consequently, the behavioral response $\vec{V}$ for robot $R_i$ is:
-\begin{equation}
+\begin{equation*}
 \begin{aligned}
 \vec{V} = & g_{goal} \vec{V}_{goal} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}    && \text{if $R_0$} \\
               & g_{form} \vec{V}_{form} + g_{obs} \vec{V}_{obs} + \vec{V}_{noise}   && \text{if $R_1,...,R_n$}
 \end{aligned}
-\end{equation}
+\end{equation*}
 
-where $\lvert\vec{V}_{noise}\rvert = 0.05$.
+where $\lvert\vec{V}_{noise}\rvert = 0.05$. A useful heuristic when robots were very close to obstacles, is to temporarily replace $\vec{V}_{form}$ with $\vec{V}_{goal}$ and switch back when clear of the obstacle.
 
 \begin{table}[h]
 \caption{Motor Schema Gain Values $g_s$}
